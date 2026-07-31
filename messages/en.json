@@ -1,0 +1,414 @@
+{
+  "app": {
+    "name": "CUISINA",
+    "tagline": "Your kitchen, differently",
+    "search": "Search (Ctrl+K)",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Continue",
+    "previous": "Previous",
+    "finish": "Finish",
+    "seeAll": "See all",
+    "today": "Today",
+    "logout": "Log out",
+    "darkMode": "Dark mode",
+    "lightMode": "Light mode",
+    "language": "Language",
+    "notifications": "Notifications",
+    "comingSoon": "Coming soon",
+    "error": "Something went wrong. Please try again.",
+    "saved": "Saved",
+    "optional": "optional"
+  },
+  "nav": {
+    "groups": {
+      "pilotage": "Overview",
+      "commercial": "Sales",
+      "organisation": "Organization",
+      "automatisation": "Automation",
+      "administration": "Administration"
+    },
+    "maJournee": "My Day",
+    "fiches": "Fiches Contact",
+    "pipeline": "Pipeline",
+    "clients": "Clients",
+    "commandes": "Confirmed Orders",
+    "devis": "Devis & Invoices",
+    "agendaEquipe": "Team Agenda",
+    "agendaClient": "Client Agenda",
+    "taches": "My Tasks",
+    "sequences": "WhatsApp Sequences",
+    "modeles": "Message Templates",
+    "journalEnvoi": "Send Log",
+    "flux": "Flows & Margins",
+    "reglements": "Payments & Collections",
+    "rayonnement": "Reach",
+    "commissions": "Commissions & Compensation",
+    "equipe": "Conseillers & Points of Sale",
+    "configuration": "Workshop Settings",
+    "plus": "More"
+  },
+  "login": {
+    "title": "Sign in",
+    "subtitle": "The internal tool for Cuisina Conseillers",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalid": "Incorrect email or password."
+  },
+  "placeholders": {
+    "commandes": {
+      "title": "Confirmed Orders",
+      "description": "Track signed orders from confirmation to installation, with workshop progress and delivery milestones."
+    },
+    "devis": {
+      "title": "Devis & Invoices",
+      "description": "Generate and number Devis and invoices straight from the Fiche Contact, with version tracking."
+    },
+    "agendaEquipe": {
+      "title": "Team Agenda",
+      "description": "The Showroom's shared calendar: appointments, Métrés, deliveries and installations for the whole team."
+    },
+    "agendaClient": {
+      "title": "Client Agenda",
+      "description": "The lifeline of every client project: each appointment, each step, on a single timeline."
+    },
+    "sequences": {
+      "title": "WhatsApp Sequences",
+      "description": "Automatic WhatsApp follow-ups triggered by pipeline stages. You stay in control — the tool never forgets."
+    },
+    "modeles": {
+      "title": "Message Templates",
+      "description": "Your standard messages, approved by management, ready to send in one tap."
+    },
+    "journalEnvoi": {
+      "title": "Send Log",
+      "description": "Every message sent — to whom, when, and what came of it."
+    },
+    "flux": {
+      "title": "Flows & Margins",
+      "description": "Margins by project, by Showroom and by Conseiller — the financial read on the pipeline."
+    },
+    "reglements": {
+      "title": "Payments & Collections",
+      "description": "Deposits, instalments and collections, automatically matched to orders."
+    },
+    "rayonnement": {
+      "title": "Reach",
+      "description": "Where your clients come from: sources, cities, campaigns. The map of Cuisina's renown."
+    },
+    "commissions": {
+      "title": "Commissions & Compensation",
+      "description": "Conseiller commission calculations — transparent, verifiable, anchored to signed revenue."
+    },
+    "configuration": {
+      "title": "Workshop Settings",
+      "description": "Tool settings: stages, targets, finish and appliance catalogues."
+    }
+  },
+  "stages": {
+    "nouveau_contact": "New contact",
+    "contacte": "Contacted",
+    "rdv_showroom": "Showroom appointment",
+    "metre_releve": "Métré taken",
+    "conception_devis": "Devis in design",
+    "devis_envoye": "Devis sent",
+    "negociation": "Negotiation",
+    "signe": "Signed",
+    "perdu": "Lost"
+  },
+  "motifsPerte": {
+    "title": "Loss reason",
+    "prompt": "Why was this fiche lost?",
+    "prix": "Price",
+    "delai": "Lead time",
+    "concurrent": "Competitor",
+    "projet_annule": "Project cancelled",
+    "injoignable": "Unreachable",
+    "autre": "Other"
+  },
+  "origines": {
+    "question": "How did you hear about CUISINA?",
+    "bouche_a_oreille": "Word of mouth",
+    "site_web": "Website",
+    "foire": "Trade fair",
+    "publicite": "Advertising",
+    "details": {
+      "prospection": "Prospecting",
+      "architecte_decorateur": "Architect / Interior designer",
+      "promoteur_entrepreneur": "Developer / Contractor",
+      "ami": "Friend",
+      "spot_publicitaire": "Ad spot",
+      "magasine": "Magazine",
+      "affiche_enseigne": "Poster / Signage",
+      "catalogue": "Catalogue"
+    }
+  },
+  "fiches": {
+    "title": "Fiches Contact",
+    "new": "New fiche",
+    "formCode": "FO-COM-02 · IE 09 JUIL 2018",
+    "reference": "Reference",
+    "searchPlaceholder": "Name, phone, reference…",
+    "empty": "No fiches here yet. Create one from the Showroom in 2 minutes.",
+    "emptyFiltered": "No fiche matches these filters.",
+    "count": "{count, plural, =0 {No fiches} one {# fiche} other {# fiches}}",
+    "createdOn": "Created on {date}",
+    "completude": "Completeness",
+    "draftSaved": "Draft saved at {time}",
+    "columns": {
+      "client": "Client",
+      "ville": "City",
+      "projet": "Project",
+      "budget": "Budget",
+      "stage": "Stage",
+      "conseiller": "Conseiller",
+      "date": "Date"
+    },
+    "wizard": {
+      "title": "Fiche Contact",
+      "step1": "Identity",
+      "step2": "Contact origin",
+      "step3": "Project",
+      "step4": "Client Requirements",
+      "stepOf": "Step {current} of {total}",
+      "clientNom": "Client name",
+      "telDomicile": "Home phone",
+      "telMobile": "Mobile phone",
+      "email": "Email",
+      "adresse": "Full address",
+      "codePostal": "Postal code",
+      "ville": "City",
+      "conseiller": "Conseiller",
+      "pointDeVente": "Point of sale",
+      "dateContact": "Contact date",
+      "nbCuisines": "Kitchens",
+      "nbDressings": "Dressings",
+      "nbSdb": "Bathrooms",
+      "etatChantier": "Site status",
+      "en_cours": "In progress",
+      "fini": "Finished",
+      "budget": "Estimated budget (DT)",
+      "dateLivraison": "Desired delivery date",
+      "observations": "Observations",
+      "create": "Create the fiche",
+      "creating": "Creating…",
+      "photoLabel": "Photo of the paper fiche",
+      "photoHint": "Take a photo of the FO-COM-02 — it will stay attached to the fiche.",
+      "errors": {
+        "nom_requis": "Client name is required.",
+        "mobile_requis": "Mobile phone is required.",
+        "telephone_invalide": "Invalid number — digits only.",
+        "email_invalide": "Invalid email address.",
+        "origine_requise": "Choose an origin.",
+        "origine_detail_requise": "Specify the origin."
+      }
+    },
+    "exigences": {
+      "finitionFacade": "Front Finish",
+      "bois_massif": "Solid wood",
+      "laque": "Lacquered",
+      "pvc": "PVC",
+      "typeDetail": "Finish details",
+      "caisson": "Carcass",
+      "decorFacade": "Front décor",
+      "electromenager": "Appliances",
+      "evier": "Sink",
+      "bac1": "1 bowl",
+      "bac2": "2 bowls",
+      "plaque": "Hob",
+      "feux4": "4 burners",
+      "feux5": "5 burners",
+      "coin": "Corner",
+      "hotte": "Hood",
+      "hotte60": "60 cm",
+      "hotte90": "90 cm",
+      "centrale": "Central",
+      "four": "Oven",
+      "fourTaille": "Oven size",
+      "microOnde": "Microwave",
+      "frigo": "Fridge",
+      "frigoAutres": "Fridge — other",
+      "laveVaisselle": "Dishwasher",
+      "encastrable": "Built-in",
+      "non_encastrable": "Freestanding",
+      "electroAutres": "Other appliances",
+      "detailsCuisine": "Other kitchen details",
+      "avecRetour": "With return",
+      "ilotCentral": "Central island",
+      "autresDetails": "Other details",
+      "oui": "Yes",
+      "non": "No"
+    },
+    "detail": {
+      "suivi": "Sales follow-up",
+      "datePrevueDevis": "Devis expected on",
+      "dateEffectiveDevis": "Devis delivered on",
+      "relances": "Follow-ups",
+      "addRelance": "Log a follow-up",
+      "noRelance": "No follow-up logged yet. The first one often brings the signature.",
+      "contactN": "Contact #{n}",
+      "canal": "Channel",
+      "resultat": "Outcome",
+      "commentaire": "Comment",
+      "historique": "History",
+      "stageChanged": "{from} → {to}",
+      "exportPdf": "Export as PDF",
+      "photoOriginal": "Original paper fiche",
+      "signature": "Client signature",
+      "scheduleNext": "Schedule the next follow-up?",
+      "nextRelanceAt": "Follow-up scheduled for {date}"
+    }
+  },
+  "canaux": {
+    "whatsapp": "WhatsApp",
+    "appel": "Call",
+    "sms": "SMS",
+    "email": "Email",
+    "visite": "Visit"
+  },
+  "relanceResultats": {
+    "joint": "Client reached",
+    "message_laisse": "Message left",
+    "injoignable": "Unreachable",
+    "rdv_pris": "Appointment booked",
+    "a_rappeler": "Call back"
+  },
+  "pipeline": {
+    "title": "Pipeline",
+    "emptyColumn": "Nothing at this stage. Fiches will glide in on their own.",
+    "perduLane": "Lost fiches",
+    "relanceOverdue": "Follow-up overdue",
+    "filters": {
+      "conseiller": "Conseiller",
+      "pointDeVente": "Point of sale",
+      "origine": "Origin",
+      "periode": "Period",
+      "typeProjet": "Project type",
+      "all": "All",
+      "reset": "Reset",
+      "cuisine": "Kitchen",
+      "dressing": "Dressing",
+      "sdb": "Bathroom"
+    },
+    "projectChips": {
+      "cuisine": "Kitchen ×{n}",
+      "dressing": "Dressing ×{n}",
+      "sdb": "Bathroom ×{n}"
+    }
+  },
+  "dashboard": {
+    "title": "My Day",
+    "greeting": "Hello, {name}",
+    "date": "{date}",
+    "kpi": {
+      "rdvJour": "Today's appointments",
+      "nextRdv": "Next at {time}",
+      "noRdv": "A day with no appointments",
+      "relancesRetard": "Overdue follow-ups",
+      "relancesOk": "All caught up",
+      "devisAttente": "Devis pending",
+      "devisTotal": "{total} at stake",
+      "caSigne": "Signed revenue this month",
+      "objectif": "Target: {total}",
+      "nouvellesFiches": "New fiches (7 d)",
+      "tauxConversion": "Conversion rate",
+      "conversionWindow": "Last 90 days",
+      "projetDuMois": "Project of the month",
+      "origineContacts": "Contact origins"
+    },
+    "insights": {
+      "title": "Signals",
+      "empty": "Nothing to flag. The pipeline is breathing easy.",
+      "noRelance7d": "{client} — no follow-up for {days} days",
+      "devisNoResponse": "{client} — Devis sent {days} days ago, no reply",
+      "metreStuck": "{client} — at Métré taken for {days} days",
+      "ficheIncomplete": "{client} — fiche {score}% complete for {days} days"
+    },
+    "agenda": {
+      "title": "Today's agenda",
+      "empty": "No appointments today. A fine day for follow-ups."
+    },
+    "tasks": {
+      "title": "My tasks",
+      "empty": "No tasks for today."
+    },
+    "classement": {
+      "title": "Conseiller leaderboard",
+      "caSigne": "Signed revenue",
+      "conversion": "Conversion",
+      "delaiDevis": "Avg. Devis turnaround",
+      "days": "{n} d"
+    }
+  },
+  "taches": {
+    "title": "My Tasks",
+    "new": "New task",
+    "titre": "Title",
+    "description": "Description",
+    "echeance": "Due date",
+    "priorite": "Priority",
+    "basse": "Low",
+    "normale": "Normal",
+    "haute": "High",
+    "fiche": "Linked fiche",
+    "assigneA": "Assigned to",
+    "groups": {
+      "retard": "Overdue",
+      "aujourdhui": "Today",
+      "semaine": "This week",
+      "plusTard": "Later"
+    },
+    "empty": "No tasks in sight. Create one, or enjoy the calm.",
+    "auto": "Auto",
+    "relanceTaskTitle": "Follow up with {client}",
+    "done": "Done",
+    "markDone": "Mark as done"
+  },
+  "clients": {
+    "title": "Clients",
+    "new": "New client",
+    "empty": "No clients yet. The first one arrives with the first signature.",
+    "searchPlaceholder": "Name, phone, city…",
+    "caCumule": "Lifetime revenue",
+    "nbProjets": "{count, plural, one {# project} other {# projects}}",
+    "identity": "Identity",
+    "linkedFiches": "Linked fiches",
+    "projectHistory": "Project history",
+    "tierComing": "Client tier — Essentiel · Signature · Prestige — coming in Phase 2, along with scoring.",
+    "nom": "Name",
+    "tel": "Phone",
+    "email": "Email",
+    "adresse": "Address",
+    "ville": "City"
+  },
+  "equipe": {
+    "title": "Conseillers & Points of Sale",
+    "conseillers": "{count, plural, one {# Conseiller} other {# Conseillers}}",
+    "fichesActives": "Active fiches",
+    "caMois": "Revenue this month",
+    "objectifMensuel": "Monthly target",
+    "editObjectif": "Edit target",
+    "roles": {
+      "conseiller": "Conseiller",
+      "chef_showroom": "Showroom manager",
+      "direction": "Management",
+      "admin": "Administrator"
+    }
+  },
+  "rdv": {
+    "types": {
+      "showroom": "Showroom",
+      "metre": "Métré",
+      "livraison": "Delivery",
+      "pose": "Installation",
+      "interne": "Internal"
+    }
+  }
+}

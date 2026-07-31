@@ -1,0 +1,414 @@
+{
+  "app": {
+    "name": "CUISINA",
+    "tagline": "Votre cuisine autrement",
+    "search": "Rechercher (Ctrl+K)",
+    "loading": "Chargement…",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "back": "Retour",
+    "next": "Continuer",
+    "previous": "Précédent",
+    "finish": "Terminer",
+    "seeAll": "Tout voir",
+    "today": "Aujourd'hui",
+    "logout": "Se déconnecter",
+    "darkMode": "Mode sombre",
+    "lightMode": "Mode clair",
+    "language": "Langue",
+    "notifications": "Notifications",
+    "comingSoon": "Bientôt disponible",
+    "error": "Une erreur est survenue. Réessayez.",
+    "saved": "Enregistré",
+    "optional": "optionnel"
+  },
+  "nav": {
+    "groups": {
+      "pilotage": "Pilotage",
+      "commercial": "Commercial",
+      "organisation": "Organisation",
+      "automatisation": "Automatisation",
+      "administration": "Administration"
+    },
+    "maJournee": "Ma Journée",
+    "fiches": "Fiches Contact",
+    "pipeline": "Pipeline",
+    "clients": "Clients",
+    "commandes": "Commandes Confirmées",
+    "devis": "Devis & Factures",
+    "agendaEquipe": "Agenda Équipe",
+    "agendaClient": "Agenda Client",
+    "taches": "Mes Tâches",
+    "sequences": "Séquences WhatsApp",
+    "modeles": "Modèles de messages",
+    "journalEnvoi": "Journal d'envoi",
+    "flux": "Flux & Marges",
+    "reglements": "Règlements & Encaissements",
+    "rayonnement": "Rayonnement",
+    "commissions": "Commissions & Rémunérations",
+    "equipe": "Conseillers & Points de Vente",
+    "configuration": "Configuration Atelier",
+    "plus": "Plus"
+  },
+  "login": {
+    "title": "Connexion",
+    "subtitle": "L'outil interne des conseillers Cuisina",
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "invalid": "E-mail ou mot de passe incorrect."
+  },
+  "placeholders": {
+    "commandes": {
+      "title": "Commandes Confirmées",
+      "description": "Le suivi des commandes signées : de la confirmation à la pose, avec l'avancement atelier et les jalons de livraison."
+    },
+    "devis": {
+      "title": "Devis & Factures",
+      "description": "Génération et numérotation des devis et factures, directement depuis la fiche contact, avec suivi des versions."
+    },
+    "agendaEquipe": {
+      "title": "Agenda Équipe",
+      "description": "Le calendrier partagé du showroom : rendez-vous, métrés, livraisons et poses de toute l'équipe."
+    },
+    "agendaClient": {
+      "title": "Agenda Client",
+      "description": "La ligne de vie de chaque projet client : chaque rendez-vous, chaque étape, sur une seule frise."
+    },
+    "sequences": {
+      "title": "Séquences WhatsApp",
+      "description": "Des relances WhatsApp automatiques déclenchées par les étapes du pipeline. Vous gardez la main, l'outil n'oublie jamais."
+    },
+    "modeles": {
+      "title": "Modèles de messages",
+      "description": "Vos messages types, validés par la direction, prêts à envoyer en un geste."
+    },
+    "journalEnvoi": {
+      "title": "Journal d'envoi",
+      "description": "Chaque message envoyé, à qui, quand, et ce qu'il en est ressorti."
+    },
+    "flux": {
+      "title": "Flux & Marges",
+      "description": "Marges par projet, par showroom et par conseiller — la lecture financière du pipeline."
+    },
+    "reglements": {
+      "title": "Règlements & Encaissements",
+      "description": "Acomptes, échéances et encaissements, rapprochés automatiquement des commandes."
+    },
+    "rayonnement": {
+      "title": "Rayonnement",
+      "description": "D'où viennent vos clients : origines, villes, campagnes. La carte de la notoriété Cuisina."
+    },
+    "commissions": {
+      "title": "Commissions & Rémunérations",
+      "description": "Le calcul des commissions conseillers, transparent et vérifiable, adossé au CA signé."
+    },
+    "configuration": {
+      "title": "Configuration Atelier",
+      "description": "Paramètres de l'outil : étapes, objectifs, catalogues de finitions et d'électroménager."
+    }
+  },
+  "stages": {
+    "nouveau_contact": "Nouveau contact",
+    "contacte": "Contacté",
+    "rdv_showroom": "RDV showroom",
+    "metre_releve": "Métré relevé",
+    "conception_devis": "Conception devis",
+    "devis_envoye": "Devis envoyé",
+    "negociation": "Négociation",
+    "signe": "Signé",
+    "perdu": "Perdu"
+  },
+  "motifsPerte": {
+    "title": "Motif de perte",
+    "prompt": "Pourquoi cette fiche est-elle perdue ?",
+    "prix": "Prix",
+    "delai": "Délai",
+    "concurrent": "Concurrent",
+    "projet_annule": "Projet annulé",
+    "injoignable": "Injoignable",
+    "autre": "Autre"
+  },
+  "origines": {
+    "question": "Comment avez-vous eu connaissance de CUISINA ?",
+    "bouche_a_oreille": "Bouche à oreille",
+    "site_web": "Site web",
+    "foire": "Foire",
+    "publicite": "Publicité",
+    "details": {
+      "prospection": "Prospection",
+      "architecte_decorateur": "Architecte / Décorateur",
+      "promoteur_entrepreneur": "Promoteur / Entrepreneur",
+      "ami": "Ami",
+      "spot_publicitaire": "Spot publicitaire",
+      "magasine": "Magazine",
+      "affiche_enseigne": "Affiche / Enseigne",
+      "catalogue": "Catalogue"
+    }
+  },
+  "fiches": {
+    "title": "Fiches Contact",
+    "new": "Nouvelle fiche",
+    "formCode": "FO-COM-02 · IE 09 JUIL 2018",
+    "reference": "Référence",
+    "searchPlaceholder": "Nom, téléphone, référence…",
+    "empty": "Aucune fiche ici. Créez-en une depuis le showroom en 2 minutes.",
+    "emptyFiltered": "Aucune fiche ne correspond à ces filtres.",
+    "count": "{count, plural, =0 {Aucune fiche} one {# fiche} other {# fiches}}",
+    "createdOn": "Créée le {date}",
+    "completude": "Complétude",
+    "draftSaved": "Brouillon enregistré à {time}",
+    "columns": {
+      "client": "Client",
+      "ville": "Ville",
+      "projet": "Projet",
+      "budget": "Budget",
+      "stage": "Étape",
+      "conseiller": "Conseiller",
+      "date": "Date"
+    },
+    "wizard": {
+      "title": "Fiche Contact",
+      "step1": "Identité",
+      "step2": "Origine du contact",
+      "step3": "Projet",
+      "step4": "Exigences Client",
+      "stepOf": "Étape {current} sur {total}",
+      "clientNom": "Nom du client",
+      "telDomicile": "Téléphone domicile",
+      "telMobile": "Téléphone mobile",
+      "email": "E-mail",
+      "adresse": "Adresse complète",
+      "codePostal": "Code postal",
+      "ville": "Ville",
+      "conseiller": "Conseiller",
+      "pointDeVente": "Point de vente",
+      "dateContact": "Date du contact",
+      "nbCuisines": "Cuisines",
+      "nbDressings": "Dressings",
+      "nbSdb": "Salles de bains",
+      "etatChantier": "État du chantier",
+      "en_cours": "En cours",
+      "fini": "Fini",
+      "budget": "Budget estimatif (DT)",
+      "dateLivraison": "Date de livraison souhaitée",
+      "observations": "Observations",
+      "create": "Créer la fiche",
+      "creating": "Création…",
+      "photoLabel": "Photo de la fiche papier",
+      "photoHint": "Prenez la FO-COM-02 en photo, elle restera attachée à la fiche.",
+      "errors": {
+        "nom_requis": "Le nom du client est requis.",
+        "mobile_requis": "Le téléphone mobile est requis.",
+        "telephone_invalide": "Numéro invalide — chiffres uniquement.",
+        "email_invalide": "Adresse e-mail invalide.",
+        "origine_requise": "Choisissez une origine.",
+        "origine_detail_requise": "Précisez l'origine."
+      }
+    },
+    "exigences": {
+      "finitionFacade": "Finition Façade",
+      "bois_massif": "Bois massif",
+      "laque": "Laqué",
+      "pvc": "PVC",
+      "typeDetail": "Précision finition",
+      "caisson": "Caisson",
+      "decorFacade": "Décor façade",
+      "electromenager": "Électroménager",
+      "evier": "Évier",
+      "bac1": "1 bac",
+      "bac2": "2 bacs",
+      "plaque": "Plaque",
+      "feux4": "4 feux",
+      "feux5": "5 feux",
+      "coin": "Coin",
+      "hotte": "Hotte",
+      "hotte60": "60 cm",
+      "hotte90": "90 cm",
+      "centrale": "Centrale",
+      "four": "Four",
+      "fourTaille": "Taille du four",
+      "microOnde": "Micro-onde",
+      "frigo": "Frigo",
+      "frigoAutres": "Frigo — autres",
+      "laveVaisselle": "Lave-vaisselle",
+      "encastrable": "Encastrable",
+      "non_encastrable": "Non encastrable",
+      "electroAutres": "Autres électroménagers",
+      "detailsCuisine": "Autres détails Cuisine",
+      "avecRetour": "Avec retour",
+      "ilotCentral": "Îlot central",
+      "autresDetails": "Autres détails",
+      "oui": "Oui",
+      "non": "Non"
+    },
+    "detail": {
+      "suivi": "Suivi commercial",
+      "datePrevueDevis": "Remise du devis prévue le",
+      "dateEffectiveDevis": "Devis remis le",
+      "relances": "Relances",
+      "addRelance": "Consigner une relance",
+      "noRelance": "Aucune relance consignée. La première appelle souvent la signature.",
+      "contactN": "{n}ᵉ contact",
+      "canal": "Canal",
+      "resultat": "Résultat",
+      "commentaire": "Commentaire",
+      "historique": "Historique",
+      "stageChanged": "{from} → {to}",
+      "exportPdf": "Exporter en PDF",
+      "photoOriginal": "Fiche papier d'origine",
+      "signature": "Signature client",
+      "scheduleNext": "Programmer la prochaine relance ?",
+      "nextRelanceAt": "Relance prévue le {date}"
+    }
+  },
+  "canaux": {
+    "whatsapp": "WhatsApp",
+    "appel": "Appel",
+    "sms": "SMS",
+    "email": "E-mail",
+    "visite": "Visite"
+  },
+  "relanceResultats": {
+    "joint": "Client joint",
+    "message_laisse": "Message laissé",
+    "injoignable": "Injoignable",
+    "rdv_pris": "RDV pris",
+    "a_rappeler": "À rappeler"
+  },
+  "pipeline": {
+    "title": "Pipeline",
+    "emptyColumn": "Rien à cette étape. Les fiches y glisseront d'elles-mêmes.",
+    "perduLane": "Fiches perdues",
+    "relanceOverdue": "Relance en retard",
+    "filters": {
+      "conseiller": "Conseiller",
+      "pointDeVente": "Point de vente",
+      "origine": "Origine",
+      "periode": "Période",
+      "typeProjet": "Type de projet",
+      "all": "Tous",
+      "reset": "Réinitialiser",
+      "cuisine": "Cuisine",
+      "dressing": "Dressing",
+      "sdb": "SDB"
+    },
+    "projectChips": {
+      "cuisine": "Cuisine ×{n}",
+      "dressing": "Dressing ×{n}",
+      "sdb": "SDB ×{n}"
+    }
+  },
+  "dashboard": {
+    "title": "Ma Journée",
+    "greeting": "Bonjour, {name}",
+    "date": "{date}",
+    "kpi": {
+      "rdvJour": "RDV du jour",
+      "nextRdv": "Prochain à {time}",
+      "noRdv": "Journée sans rendez-vous",
+      "relancesRetard": "Relances en retard",
+      "relancesOk": "Tout est à jour",
+      "devisAttente": "Devis en attente",
+      "devisTotal": "{total} en jeu",
+      "caSigne": "CA signé ce mois",
+      "objectif": "Objectif : {total}",
+      "nouvellesFiches": "Nouvelles fiches (7 j)",
+      "tauxConversion": "Taux de conversion",
+      "conversionWindow": "90 derniers jours",
+      "projetDuMois": "Projet du mois",
+      "origineContacts": "Origine des contacts"
+    },
+    "insights": {
+      "title": "Signaux",
+      "empty": "Rien à signaler. Le pipeline respire.",
+      "noRelance7d": "{client} — aucune relance depuis {days} jours",
+      "devisNoResponse": "{client} — devis envoyé il y a {days} jours, sans réponse",
+      "metreStuck": "{client} — en métré relevé depuis {days} jours",
+      "ficheIncomplete": "{client} — fiche complétée à {score}% depuis {days} jours"
+    },
+    "agenda": {
+      "title": "Agenda du jour",
+      "empty": "Aucun rendez-vous aujourd'hui. Une bonne journée pour relancer."
+    },
+    "tasks": {
+      "title": "Mes tâches",
+      "empty": "Aucune tâche pour aujourd'hui."
+    },
+    "classement": {
+      "title": "Classement conseillers",
+      "caSigne": "CA signé",
+      "conversion": "Conversion",
+      "delaiDevis": "Délai devis moyen",
+      "days": "{n} j"
+    }
+  },
+  "taches": {
+    "title": "Mes Tâches",
+    "new": "Nouvelle tâche",
+    "titre": "Titre",
+    "description": "Description",
+    "echeance": "Échéance",
+    "priorite": "Priorité",
+    "basse": "Basse",
+    "normale": "Normale",
+    "haute": "Haute",
+    "fiche": "Fiche liée",
+    "assigneA": "Assignée à",
+    "groups": {
+      "retard": "En retard",
+      "aujourdhui": "Aujourd'hui",
+      "semaine": "Cette semaine",
+      "plusTard": "Plus tard"
+    },
+    "empty": "Aucune tâche en vue. Créez-en une ou profitez du calme.",
+    "auto": "Auto",
+    "relanceTaskTitle": "Relance {client}",
+    "done": "Fait",
+    "markDone": "Marquer comme fait"
+  },
+  "clients": {
+    "title": "Clients",
+    "new": "Nouveau client",
+    "empty": "Aucun client pour l'instant. Le premier arrive avec la première signature.",
+    "searchPlaceholder": "Nom, téléphone, ville…",
+    "caCumule": "CA cumulé",
+    "nbProjets": "{count, plural, one {# projet} other {# projets}}",
+    "identity": "Identité",
+    "linkedFiches": "Fiches liées",
+    "projectHistory": "Historique projets",
+    "tierComing": "Niveau client — Essentiel · Signature · Prestige — disponible en Phase 2, avec le scoring.",
+    "nom": "Nom",
+    "tel": "Téléphone",
+    "email": "E-mail",
+    "adresse": "Adresse",
+    "ville": "Ville"
+  },
+  "equipe": {
+    "title": "Conseillers & Points de Vente",
+    "conseillers": "{count, plural, one {# conseiller} other {# conseillers}}",
+    "fichesActives": "Fiches actives",
+    "caMois": "CA du mois",
+    "objectifMensuel": "Objectif mensuel",
+    "editObjectif": "Modifier l'objectif",
+    "roles": {
+      "conseiller": "Conseiller",
+      "chef_showroom": "Chef de showroom",
+      "direction": "Direction",
+      "admin": "Administrateur"
+    }
+  },
+  "rdv": {
+    "types": {
+      "showroom": "Showroom",
+      "metre": "Métré",
+      "livraison": "Livraison",
+      "pose": "Pose",
+      "interne": "Interne"
+    }
+  }
+}

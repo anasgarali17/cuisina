@@ -1,0 +1,414 @@
+{
+  "app": {
+    "name": "CUISINA",
+    "tagline": "مطبخك بطريقة مختلفة",
+    "search": "بحث (Ctrl+K)",
+    "loading": "جارٍ التحميل…",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "back": "رجوع",
+    "next": "متابعة",
+    "previous": "السابق",
+    "finish": "إنهاء",
+    "seeAll": "عرض الكل",
+    "today": "اليوم",
+    "logout": "تسجيل الخروج",
+    "darkMode": "الوضع الداكن",
+    "lightMode": "الوضع الفاتح",
+    "language": "اللغة",
+    "notifications": "الإشعارات",
+    "comingSoon": "متوفر قريبًا",
+    "error": "حدث خطأ ما. أعد المحاولة.",
+    "saved": "تم الحفظ",
+    "optional": "اختياري"
+  },
+  "nav": {
+    "groups": {
+      "pilotage": "القيادة",
+      "commercial": "المبيعات",
+      "organisation": "التنظيم",
+      "automatisation": "الأتمتة",
+      "administration": "الإدارة"
+    },
+    "maJournee": "يومي",
+    "fiches": "Fiches Contact",
+    "pipeline": "مسار المبيعات",
+    "clients": "العملاء",
+    "commandes": "الطلبيات المؤكدة",
+    "devis": "Devis والفواتير",
+    "agendaEquipe": "أجندة الفريق",
+    "agendaClient": "أجندة العميل",
+    "taches": "مهامي",
+    "sequences": "تسلسلات WhatsApp",
+    "modeles": "نماذج الرسائل",
+    "journalEnvoi": "سجل الإرسال",
+    "flux": "التدفقات والهوامش",
+    "reglements": "المدفوعات والمقبوضات",
+    "rayonnement": "الانتشار",
+    "commissions": "العمولات والأجور",
+    "equipe": "Conseillers ونقاط البيع",
+    "configuration": "إعدادات الورشة",
+    "plus": "المزيد"
+  },
+  "login": {
+    "title": "تسجيل الدخول",
+    "subtitle": "الأداة الداخلية لفريق Conseillers في Cuisina",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "submit": "دخول",
+    "invalid": "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+  },
+  "placeholders": {
+    "commandes": {
+      "title": "الطلبيات المؤكدة",
+      "description": "متابعة الطلبيات الموقّعة: من التأكيد إلى التركيب، مع تقدّم الورشة ومحطات التسليم."
+    },
+    "devis": {
+      "title": "Devis والفواتير",
+      "description": "إنشاء وترقيم Devis (عروض الأسعار) والفواتير مباشرة من Fiche Contact، مع تتبّع النسخ."
+    },
+    "agendaEquipe": {
+      "title": "أجندة الفريق",
+      "description": "الرزنامة المشتركة للـ Showroom: المواعيد وعمليات Métré (أخذ القياسات) والتسليم والتركيب لكامل الفريق."
+    },
+    "agendaClient": {
+      "title": "أجندة العميل",
+      "description": "خط حياة كل مشروع عميل: كل موعد وكل مرحلة، على شريط زمني واحد."
+    },
+    "sequences": {
+      "title": "تسلسلات WhatsApp",
+      "description": "متابعات WhatsApp تلقائية تنطلق حسب مراحل مسار المبيعات. تبقى القيادة بيدك، والأداة لا تنسى أبدًا."
+    },
+    "modeles": {
+      "title": "نماذج الرسائل",
+      "description": "رسائلك الجاهزة، المعتمدة من الإدارة، جاهزة للإرسال بلمسة واحدة."
+    },
+    "journalEnvoi": {
+      "title": "سجل الإرسال",
+      "description": "كل رسالة أُرسلت: إلى من، ومتى، وما الذي نتج عنها."
+    },
+    "flux": {
+      "title": "التدفقات والهوامش",
+      "description": "الهوامش حسب المشروع وحسب الـ Showroom وحسب الـ Conseiller — القراءة المالية لمسار المبيعات."
+    },
+    "reglements": {
+      "title": "المدفوعات والمقبوضات",
+      "description": "التسبقات والاستحقاقات والمقبوضات، مطابقة تلقائيًا مع الطلبيات."
+    },
+    "rayonnement": {
+      "title": "الانتشار",
+      "description": "من أين يأتي عملاؤك: المصادر والمدن والحملات. خريطة شهرة Cuisina."
+    },
+    "commissions": {
+      "title": "العمولات والأجور",
+      "description": "احتساب عمولات الـ Conseillers بشكل شفاف وقابل للتحقق، استنادًا إلى رقم المعاملات الموقّع."
+    },
+    "configuration": {
+      "title": "إعدادات الورشة",
+      "description": "إعدادات الأداة: المراحل والأهداف وكتالوجات التشطيبات والأجهزة الكهرومنزلية."
+    }
+  },
+  "stages": {
+    "nouveau_contact": "اتصال جديد",
+    "contacte": "تم التواصل",
+    "rdv_showroom": "موعد Showroom",
+    "metre_releve": "Métré منجز",
+    "conception_devis": "إعداد Devis",
+    "devis_envoye": "Devis مُرسل",
+    "negociation": "تفاوض",
+    "signe": "موقّع",
+    "perdu": "خسارة"
+  },
+  "motifsPerte": {
+    "title": "سبب الخسارة",
+    "prompt": "لماذا خُسرت هذه الـ fiche؟",
+    "prix": "السعر",
+    "delai": "الآجال",
+    "concurrent": "منافس",
+    "projet_annule": "مشروع ملغى",
+    "injoignable": "تعذّر الاتصال به",
+    "autre": "أخرى"
+  },
+  "origines": {
+    "question": "كيف تعرّفتم على CUISINA؟",
+    "bouche_a_oreille": "توصية شفهية",
+    "site_web": "الموقع الإلكتروني",
+    "foire": "معرض",
+    "publicite": "إشهار",
+    "details": {
+      "prospection": "تنقيب تجاري",
+      "architecte_decorateur": "مهندس معماري / مصمم ديكور",
+      "promoteur_entrepreneur": "باعث عقاري / مقاول",
+      "ami": "صديق",
+      "spot_publicitaire": "ومضة إشهارية",
+      "magasine": "مجلة",
+      "affiche_enseigne": "معلّقة / لافتة",
+      "catalogue": "كتالوج"
+    }
+  },
+  "fiches": {
+    "title": "Fiches Contact",
+    "new": "Fiche جديدة",
+    "formCode": "FO-COM-02 · IE 09 JUIL 2018",
+    "reference": "المرجع",
+    "searchPlaceholder": "الاسم، الهاتف، المرجع…",
+    "empty": "لا توجد أي fiche هنا. أنشئ واحدة من الـ Showroom في دقيقتين.",
+    "emptyFiltered": "لا توجد fiche مطابقة لهذه المرشّحات.",
+    "count": "{count, plural, zero {لا توجد أي fiche} one {fiche واحدة} two {fiche اثنتان} few {# fiches} many {# fiche} other {# fiche}}",
+    "createdOn": "أُنشئت في {date}",
+    "completude": "نسبة الاكتمال",
+    "draftSaved": "حُفظت المسودة على الساعة {time}",
+    "columns": {
+      "client": "العميل",
+      "ville": "المدينة",
+      "projet": "المشروع",
+      "budget": "الميزانية",
+      "stage": "المرحلة",
+      "conseiller": "Conseiller",
+      "date": "التاريخ"
+    },
+    "wizard": {
+      "title": "Fiche Contact",
+      "step1": "الهوية",
+      "step2": "مصدر الاتصال",
+      "step3": "المشروع",
+      "step4": "متطلبات العميل",
+      "stepOf": "الخطوة {current} من {total}",
+      "clientNom": "اسم العميل",
+      "telDomicile": "هاتف المنزل",
+      "telMobile": "الهاتف الجوال",
+      "email": "البريد الإلكتروني",
+      "adresse": "العنوان الكامل",
+      "codePostal": "الترقيم البريدي",
+      "ville": "المدينة",
+      "conseiller": "Conseiller",
+      "pointDeVente": "نقطة البيع",
+      "dateContact": "تاريخ الاتصال",
+      "nbCuisines": "مطابخ",
+      "nbDressings": "غرف ملابس",
+      "nbSdb": "حمّامات",
+      "etatChantier": "حالة الأشغال",
+      "en_cours": "جارية",
+      "fini": "منتهية",
+      "budget": "الميزانية التقديرية (DT)",
+      "dateLivraison": "تاريخ التسليم المرغوب",
+      "observations": "ملاحظات",
+      "create": "إنشاء الـ fiche",
+      "creating": "جارٍ الإنشاء…",
+      "photoLabel": "صورة الـ fiche الورقية",
+      "photoHint": "التقط صورة لاستمارة FO-COM-02، وستبقى مرفقة بالـ fiche.",
+      "errors": {
+        "nom_requis": "اسم العميل مطلوب.",
+        "mobile_requis": "الهاتف الجوال مطلوب.",
+        "telephone_invalide": "رقم غير صالح — أرقام فقط.",
+        "email_invalide": "البريد الإلكتروني غير صالح.",
+        "origine_requise": "اختر مصدر الاتصال.",
+        "origine_detail_requise": "حدّد المصدر بدقة."
+      }
+    },
+    "exigences": {
+      "finitionFacade": "تشطيب الواجهة",
+      "bois_massif": "خشب صلب",
+      "laque": "لاكيه",
+      "pvc": "PVC",
+      "typeDetail": "تفاصيل التشطيب",
+      "caisson": "الهيكل الداخلي",
+      "decorFacade": "ديكور الواجهة",
+      "electromenager": "الأجهزة الكهرومنزلية",
+      "evier": "حوض الغسيل",
+      "bac1": "جُرن واحد",
+      "bac2": "جُرنان",
+      "plaque": "سطح الطهي",
+      "feux4": "4 عيون",
+      "feux5": "5 عيون",
+      "coin": "زاوية",
+      "hotte": "شفّاط",
+      "hotte60": "60 صم",
+      "hotte90": "90 صم",
+      "centrale": "مركزي",
+      "four": "فرن",
+      "fourTaille": "حجم الفرن",
+      "microOnde": "ميكروويف",
+      "frigo": "ثلاجة",
+      "frigoAutres": "ثلاجة — أخرى",
+      "laveVaisselle": "غسّالة أواني",
+      "encastrable": "مدمج",
+      "non_encastrable": "غير مدمج",
+      "electroAutres": "أجهزة كهرومنزلية أخرى",
+      "detailsCuisine": "تفاصيل أخرى للمطبخ",
+      "avecRetour": "مع امتداد جانبي",
+      "ilotCentral": "جزيرة وسطية",
+      "autresDetails": "تفاصيل أخرى",
+      "oui": "نعم",
+      "non": "لا"
+    },
+    "detail": {
+      "suivi": "المتابعة التجارية",
+      "datePrevueDevis": "الموعد المتوقع لتسليم الـ Devis",
+      "dateEffectiveDevis": "تم تسليم الـ Devis في",
+      "relances": "المتابعات",
+      "addRelance": "تسجيل متابعة",
+      "noRelance": "لم تُسجَّل أي متابعة بعد. الأولى كثيرًا ما تفتح باب التوقيع.",
+      "contactN": "الاتصال رقم {n}",
+      "canal": "القناة",
+      "resultat": "النتيجة",
+      "commentaire": "تعليق",
+      "historique": "السجل",
+      "stageChanged": "{from} → {to}",
+      "exportPdf": "تصدير PDF",
+      "photoOriginal": "الـ fiche الورقية الأصلية",
+      "signature": "توقيع العميل",
+      "scheduleNext": "برمجة المتابعة القادمة؟",
+      "nextRelanceAt": "المتابعة مقررة في {date}"
+    }
+  },
+  "canaux": {
+    "whatsapp": "WhatsApp",
+    "appel": "مكالمة",
+    "sms": "SMS",
+    "email": "بريد إلكتروني",
+    "visite": "زيارة"
+  },
+  "relanceResultats": {
+    "joint": "تم الاتصال بالعميل",
+    "message_laisse": "تُركت رسالة",
+    "injoignable": "تعذّر الاتصال",
+    "rdv_pris": "تم أخذ موعد",
+    "a_rappeler": "يُعاد الاتصال به"
+  },
+  "pipeline": {
+    "title": "مسار المبيعات",
+    "emptyColumn": "لا شيء في هذه المرحلة. ستنساب الـ fiches إليها من تلقاء نفسها.",
+    "perduLane": "Fiches خاسرة",
+    "relanceOverdue": "متابعة متأخرة",
+    "filters": {
+      "conseiller": "Conseiller",
+      "pointDeVente": "نقطة البيع",
+      "origine": "المصدر",
+      "periode": "الفترة",
+      "typeProjet": "نوع المشروع",
+      "all": "الكل",
+      "reset": "إعادة التعيين",
+      "cuisine": "مطبخ",
+      "dressing": "غرفة ملابس",
+      "sdb": "حمّام"
+    },
+    "projectChips": {
+      "cuisine": "مطبخ ×{n}",
+      "dressing": "غرفة ملابس ×{n}",
+      "sdb": "حمّام ×{n}"
+    }
+  },
+  "dashboard": {
+    "title": "يومي",
+    "greeting": "مرحبًا، {name}",
+    "date": "{date}",
+    "kpi": {
+      "rdvJour": "مواعيد اليوم",
+      "nextRdv": "الموعد القادم على {time}",
+      "noRdv": "يوم بلا مواعيد",
+      "relancesRetard": "متابعات متأخرة",
+      "relancesOk": "كل شيء محدَّث",
+      "devisAttente": "Devis في الانتظار",
+      "devisTotal": "{total} على المحك",
+      "caSigne": "رقم المعاملات الموقّع هذا الشهر",
+      "objectif": "الهدف: {total}",
+      "nouvellesFiches": "Fiches جديدة (7 أيام)",
+      "tauxConversion": "نسبة التحويل",
+      "conversionWindow": "آخر 90 يومًا",
+      "projetDuMois": "مشروع الشهر",
+      "origineContacts": "مصادر الاتصالات"
+    },
+    "insights": {
+      "title": "إشارات",
+      "empty": "لا شيء يستدعي الانتباه. مسار المبيعات يتنفّس بارتياح.",
+      "noRelance7d": "{client} — لا متابعة منذ {days} يومًا",
+      "devisNoResponse": "{client} — أُرسل الـ Devis منذ {days} يومًا دون رد",
+      "metreStuck": "{client} — في مرحلة Métré منذ {days} يومًا",
+      "ficheIncomplete": "{client} — fiche مكتملة بنسبة {score}% منذ {days} يومًا"
+    },
+    "agenda": {
+      "title": "أجندة اليوم",
+      "empty": "لا مواعيد اليوم. يوم مناسب للمتابعات."
+    },
+    "tasks": {
+      "title": "مهامي",
+      "empty": "لا مهام لهذا اليوم."
+    },
+    "classement": {
+      "title": "ترتيب الـ Conseillers",
+      "caSigne": "رقم المعاملات الموقّع",
+      "conversion": "التحويل",
+      "delaiDevis": "متوسط أجل الـ Devis",
+      "days": "{n} يوم"
+    }
+  },
+  "taches": {
+    "title": "مهامي",
+    "new": "مهمة جديدة",
+    "titre": "العنوان",
+    "description": "الوصف",
+    "echeance": "الأجل",
+    "priorite": "الأولوية",
+    "basse": "منخفضة",
+    "normale": "عادية",
+    "haute": "عالية",
+    "fiche": "الـ fiche المرتبطة",
+    "assigneA": "مسندة إلى",
+    "groups": {
+      "retard": "متأخرة",
+      "aujourdhui": "اليوم",
+      "semaine": "هذا الأسبوع",
+      "plusTard": "لاحقًا"
+    },
+    "empty": "لا مهام في الأفق. أنشئ واحدة أو استمتع بالهدوء.",
+    "auto": "تلقائي",
+    "relanceTaskTitle": "متابعة {client}",
+    "done": "تم",
+    "markDone": "وضع علامة \"تم\""
+  },
+  "clients": {
+    "title": "العملاء",
+    "new": "عميل جديد",
+    "empty": "لا عملاء بعد. الأول يصل مع أول توقيع.",
+    "searchPlaceholder": "الاسم، الهاتف، المدينة…",
+    "caCumule": "رقم المعاملات التراكمي",
+    "nbProjets": "{count, plural, zero {لا مشاريع} one {مشروع واحد} two {مشروعان} few {# مشاريع} many {# مشروعًا} other {# مشروع}}",
+    "identity": "الهوية",
+    "linkedFiches": "الـ fiches المرتبطة",
+    "projectHistory": "سجل المشاريع",
+    "tierComing": "مستوى العميل — Essentiel · Signature · Prestige — متاح في المرحلة الثانية، مع نظام التنقيط.",
+    "nom": "الاسم",
+    "tel": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "adresse": "العنوان",
+    "ville": "المدينة"
+  },
+  "equipe": {
+    "title": "Conseillers ونقاط البيع",
+    "conseillers": "{count, plural, zero {لا يوجد أي Conseiller} one {Conseiller واحد} two {Conseiller اثنان} few {# Conseillers} many {# Conseiller} other {# Conseiller}}",
+    "fichesActives": "Fiches نشطة",
+    "caMois": "رقم معاملات الشهر",
+    "objectifMensuel": "الهدف الشهري",
+    "editObjectif": "تعديل الهدف",
+    "roles": {
+      "conseiller": "Conseiller",
+      "chef_showroom": "رئيس الـ Showroom",
+      "direction": "الإدارة",
+      "admin": "مسؤول النظام"
+    }
+  },
+  "rdv": {
+    "types": {
+      "showroom": "Showroom",
+      "metre": "Métré",
+      "livraison": "تسليم",
+      "pose": "تركيب",
+      "interne": "داخلي"
+    }
+  }
+}
