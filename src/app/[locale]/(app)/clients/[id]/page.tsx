@@ -32,7 +32,7 @@ export default async function ClientDetailPage({
     <div>
       <PageHeader title={client.nom} subtitle={client.ville ?? undefined} />
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle>{t("clients.identity")}</CardTitle>

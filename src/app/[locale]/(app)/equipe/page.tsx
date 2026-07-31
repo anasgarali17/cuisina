@@ -57,7 +57,7 @@ export default async function EquipePage() {
   return (
     <>
       <PageHeader title={t("equipe.title")} />
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {pdvs.map((pdv) => {
           const team = profiles.filter((p) => p.point_de_vente_id === pdv.id);
           return (

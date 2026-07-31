@@ -323,7 +323,12 @@ export function KanbanBoard({
         ))}
       </div>
 
-      <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
+      <DndContext
+        id="pipeline-dnd"
+        sensors={sensors}
+        onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
+      >
         <div className="kanban-scroll -mx-4 flex gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0">
           {STAGES.map((stage) => (
             <KanbanColumn
@@ -534,7 +539,7 @@ function PerduLane({
           {t("pipeline.emptyColumn")}
         </p>
       ) : (
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {fiches.map((f) => (
             <DraggableFicheCard
               key={f.id}

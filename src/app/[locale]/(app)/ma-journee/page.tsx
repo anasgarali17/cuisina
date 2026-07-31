@@ -287,7 +287,7 @@ export default async function MaJourneePage({
         </p>
       </div>
 
-      <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label={t("dashboard.kpi.rdvJour")}
           value={rdvToday.length}
@@ -296,7 +296,9 @@ export default async function MaJourneePage({
               ? t("dashboard.kpi.nextRdv", {
                   time: formatDate(nextRdv.debut, "HH:mm", locale),
                 })
-              : t("dashboard.kpi.noRdv")
+              : rdvToday.length === 0
+                ? t("dashboard.kpi.noRdv")
+                : undefined
           }
         />
         <KpiCard
@@ -354,7 +356,7 @@ export default async function MaJourneePage({
         </Card>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <InsightsPanel insights={insights.slice(0, 8)} />
         <AgendaJour rdv={rdvToday} />
         <TasksWidget taches={widgetTaches} ficheNames={ficheNames} />
