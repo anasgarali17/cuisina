@@ -24,7 +24,8 @@
     "comingSoon": "Bientôt disponible",
     "error": "Une erreur est survenue. Réessayez.",
     "saved": "Enregistré",
-    "optional": "optionnel"
+    "optional": "optionnel",
+    "demoReadOnly": "Mode démo — les écritures sont désactivées jusqu’à la connexion à Supabase."
   },
   "nav": {
     "groups": {

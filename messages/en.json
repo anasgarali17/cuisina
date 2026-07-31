@@ -24,7 +24,8 @@
     "comingSoon": "Coming soon",
     "error": "Something went wrong. Please try again.",
     "saved": "Saved",
-    "optional": "optional"
+    "optional": "optional",
+    "demoReadOnly": "Demo mode — writes are disabled until Supabase is connected."
   },
   "nav": {
     "groups": {
