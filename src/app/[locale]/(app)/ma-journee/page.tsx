@@ -27,6 +27,11 @@ import {
   type ClassementRow,
 } from "@/components/dashboard/classement";
 import { LatestFiches } from "@/components/dashboard/latest-fiches";
+import {
+  ProductsStrip,
+  type ProductCounts,
+} from "@/components/dashboard/products-strip";
+import { exigencesSchema } from "@/lib/schemas/fiche";
 import { Card, CardTitle } from "@/components/ui/card";
 
 const MID_STAGES = new Set([
@@ -305,6 +310,29 @@ export default async function MaJourneePage({
     .filter((p) => p.role === "conseiller")
     .slice(0, 3)
     .map((p) => initials(p.nom, p.prenom));
+
+  /* — Produits demandés (Exigences des fiches actives) — */
+  const productCounts: ProductCounts = {
+    evier: 0,
+    plaque: 0,
+    hotte: 0,
+    four: 0,
+    micro_onde: 0,
+    frigo: 0,
+    lave_vaisselle: 0,
+  };
+  for (const f of activeFiches) {
+    const parsed = exigencesSchema.safeParse(f.exigences);
+    if (!parsed.success) continue;
+    const e = parsed.data.electromenager;
+    if (e.evier) productCounts.evier += 1;
+    if (e.plaque) productCounts.plaque += 1;
+    if (e.hotte) productCounts.hotte += 1;
+    if (e.four) productCounts.four += 1;
+    if (e.micro_onde) productCounts.micro_onde += 1;
+    if (e.frigo) productCounts.frigo += 1;
+    if (e.lave_vaisselle) productCounts.lave_vaisselle += 1;
+  }
   const latest = [...fiches]
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
     .slice(0, 6);
@@ -415,6 +443,10 @@ export default async function MaJourneePage({
           </CardTitle>
           <OrigineDonut counts={origineCounts} />
         </Card>
+      </div>
+
+      <div className="mt-4">
+        <ProductsStrip counts={productCounts} />
       </div>
 
       {classement && classement.length > 0 && (

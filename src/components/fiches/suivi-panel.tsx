@@ -17,7 +17,7 @@ import type { FicheRelanceRow, FicheRow } from "@/lib/database.types";
 import type { Canal } from "@/lib/domain";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { RelanceDialog } from "@/components/fiches/relance-dialog";
 
@@ -77,22 +77,16 @@ export function SuiviPanel({
             <Label htmlFor="suivi-prevue">
               {t("fiches.detail.datePrevueDevis")}
             </Label>
-            <Input
-              id="suivi-prevue"
-              type="date"
-              value={prevue}
-              onChange={(e) => setPrevue(e.target.value)}
-            />
+            <DatePicker id="suivi-prevue" value={prevue} onChange={setPrevue} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="suivi-effective">
               {t("fiches.detail.dateEffectiveDevis")}
             </Label>
-            <Input
+            <DatePicker
               id="suivi-effective"
-              type="date"
               value={effective}
-              onChange={(e) => setEffective(e.target.value)}
+              onChange={setEffective}
             />
           </div>
           <div className="flex items-center gap-3">

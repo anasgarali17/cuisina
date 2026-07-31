@@ -46,7 +46,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { RadioCard, RadioGroup } from "@/components/ui/radio-group";
 import {
@@ -246,19 +246,18 @@ export function KanbanBoard({
             {t("pipeline.filters.periode")}
           </Label>
           <div className="flex items-center gap-1.5">
-            <Input
+            <DatePicker
               id="flt-from"
-              type="date"
-              className="h-9 w-36 rounded-full text-xs"
               value={filters.from}
-              onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+              onChange={(v) => setFilters({ ...filters, from: v })}
+              className="w-38"
+              triggerClassName="h-9 rounded-full text-xs"
             />
-            <Input
-              aria-label={t("pipeline.filters.periode")}
-              type="date"
-              className="h-9 w-36 rounded-full text-xs"
+            <DatePicker
               value={filters.to}
-              onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+              onChange={(v) => setFilters({ ...filters, to: v })}
+              className="w-38"
+              triggerClassName="h-9 rounded-full text-xs"
             />
           </div>
         </div>

@@ -8,6 +8,11 @@ const DATE_LOCALES: Record<string, DateFnsLocale> = {
   en: enGB,
 };
 
+/** date-fns locale object for the active UI locale (calendar widgets, etc.). */
+export function dateFnsLocale(locale: string): DateFnsLocale {
+  return DATE_LOCALES[locale] ?? fr;
+}
+
 /** Locale-aware date formatting — numerals stay Western Arabic everywhere. */
 export function formatDate(
   date: string | Date,

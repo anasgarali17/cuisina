@@ -353,7 +353,9 @@
       "goals": "Monthly goals",
       "vsPrevWeek": "vs previous week",
       "signeesMois": "Fiches signed this month",
-      "dernieresFiches": "Latest fiches"
+      "dernieresFiches": "Latest fiches",
+      "produits": "Requested products",
+      "produitsHint": "Across active fiches"
     }
   },
   "taches": {

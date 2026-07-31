@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -456,11 +457,10 @@ function CreateTaskDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="task-echeance">{t("taches.echeance")}</Label>
-              <Input
+              <DatePicker
                 id="task-echeance"
-                type="date"
                 value={echeance}
-                onChange={(e) => setEcheance(e.target.value)}
+                onChange={setEcheance}
               />
             </div>
             <div className="space-y-1.5">

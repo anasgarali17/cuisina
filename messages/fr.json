@@ -353,7 +353,9 @@
       "goals": "Objectifs du mois",
       "vsPrevWeek": "vs semaine précédente",
       "signeesMois": "Fiches signées ce mois",
-      "dernieresFiches": "Dernières fiches"
+      "dernieresFiches": "Dernières fiches",
+      "produits": "Produits demandés",
+      "produitsHint": "Sur les fiches actives"
     }
   },
   "taches": {

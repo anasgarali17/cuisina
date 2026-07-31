@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -135,11 +135,10 @@ export function RelanceDialog({
             <Label htmlFor="relance-prochaine">
               {t("fiches.detail.scheduleNext")}
             </Label>
-            <Input
+            <DatePicker
               id="relance-prochaine"
-              type="date"
               value={prochaine}
-              onChange={(e) => setProchaine(e.target.value)}
+              onChange={setProchaine}
             />
           </div>
 

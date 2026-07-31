@@ -19,6 +19,7 @@ import { formatDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -566,12 +567,11 @@ export function FicheWizard({
                 <Label htmlFor="w-livraison">
                   {t("fiches.wizard.dateLivraison")}
                 </Label>
-                <Input
+                <DatePicker
                   id="w-livraison"
-                  type="date"
                   value={projet.date_livraison}
-                  onChange={(e) => {
-                    setProjet({ ...projet, date_livraison: e.target.value });
+                  onChange={(v) => {
+                    setProjet({ ...projet, date_livraison: v });
                     markDirty();
                   }}
                 />

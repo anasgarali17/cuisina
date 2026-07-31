@@ -353,7 +353,9 @@
       "goals": "أهداف الشهر",
       "vsPrevWeek": "مقارنة بالأسبوع الماضي",
       "signeesMois": "Fiches موقّعة هذا الشهر",
-      "dernieresFiches": "أحدث الـ Fiches"
+      "dernieresFiches": "أحدث الـ Fiches",
+      "produits": "المنتجات المطلوبة",
+      "produitsHint": "في الـ Fiches النشطة"
     }
   },
   "taches": {
