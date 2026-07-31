@@ -243,7 +243,7 @@ export function FicheWizard({
   return (
     <div className="mx-auto max-w-3xl">
       {/* — Wizard header: the paper echo — */}
-      <div className="sticky top-16 z-20 -mx-4 bg-background/95 px-4 pt-2 backdrop-blur md:-mx-6 md:px-6">
+      <div className="glass-strong sticky top-16 z-20 -mx-4 px-4 pt-2 md:-mx-6 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
@@ -630,7 +630,7 @@ export function FicheWizard({
           type="button"
           onClick={isLast ? submit : next}
           disabled={submitting}
-          className="min-w-36"
+          className="neo neo-hover min-w-36"
         >
           {isLast
             ? submitting

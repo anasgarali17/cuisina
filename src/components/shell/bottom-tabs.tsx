@@ -19,7 +19,7 @@ export function BottomTabs() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   return (
-    <nav className="no-print fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav className="no-print glass-strong fixed inset-x-0 bottom-0 z-40 flex border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden">
       {MOBILE_TABS.map((tab) => {
         const active =
           pathname === tab.href || pathname.startsWith(`${tab.href}/`);
@@ -31,10 +31,18 @@ export function BottomTabs() {
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
-              active ? "text-rouge" : "text-muted-foreground",
+              active ? "text-foreground" : "text-muted-foreground",
             )}
           >
-            <Icon className="size-5" />
+            <span
+              className={cn(
+                "grid size-9 place-items-center rounded-full",
+                active &&
+                  "bg-noir-atelier text-ivoire dark:bg-ivoire dark:text-noir-atelier",
+              )}
+            >
+              <Icon className="size-5" />
+            </span>
             {t(tab.key)}
           </Link>
         );
@@ -45,7 +53,9 @@ export function BottomTabs() {
             type="button"
             className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground"
           >
-            <Menu className="size-5" />
+            <span className="grid size-9 place-items-center rounded-full">
+              <Menu className="size-5" />
+            </span>
             {t("plus")}
           </button>
         </DialogTrigger>

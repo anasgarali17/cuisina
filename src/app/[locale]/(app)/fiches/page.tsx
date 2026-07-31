@@ -28,7 +28,10 @@ export default async function FichesPage() {
       <PageHeader
         title={t("fiches.title")}
         actions={
-          <Link href="/fiches/nouvelle" className={buttonVariants()}>
+          <Link
+            href="/fiches/nouvelle"
+            className={`${buttonVariants()} neo neo-hover`}
+          >
             <Plus className="size-4" />
             {t("fiches.new")}
           </Link>

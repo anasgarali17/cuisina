@@ -3,6 +3,7 @@ import {
   CircleDashed,
   FileClock,
   Ruler,
+  Sparkles,
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
@@ -33,6 +34,12 @@ export async function InsightsPanel({ insights }: { insights: Insight[] }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="grid size-6 shrink-0 place-items-center rounded-full bg-secondary"
+          >
+            <Sparkles className="size-3.5" />
+          </span>
           {t("dashboard.insights.title")}
           {insights.length > 0 && (
             <span aria-hidden className="size-2 rounded-full bg-ambre" />

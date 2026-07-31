@@ -1,4 +1,5 @@
 import { getLocale, getTranslations } from "next-intl/server";
+import { CalendarClock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/dates";
@@ -12,7 +13,15 @@ export async function AgendaJour({ rdv }: { rdv: RendezVousRow[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("dashboard.agenda.title")}</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="grid size-6 shrink-0 place-items-center rounded-full bg-secondary"
+          >
+            <CalendarClock className="size-3.5" />
+          </span>
+          {t("dashboard.agenda.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {rdv.length === 0 ? (

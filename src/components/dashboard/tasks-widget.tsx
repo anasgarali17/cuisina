@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { ListChecks } from "lucide-react";
 import { toggleTache } from "@/lib/actions/tache-actions";
 import { formatDate, startOfToday } from "@/lib/dates";
 import type { TacheRow } from "@/lib/database.types";
@@ -49,7 +50,15 @@ export function TasksWidget({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("dashboard.tasks.title")}</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <span
+            aria-hidden
+            className="grid size-6 shrink-0 place-items-center rounded-full bg-secondary"
+          >
+            <ListChecks className="size-3.5" />
+          </span>
+          {t("dashboard.tasks.title")}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {taches.length === 0 ? (

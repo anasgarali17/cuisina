@@ -50,20 +50,25 @@ export function TopBar({ profile }: { profile: ProfileRow }) {
   }
 
   return (
-    <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/85 px-4 backdrop-blur md:px-6">
-      <label className="relative hidden max-w-md flex-1 items-center sm:flex">
+    <header className="no-print glass-strong sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border px-4 md:px-6">
+      <label className="relative hidden h-10 max-w-md flex-1 items-center rounded-full border border-transparent bg-secondary/70 focus-within:ring-2 focus-within:ring-ring sm:flex">
         <Search className="pointer-events-none absolute start-3.5 size-4 text-muted-foreground" />
         <input
           type="search"
           placeholder={t("search")}
-          className="h-10 w-full rounded-full border border-border bg-card ps-10 pe-4 text-sm placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
+          className="h-full w-full rounded-full bg-transparent ps-10 pe-4 text-sm placeholder:text-muted-foreground focus-visible:outline-none"
         />
       </label>
 
       <div className="ms-auto flex items-center gap-1.5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="iconSm" aria-label={t("language")}>
+            <Button
+              variant="ghost"
+              size="iconSm"
+              aria-label={t("language")}
+              className="size-11 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
+            >
               <Globe />
             </Button>
           </DropdownMenuTrigger>
@@ -86,12 +91,18 @@ export function TopBar({ profile }: { profile: ProfileRow }) {
           size="iconSm"
           aria-label={t("darkMode")}
           onClick={toggleTheme}
+          className="size-11 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
         >
           <Sun className="dark:hidden" />
           <Moon className="hidden dark:block" />
         </Button>
 
-        <Button variant="ghost" size="iconSm" aria-label={t("notifications")}>
+        <Button
+          variant="ghost"
+          size="iconSm"
+          aria-label={t("notifications")}
+          className="size-11 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
+        >
           <Bell />
         </Button>
 

@@ -1,8 +1,9 @@
 import { getTranslations } from "next-intl/server";
 
 /**
- * The visual anchor of the dashboard — a dark tile with a warm oak glow,
- * echoing the reference design's featured project card.
+ * The visual anchor of the dashboard — the featured tile in solid Cuisina
+ * red with kitchen line-art and a brutalist offset shadow, echoing the
+ * reference design's hero card.
  */
 export async function ProjetDuMois({
   fiche,
@@ -13,34 +14,45 @@ export async function ProjetDuMois({
 
   return (
     <div
-      className="card-lift relative flex min-h-52 flex-col justify-end overflow-hidden rounded-3xl bg-noir-atelier p-6 text-ivoire"
+      className="neo neo-hover relative flex min-h-52 flex-col justify-end overflow-hidden rounded-3xl bg-rouge p-6 text-white"
       style={{
-        backgroundImage: [
-          "radial-gradient(120% 90% at 85% 0%, rgba(185,139,84,0.35) 0%, rgba(185,139,84,0.08) 45%, transparent 70%)",
-          "radial-gradient(80% 60% at 15% 100%, rgba(193,18,31,0.18) 0%, transparent 60%)",
-          "repeating-linear-gradient(100deg, rgba(251,248,243,0.025) 0px, rgba(251,248,243,0.025) 1px, transparent 1px, transparent 9px)",
-        ].join(", "),
+        backgroundImage:
+          "radial-gradient(90% 90% at 80% 10%, rgba(255,255,255,0.18), transparent 60%)",
       }}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-chene">
-        {t("dashboard.kpi.projetDuMois")}
-      </p>
-      {fiche ? (
-        <>
-          <p className="mt-2 font-display text-2xl font-semibold leading-tight">
-            {fiche.client}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/projet-cuisine.svg"
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute -end-3 -top-4 h-28 opacity-45"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-noir-atelier/35 to-transparent"
+      />
+      <div className="relative">
+        <span className="inline-block rounded-full bg-noir-atelier/40 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-white">
+          {t("dashboard.kpi.projetDuMois")}
+        </span>
+        {fiche ? (
+          <>
+            <p className="mt-2 font-display text-2xl font-semibold leading-tight">
+              {fiche.client}
+            </p>
+            {fiche.ville && (
+              <p className="text-sm text-white/70">{fiche.ville}</p>
+            )}
+            <p className="kpi-number mt-3 text-3xl text-white">
+              {fiche.montant}
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 max-w-[24ch] text-sm text-white/70">
+            {t("dashboard.insights.empty")}
           </p>
-          {fiche.ville && (
-            <p className="text-sm text-ivoire/60">{fiche.ville}</p>
-          )}
-          <p className="kpi-number mt-3 text-3xl">{fiche.montant}</p>
-          <span className="mt-2 block h-[3px] w-12 rounded-full bg-rouge" />
-        </>
-      ) : (
-        <p className="mt-2 max-w-[24ch] text-sm text-ivoire/60">
-          {t("dashboard.insights.empty")}
-        </p>
-      )}
+        )}
+      </div>
     </div>
   );
 }

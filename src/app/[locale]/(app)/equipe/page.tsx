@@ -84,7 +84,7 @@ export default async function EquipePage() {
                   <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
                     {t("equipe.fichesActives")}
                   </dt>
-                  <dd className="font-mono text-lg font-medium">
+                  <dd className="kpi-number text-2xl">
                     {activesByPdv.get(pdv.id) ?? 0}
                   </dd>
                 </div>
@@ -92,7 +92,7 @@ export default async function EquipePage() {
                   <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
                     {t("equipe.caMois")}
                   </dt>
-                  <dd className="font-mono text-lg font-medium">
+                  <dd className="kpi-number text-2xl">
                     {formatDT(caByPdv.get(pdv.id) ?? 0)}
                   </dd>
                 </div>

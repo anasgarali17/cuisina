@@ -169,10 +169,10 @@ export function FichesList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("fiches.searchPlaceholder")}
-            className="ps-11"
+            className="rounded-full ps-11"
           />
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="rounded-full border border-border px-3 py-1 font-mono text-xs text-muted-foreground">
           {t("fiches.count", { count: filtered.length })}
         </p>
       </div>
@@ -188,9 +188,9 @@ export function FichesList({
           {/* Desktop table */}
           <Card className="hidden overflow-hidden md:block">
             <table className="w-full text-sm">
-              <thead>
+              <thead className="bg-secondary/50">
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="px-4 py-3 text-start font-medium">
+                  <th className="rounded-s-lg px-4 py-3 text-start font-medium">
                     {t("fiches.columns.client")}
                   </th>
                   <th className="px-4 py-3 text-start font-medium">
@@ -208,7 +208,7 @@ export function FichesList({
                   <th className="px-4 py-3 text-start font-medium">
                     {t("fiches.columns.conseiller")}
                   </th>
-                  <th className="px-4 py-3 text-start font-medium">
+                  <th className="rounded-e-lg px-4 py-3 text-start font-medium">
                     {t("fiches.columns.date")}
                   </th>
                 </tr>

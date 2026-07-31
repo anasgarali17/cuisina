@@ -62,7 +62,7 @@ export function ClientsList({ clients }: { clients: ClientRow[] }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("clients.searchPlaceholder")}
-          className="ps-11"
+          className="rounded-full ps-11"
         />
       </div>
 

@@ -52,7 +52,11 @@ export default function LoginPage() {
       <div className="flex items-center justify-center bg-background p-6 lg:rounded-s-[2.5rem]">
         <form onSubmit={onSubmit} className="w-full max-w-sm">
           <h1 className="font-display text-3xl font-bold">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
+          <span
+            aria-hidden="true"
+            className="mt-2 block h-[3px] w-12 rounded bg-rouge"
+          />
+          <p className="mt-2 text-sm text-muted-foreground">{t("subtitle")}</p>
 
           <div className="mt-8 space-y-4">
             <div className="space-y-1.5">
@@ -84,7 +88,11 @@ export default function LoginPage() {
             </p>
           )}
 
-          <Button type="submit" className="mt-6 w-full" disabled={pending}>
+          <Button
+            type="submit"
+            className="neo neo-hover mt-6 w-full"
+            disabled={pending}
+          >
             {t("submit")}
           </Button>
         </form>

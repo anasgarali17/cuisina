@@ -249,14 +249,14 @@ export function KanbanBoard({
             <Input
               id="flt-from"
               type="date"
-              className="h-9 w-36 text-xs"
+              className="h-9 w-36 rounded-full text-xs"
               value={filters.from}
               onChange={(e) => setFilters({ ...filters, from: e.target.value })}
             />
             <Input
               aria-label={t("pipeline.filters.periode")}
               type="date"
-              className="h-9 w-36 text-xs"
+              className="h-9 w-36 rounded-full text-xs"
               value={filters.to}
               onChange={(e) => setFilters({ ...filters, to: e.target.value })}
             />
@@ -283,7 +283,7 @@ export function KanbanBoard({
               className={cn(
                 "h-9 rounded-full border px-3 text-xs font-medium transition-colors",
                 filters.types[key]
-                  ? "border-rouge bg-rouge/5 text-rouge"
+                  ? "neo bg-rouge/5 text-rouge"
                   : "border-border bg-card text-muted-foreground hover:border-chene/60",
               )}
             >
@@ -294,6 +294,7 @@ export function KanbanBoard({
         <Button
           variant="ghost"
           size="sm"
+          className="neo rounded-full bg-card"
           onClick={() => setFilters(EMPTY_FILTERS)}
         >
           {t("pipeline.filters.reset")}
@@ -428,7 +429,7 @@ function FilterSelect({
     <div className="space-y-1">
       <span className="block text-xs text-muted-foreground">{label}</span>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="h-9 w-44 text-xs" aria-label={label}>
+        <SelectTrigger className="h-9 w-44 rounded-full text-xs" aria-label={label}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -471,7 +472,7 @@ function KanbanColumn({
       <div className="mb-2 flex items-baseline justify-between gap-2 px-1">
         <h2 className="text-sm font-semibold">
           {t(`stages.${stage}`)}{" "}
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="rounded-full bg-secondary px-2 font-mono text-xs text-muted-foreground">
             {fiches.length}
           </span>
         </h2>
@@ -532,7 +533,9 @@ function PerduLane({
     >
       <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
         {t("pipeline.perduLane")}{" "}
-        <span className="font-mono text-xs">{fiches.length}</span>
+        <span className="rounded-full bg-secondary px-2 font-mono text-xs">
+          {fiches.length}
+        </span>
       </h2>
       {fiches.length === 0 ? (
         <p className="text-xs italic text-muted-foreground">
@@ -623,7 +626,7 @@ function FicheCard({
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
               aria-label={t("fiches.columns.stage")}
-              className="rounded-full p-1 text-muted-foreground hover:bg-secondary"
+              className="rounded-full p-1 text-muted-foreground hover:bg-secondary hover:ring-1 hover:ring-border"
             >
               <MoreHorizontal className="size-4" />
             </button>

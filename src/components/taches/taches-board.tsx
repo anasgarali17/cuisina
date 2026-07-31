@@ -148,7 +148,7 @@ export function TachesBoard({
       <PageHeader
         title={t("taches.title")}
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button className="neo neo-hover" onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" />
             {t("taches.new")}
           </Button>
@@ -189,11 +189,11 @@ export function TachesBoard({
                     key === "retard" && "text-ambre",
                   )}
                 >
-                  {key === "retard" && <TriangleAlert className="size-4" />}
-                  {t(`taches.groups.${key}`)}
-                  <span className="font-mono text-xs text-muted-foreground">
+                  <span className="rounded-full bg-secondary px-2 font-mono text-xs text-muted-foreground">
                     {list.length}
                   </span>
+                  {key === "retard" && <TriangleAlert className="size-4" />}
+                  {t(`taches.groups.${key}`)}
                 </h2>
                 <ul className="space-y-2">
                   {list.map((task) => (

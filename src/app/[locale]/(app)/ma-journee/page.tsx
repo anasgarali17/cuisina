@@ -11,8 +11,8 @@ import {
 import { daysBetween, formatDate, isToday, startOfToday } from "@/lib/dates";
 import { formatDT } from "@/lib/utils";
 import { KpiCard } from "@/components/dashboard/kpi-cards";
-import { ProgressRing } from "@/components/dashboard/progress-ring";
-import { Sparkline } from "@/components/dashboard/sparkline";
+import { SemiGauge } from "@/components/dashboard/semi-gauge";
+import { PillBar } from "@/components/dashboard/pill-bar";
 import { OrigineDonut } from "@/components/dashboard/origine-donut";
 import { ProjetDuMois } from "@/components/dashboard/projet-du-mois";
 import {
@@ -114,18 +114,30 @@ export default async function MaJourneePage({
           .reduce((sum, p) => sum + p.objectif_mensuel, 0);
   const caPercent = objectif > 0 ? Math.round((caSigne / objectif) * 100) : 0;
 
-  /* — Sparkline : nouvelles fiches 7 jours — */
-  const fiches7d: { day: string; count: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
+  /* — Pill bar : nouvelles fiches 14 jours — */
+  const fiches14d: { day: string; count: number; highlight?: boolean }[] = [];
+  for (let i = 13; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0, 10);
-    fiches7d.push({
+    fiches14d.push({
       day: formatDate(d, "EEE", locale),
       count: fiches.filter((f) => f.created_at.slice(0, 10) === key).length,
+      ...(i === 0 ? { highlight: true } : {}),
     });
   }
-  const fiches7dTotal = fiches7d.reduce((sum, p) => sum + p.count, 0);
+  const fiches7dTotal = fiches14d
+    .slice(7)
+    .reduce((sum, p) => sum + p.count, 0);
+  const fichesPrev7Total = fiches14d
+    .slice(0, 7)
+    .reduce((sum, p) => sum + p.count, 0);
+  const fichesDelta =
+    fichesPrev7Total > 0
+      ? Math.round(
+          ((fiches7dTotal - fichesPrev7Total) / fichesPrev7Total) * 100,
+        )
+      : 0;
 
   /* — Conversion 90 jours — */
   const recent = fiches.filter((f) => new Date(f.created_at) >= since90);
@@ -318,24 +330,31 @@ export default async function MaJourneePage({
           valueClassName="text-3xl md:text-4xl"
           hint={t("dashboard.kpi.objectif", { total: formatDT(objectif) })}
           trailing={
-            <ProgressRing
+            <SemiGauge
               percent={caPercent}
               label={t("dashboard.kpi.caSigne")}
             />
           }
         />
 
-        <Card className="p-6">
-          <CardTitle className="p-0">
-            {t("dashboard.kpi.nouvellesFiches")}
-          </CardTitle>
-          <p className="kpi-number mt-2 text-4xl">{fiches7dTotal}</p>
-          <Sparkline data={fiches7d} />
-        </Card>
+        <KpiCard
+          label={t("dashboard.kpi.nouvellesFiches")}
+          value={fiches7dTotal}
+          valueClassName="text-4xl"
+          delta={fichesDelta}
+        >
+          <PillBar data={fiches14d} />
+        </KpiCard>
         <KpiCard
           label={t("dashboard.kpi.tauxConversion")}
           value={`${conversion}%`}
           hint={t("dashboard.kpi.conversionWindow")}
+          trailing={
+            <SemiGauge
+              percent={conversion}
+              label={t("dashboard.kpi.tauxConversion")}
+            />
+          }
         />
         <ProjetDuMois
           fiche={
