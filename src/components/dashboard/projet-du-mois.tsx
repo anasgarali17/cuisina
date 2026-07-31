@@ -14,7 +14,7 @@ export async function ProjetDuMois({
 
   return (
     <div
-      className="neo neo-hover relative flex min-h-52 flex-col justify-end overflow-hidden rounded-3xl bg-rouge p-6 text-white"
+      className="neo neo-hover relative flex h-full min-h-52 flex-col justify-end overflow-hidden rounded-3xl bg-rouge p-6 text-white"
       style={{
         backgroundImage:
           "radial-gradient(90% 90% at 80% 10%, rgba(255,255,255,0.18), transparent 60%)",
@@ -25,7 +25,7 @@ export async function ProjetDuMois({
         src="/projet-cuisine.svg"
         alt=""
         aria-hidden
-        className="pointer-events-none absolute -end-3 -top-4 h-28 opacity-45"
+        className="pointer-events-none absolute inset-x-4 top-6 mx-auto max-h-[55%] w-auto opacity-50"
       />
       <div
         aria-hidden

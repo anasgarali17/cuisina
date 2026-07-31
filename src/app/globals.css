@@ -16,7 +16,8 @@
   --ambre: #d08a2c;
 
   /* — Semantic — */
-  --background: var(--ivoire);
+  /* Canvas: the reference's warm greige, a step greyer than ivoire. */
+  --background: #f0eee8;
   --foreground: var(--ardoise);
   --card: var(--blanc-plan);
   --card-foreground: var(--ardoise);
@@ -240,6 +241,26 @@ body {
   .rail-btn:hover {
     transform: none;
   }
+}
+
+/* — Hatched texture (reference's striped bars) — */
+.hatch {
+  background-image: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--ardoise) 18%, transparent) 0 2px,
+    transparent 2px 6px
+  );
+}
+
+/* — Sun burst (reference's promo decoration), in Cuisina red — */
+.burst {
+  background: repeating-conic-gradient(
+    color-mix(in srgb, var(--rouge-cuisina) 85%, transparent) 0deg 6deg,
+    transparent 6deg 18deg
+  );
+  border-radius: 9999px;
+  -webkit-mask-image: radial-gradient(circle, black 30%, transparent 70%);
+  mask-image: radial-gradient(circle, black 30%, transparent 70%);
 }
 
 /* Scrollbar — quiet */

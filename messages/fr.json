@@ -346,6 +346,14 @@
       "conversion": "Conversion",
       "delaiDevis": "Délai devis moyen",
       "days": "{n} j"
+    },
+    "hub": {
+      "promoTitle": "Fiches & Pipeline",
+      "promoText": "La FO-COM-02 en 2 minutes : score de complétude, relances automatiques, PDF conforme au papier.",
+      "goals": "Objectifs du mois",
+      "vsPrevWeek": "vs semaine précédente",
+      "signeesMois": "Fiches signées ce mois",
+      "dernieresFiches": "Dernières fiches"
     }
   },
   "taches": {

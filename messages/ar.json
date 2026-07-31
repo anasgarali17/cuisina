@@ -346,6 +346,14 @@
       "conversion": "التحويل",
       "delaiDevis": "متوسط أجل الـ Devis",
       "days": "{n} يوم"
+    },
+    "hub": {
+      "promoTitle": "Fiches & Pipeline",
+      "promoText": "استمارة FO-COM-02 في دقيقتين: نسبة الاكتمال، متابعات تلقائية، وملف PDF مطابق للورق.",
+      "goals": "أهداف الشهر",
+      "vsPrevWeek": "مقارنة بالأسبوع الماضي",
+      "signeesMois": "Fiches موقّعة هذا الشهر",
+      "dernieresFiches": "أحدث الـ Fiches"
     }
   },
   "taches": {

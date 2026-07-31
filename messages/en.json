@@ -346,6 +346,14 @@
       "conversion": "Conversion",
       "delaiDevis": "Avg. Devis turnaround",
       "days": "{n} d"
+    },
+    "hub": {
+      "promoTitle": "Fiches & Pipeline",
+      "promoText": "The FO-COM-02 in 2 minutes: completion score, automatic follow-ups, paper-matching PDF.",
+      "goals": "Monthly goals",
+      "vsPrevWeek": "vs previous week",
+      "signeesMois": "Fiches signed this month",
+      "dernieresFiches": "Latest fiches"
     }
   },
   "taches": {

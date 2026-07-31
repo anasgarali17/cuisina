@@ -9,10 +9,11 @@ import {
   listTaches,
 } from "@/lib/data/queries";
 import { daysBetween, formatDate, isToday, startOfToday } from "@/lib/dates";
-import { formatDT } from "@/lib/utils";
+import { formatDT, initials } from "@/lib/utils";
 import { KpiCard } from "@/components/dashboard/kpi-cards";
-import { SemiGauge } from "@/components/dashboard/semi-gauge";
-import { PillBar } from "@/components/dashboard/pill-bar";
+import { MainGoals } from "@/components/dashboard/main-goals";
+import { PromoCard } from "@/components/dashboard/promo-card";
+import { PillBar, type PillPoint } from "@/components/dashboard/pill-bar";
 import { OrigineDonut } from "@/components/dashboard/origine-donut";
 import { ProjetDuMois } from "@/components/dashboard/projet-du-mois";
 import {
@@ -21,7 +22,11 @@ import {
 } from "@/components/dashboard/insights-panel";
 import { AgendaJour } from "@/components/dashboard/agenda-jour";
 import { TasksWidget } from "@/components/dashboard/tasks-widget";
-import { Classement, type ClassementRow } from "@/components/dashboard/classement";
+import {
+  Classement,
+  type ClassementRow,
+} from "@/components/dashboard/classement";
+import { LatestFiches } from "@/components/dashboard/latest-fiches";
 import { Card, CardTitle } from "@/components/ui/card";
 
 const MID_STAGES = new Set([
@@ -65,13 +70,13 @@ export default async function MaJourneePage({
   const today = startOfToday();
   const ficheById = new Map(fiches.map((f) => [f.id, f]));
 
-  /* — KPI 1 : RDV du jour — */
+  /* — RDV du jour — */
   const rdvToday = rdv
     .filter((r) => isToday(r.debut))
     .sort((a, b) => a.debut.localeCompare(b.debut));
   const nextRdv = rdvToday.find((r) => new Date(r.debut) > now);
 
-  /* — KPI 2 : relances en retard — */
+  /* — Relances en retard — */
   const relancesRetard = taches.filter(
     (task) =>
       task.statut === "a_faire" &&
@@ -81,14 +86,14 @@ export default async function MaJourneePage({
       new Date(task.echeance) < today,
   ).length;
 
-  /* — KPI 3 : devis en attente — */
+  /* — Devis en attente — */
   const devisAttente = fiches.filter((f) => f.stage === "devis_envoye");
   const devisTotal = devisAttente.reduce(
     (sum, f) => sum + (f.budget_estimatif ?? 0),
     0,
   );
 
-  /* — KPI 4 : CA signé ce mois vs objectif — */
+  /* — CA signé ce mois vs objectif — */
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const signedThisMonth = new Set(
     historique
@@ -114,29 +119,26 @@ export default async function MaJourneePage({
           .reduce((sum, p) => sum + p.objectif_mensuel, 0);
   const caPercent = objectif > 0 ? Math.round((caSigne / objectif) * 100) : 0;
 
-  /* — Pill bar : nouvelles fiches 14 jours — */
-  const fiches14d: { day: string; count: number; highlight?: boolean }[] = [];
+  /* — Nouvelles fiches, 14 jours (capsule chart) — */
+  const fiches14d: PillPoint[] = [];
   for (let i = 13; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const key = d.toISOString().slice(0, 10);
     fiches14d.push({
-      day: formatDate(d, "EEE", locale),
+      day: formatDate(d, "EEE d MMM", locale),
+      label: formatDate(d, "d", locale),
       count: fiches.filter((f) => f.created_at.slice(0, 10) === key).length,
       ...(i === 0 ? { highlight: true } : {}),
     });
   }
-  const fiches7dTotal = fiches14d
-    .slice(7)
-    .reduce((sum, p) => sum + p.count, 0);
+  const fiches7dTotal = fiches14d.slice(7).reduce((sum, p) => sum + p.count, 0);
   const fichesPrev7Total = fiches14d
     .slice(0, 7)
     .reduce((sum, p) => sum + p.count, 0);
   const fichesDelta =
     fichesPrev7Total > 0
-      ? Math.round(
-          ((fiches7dTotal - fichesPrev7Total) / fichesPrev7Total) * 100,
-        )
+      ? Math.round(((fiches7dTotal - fichesPrev7Total) / fichesPrev7Total) * 100)
       : 0;
 
   /* — Conversion 90 jours — */
@@ -158,8 +160,13 @@ export default async function MaJourneePage({
     signedFiches[0] ??
     null;
 
-  /* — Origine donut — */
-  const origineCounts = { bouche_a_oreille: 0, site_web: 0, foire: 0, publicite: 0 };
+  /* — Origine — */
+  const origineCounts = {
+    bouche_a_oreille: 0,
+    site_web: 0,
+    foire: 0,
+    publicite: 0,
+  };
   for (const f of fiches) {
     if (f.origine) origineCounts[f.origine] += 1;
   }
@@ -168,7 +175,8 @@ export default async function MaJourneePage({
   const lastRelanceByFiche = new Map<string, string>();
   for (const r of relances) {
     const prev = lastRelanceByFiche.get(r.fiche_id);
-    if (!prev || r.created_at > prev) lastRelanceByFiche.set(r.fiche_id, r.created_at);
+    if (!prev || r.created_at > prev)
+      lastRelanceByFiche.set(r.fiche_id, r.created_at);
   }
   const insights: Insight[] = [];
   for (const f of activeFiches) {
@@ -224,7 +232,7 @@ export default async function MaJourneePage({
   }
   insights.sort((a, b) => b.days - a.days);
 
-  /* — Tâches du widget : aujourd'hui + en retard — */
+  /* — Tâches (aujourd'hui + retard) — */
   const widgetTaches = taches.filter(
     (task) =>
       task.statut === "a_faire" &&
@@ -260,7 +268,10 @@ export default async function MaJourneePage({
                 withDevis.reduce(
                   (sum, f) =>
                     sum +
-                    daysBetween(f.created_at, f.date_effective_remise_devis as string),
+                    daysBetween(
+                      f.created_at,
+                      f.date_effective_remise_devis as string,
+                    ),
                   0,
                 ) / withDevis.length,
               )
@@ -284,9 +295,19 @@ export default async function MaJourneePage({
       .sort((a, b) => b.ca - a.ca);
   }
 
+  const conseillerNames = Object.fromEntries(
+    profiles.map((p) => [p.id, `${p.prenom} ${p.nom}`]),
+  );
   const ficheNames = Object.fromEntries(
     fiches.map((f) => [f.id, f.client_nom] as const),
   );
+  const promoInitials = profiles
+    .filter((p) => p.role === "conseiller")
+    .slice(0, 3)
+    .map((p) => initials(p.nom, p.prenom));
+  const latest = [...fiches]
+    .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
+    .slice(0, 6);
 
   return (
     <div>
@@ -299,74 +320,95 @@ export default async function MaJourneePage({
         </p>
       </div>
 
-      <div className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label={t("dashboard.kpi.rdvJour")}
-          value={rdvToday.length}
-          hint={
-            nextRdv
-              ? t("dashboard.kpi.nextRdv", {
-                  time: formatDate(nextRdv.debut, "HH:mm", locale),
-                })
-              : rdvToday.length === 0
-                ? t("dashboard.kpi.noRdv")
-                : undefined
-          }
-        />
-        <KpiCard
-          label={t("dashboard.kpi.relancesRetard")}
-          value={relancesRetard}
-          accent={relancesRetard > 0 ? "ambre" : undefined}
-          hint={relancesRetard === 0 ? t("dashboard.kpi.relancesOk") : undefined}
-        />
-        <KpiCard
-          label={t("dashboard.kpi.devisAttente")}
-          value={devisAttente.length}
-          hint={t("dashboard.kpi.devisTotal", { total: formatDT(devisTotal) })}
-        />
-        <KpiCard
-          label={t("dashboard.kpi.caSigne")}
-          value={<span className="text-rouge">{formatDT(caSigne)}</span>}
-          valueClassName="text-3xl md:text-4xl"
-          hint={t("dashboard.kpi.objectif", { total: formatDT(objectif) })}
-          trailing={
-            <SemiGauge
-              percent={caPercent}
-              label={t("dashboard.kpi.caSigne")}
+      {/* — Reference row: goals / hero / promo + waveform — */}
+      <div className="stagger grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="space-y-4 xl:col-span-3">
+          <MainGoals
+            caSigne={formatDT(caSigne)}
+            caPercent={caPercent}
+            objectifHint={t("dashboard.kpi.objectif", {
+              total: formatDT(objectif),
+            })}
+            devisCount={devisAttente.length}
+            devisTotal={formatDT(devisTotal)}
+            conversion={conversion}
+          />
+          <div className="grid grid-cols-2 gap-4 xl:grid-cols-1">
+            <KpiCard
+              label={t("dashboard.kpi.rdvJour")}
+              value={rdvToday.length}
+              hint={
+                nextRdv
+                  ? t("dashboard.kpi.nextRdv", {
+                      time: formatDate(nextRdv.debut, "HH:mm", locale),
+                    })
+                  : rdvToday.length === 0
+                    ? t("dashboard.kpi.noRdv")
+                    : undefined
+              }
             />
-          }
-        />
+            <KpiCard
+              label={t("dashboard.kpi.relancesRetard")}
+              value={relancesRetard}
+              accent={relancesRetard > 0 ? "ambre" : undefined}
+              hint={
+                relancesRetard === 0
+                  ? t("dashboard.kpi.relancesOk")
+                  : undefined
+              }
+            />
+          </div>
+        </div>
 
-        <KpiCard
-          label={t("dashboard.kpi.nouvellesFiches")}
-          value={fiches7dTotal}
-          valueClassName="text-4xl"
-          delta={fichesDelta}
-        >
-          <PillBar data={fiches14d} />
-        </KpiCard>
-        <KpiCard
-          label={t("dashboard.kpi.tauxConversion")}
-          value={`${conversion}%`}
-          hint={t("dashboard.kpi.conversionWindow")}
-          trailing={
-            <SemiGauge
-              percent={conversion}
-              label={t("dashboard.kpi.tauxConversion")}
-            />
-          }
-        />
-        <ProjetDuMois
-          fiche={
-            projetDuMois
-              ? {
-                  client: projetDuMois.client_nom,
-                  ville: projetDuMois.ville,
-                  montant: formatDT(projetDuMois.budget_estimatif),
-                }
-              : null
-          }
-        />
+        <div className="xl:col-span-3">
+          <ProjetDuMois
+            fiche={
+              projetDuMois
+                ? {
+                    client: projetDuMois.client_nom,
+                    ville: projetDuMois.ville,
+                    montant: formatDT(projetDuMois.budget_estimatif),
+                  }
+                : null
+            }
+          />
+        </div>
+
+        <div className="space-y-4 xl:col-span-6">
+          <PromoCard initials={promoInitials} />
+          <Card className="p-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <div>
+                <CardTitle className="p-0">
+                  {t("dashboard.kpi.nouvellesFiches")}
+                </CardTitle>
+                <p className="kpi-number mt-1 text-4xl">{fiches7dTotal}</p>
+              </div>
+              <div className="ms-auto flex items-center gap-2">
+                <span
+                  className={
+                    fichesDelta >= 0
+                      ? "rounded-full bg-vert-plan/10 px-2 py-0.5 font-mono text-[11px] text-vert-plan"
+                      : "rounded-full bg-rouge/10 px-2 py-0.5 font-mono text-[11px] text-rouge"
+                  }
+                >
+                  {fichesDelta >= 0 ? "▲" : "▼"} {Math.abs(fichesDelta)}%
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t("dashboard.hub.vsPrevWeek")}
+                </span>
+              </div>
+            </div>
+            <PillBar data={fiches14d} />
+          </Card>
+        </div>
+      </div>
+
+      {/* — Operational row — */}
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
+        <InsightsPanel insights={insights.slice(0, 8)} />
+        <AgendaJour rdv={rdvToday} />
+        <TasksWidget taches={widgetTaches} ficheNames={ficheNames} />
         <Card className="p-6">
           <CardTitle className="p-0">
             {t("dashboard.kpi.origineContacts")}
@@ -375,17 +417,19 @@ export default async function MaJourneePage({
         </Card>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <InsightsPanel insights={insights.slice(0, 8)} />
-        <AgendaJour rdv={rdvToday} />
-        <TasksWidget taches={widgetTaches} ficheNames={ficheNames} />
-      </div>
-
       {classement && classement.length > 0 && (
         <div className="mt-4">
           <Classement rows={classement} />
         </div>
       )}
+
+      <div className="mt-6">
+        <LatestFiches
+          fiches={latest}
+          conseillers={conseillerNames}
+          total={fiches.length}
+        />
+      </div>
     </div>
   );
 }
