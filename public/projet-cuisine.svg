@@ -1,0 +1,40 @@
+<svg viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- stylized kitchen line-art: hood, upper cabinets, worktop, island -->
+  <g stroke="#FBF8F3" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.92">
+    <!-- upper cabinets -->
+    <rect x="24" y="24" width="52" height="40" rx="4"/>
+    <rect x="84" y="24" width="52" height="40" rx="4"/>
+    <line x1="50" y1="44" x2="50" y2="52"/>
+    <line x1="110" y1="44" x2="110" y2="52"/>
+    <!-- hood -->
+    <path d="M196 20 h56 v18 l14 22 h-84 l14 -22 z"/>
+    <line x1="224" y1="20" x2="224" y2="12"/>
+    <!-- back wall shelf -->
+    <line x1="148" y1="52" x2="180" y2="52"/>
+    <circle cx="154" cy="44" r="4"/>
+    <circle cx="168" cy="44" r="4"/>
+    <!-- worktop + base cabinets -->
+    <line x1="16" y1="92" x2="304" y2="92"/>
+    <rect x="24" y="100" width="70" height="52" rx="4"/>
+    <rect x="102" y="100" width="70" height="52" rx="4"/>
+    <line x1="59" y1="118" x2="59" y2="130"/>
+    <line x1="137" y1="118" x2="137" y2="130"/>
+    <!-- cooktop under hood -->
+    <rect x="196" y="100" width="84" height="52" rx="4"/>
+    <circle cx="222" cy="96" r="0.5"/>
+    <line x1="208" y1="112" x2="232" y2="112"/>
+    <line x1="246" y1="112" x2="268" y2="112"/>
+    <!-- island -->
+    <rect x="96" y="164" width="150" height="24" rx="8" fill="#B98B54" fill-opacity="0.35"/>
+    <line x1="86" y1="164" x2="256" y2="164"/>
+    <!-- stools -->
+    <line x1="118" y1="188" x2="118" y2="196"/>
+    <line x1="170" y1="188" x2="170" y2="196"/>
+    <line x1="222" y1="188" x2="222" y2="196"/>
+  </g>
+  <!-- oak glow accents -->
+  <g fill="#B98B54" opacity="0.85">
+    <rect x="148" y="58" width="32" height="6" rx="3"/>
+    <circle cx="290" cy="36" r="5"/>
+  </g>
+</svg>

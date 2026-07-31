@@ -167,6 +167,81 @@ body {
   outline-offset: 2px;
 }
 
+/* — Liquid glass surfaces — */
+.glass {
+  background: color-mix(in srgb, var(--card) 62%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+.glass-strong {
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+}
+
+/* — Brutalist accents: hard offset shadow, chunky border — */
+.neo {
+  border: 1.5px solid var(--noir-atelier);
+  box-shadow: 3px 3px 0 0 var(--noir-atelier);
+}
+.neo-hover {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.neo-hover:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 0 var(--noir-atelier);
+}
+.neo-hover:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 0 var(--noir-atelier);
+}
+.dark .neo,
+.dark .neo-hover:hover,
+.dark .neo-hover:active {
+  border-color: var(--chene);
+  box-shadow: 3px 3px 0 0 var(--chene);
+}
+[dir="rtl"] .neo {
+  box-shadow: -3px 3px 0 0 var(--noir-atelier);
+}
+
+/* — Icon rail buttons (reference: circular, black active dot) — */
+.rail-btn {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  color: color-mix(in srgb, var(--foreground) 55%, transparent);
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.rail-btn:hover {
+  background: var(--secondary);
+  color: var(--foreground);
+  transform: scale(1.06);
+}
+.rail-btn[aria-current="page"],
+.rail-btn[data-active="true"] {
+  background: var(--noir-atelier);
+  color: var(--ivoire);
+}
+.dark .rail-btn[aria-current="page"],
+.dark .rail-btn[data-active="true"] {
+  background: var(--ivoire);
+  color: var(--noir-atelier);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rail-btn,
+  .neo-hover {
+    transition: none;
+  }
+  .rail-btn:hover {
+    transform: none;
+  }
+}
+
 /* Scrollbar — quiet */
 * {
   scrollbar-width: thin;
