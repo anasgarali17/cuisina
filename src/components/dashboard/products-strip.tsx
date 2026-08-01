@@ -1,14 +1,4 @@
 import { getTranslations } from "next-intl/server";
-import {
-  CookingPot,
-  Droplets,
-  Fan,
-  Flame,
-  Microwave,
-  Refrigerator,
-  WashingMachine,
-  type LucideIcon,
-} from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 
 export interface ProductCounts {
@@ -21,23 +11,20 @@ export interface ProductCounts {
   lave_vaisselle: number;
 }
 
-const PRODUCTS: {
-  key: keyof ProductCounts;
-  labelKey: string;
-  icon: LucideIcon;
-}[] = [
-  { key: "evier", labelKey: "evier", icon: Droplets },
-  { key: "plaque", labelKey: "plaque", icon: Flame },
-  { key: "hotte", labelKey: "hotte", icon: Fan },
-  { key: "four", labelKey: "four", icon: CookingPot },
-  { key: "micro_onde", labelKey: "microOnde", icon: Microwave },
-  { key: "frigo", labelKey: "frigo", icon: Refrigerator },
-  { key: "lave_vaisselle", labelKey: "laveVaisselle", icon: WashingMachine },
+const PRODUCTS: { key: keyof ProductCounts; labelKey: string }[] = [
+  { key: "frigo", labelKey: "frigo" },
+  { key: "four", labelKey: "four" },
+  { key: "plaque", labelKey: "plaque" },
+  { key: "hotte", labelKey: "hotte" },
+  { key: "evier", labelKey: "evier" },
+  { key: "micro_onde", labelKey: "microOnde" },
+  { key: "lave_vaisselle", labelKey: "laveVaisselle" },
 ];
 
 /**
- * Kitchen product tiles with live demand: how many active fiches have each
- * appliance ticked in their Exigences (feeds showroom stock conversations).
+ * Isometric 3D product tiles (generated brand renders in /public/products)
+ * with live demand: how many active fiches ticked each appliance in their
+ * Exigences.
  */
 export async function ProductsStrip({ counts }: { counts: ProductCounts }) {
   const t = await getTranslations();
@@ -51,14 +38,18 @@ export async function ProductsStrip({ counts }: { counts: ProductCounts }) {
         </span>
       </div>
       <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-        {PRODUCTS.map(({ key, labelKey, icon: Icon }) => (
+        {PRODUCTS.map(({ key, labelKey }) => (
           <div
             key={key}
-            className="flex min-w-28 shrink-0 flex-col items-center gap-2 rounded-2xl border border-border bg-secondary/40 px-4 py-4 text-center"
+            className="group flex min-w-32 shrink-0 flex-col items-center gap-1 rounded-2xl border border-border/70 bg-card/60 px-4 pb-4 pt-2 text-center transition-transform hover:-translate-y-1 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
-            <span className="grid size-11 place-items-center rounded-full bg-card text-chene shadow-sm">
-              <Icon className="size-5" aria-hidden />
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/products/${key}.svg`}
+              alt=""
+              aria-hidden
+              className="h-20 w-auto transition-transform duration-200 group-hover:scale-110 motion-reduce:transition-none"
+            />
             <span className="text-xs font-medium">
               {t(`fiches.exigences.${labelKey}`)}
             </span>
