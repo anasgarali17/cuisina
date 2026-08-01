@@ -5,6 +5,7 @@ import { getFicheDetail, listPdvs, listProfiles } from "@/lib/data/queries";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/dates";
+import { DetailTabs } from "@/components/fiches/detail-tabs";
 import { FichePaper } from "@/components/fiches/fiche-paper";
 import { SuiviPanel } from "@/components/fiches/suivi-panel";
 import { ExportPdfButton } from "@/components/fiches/export-pdf-button";
@@ -76,37 +77,44 @@ export default async function FicheDetailPage({
           </Card>
         )}
 
-        <SuiviPanel fiche={fiche} relances={relances} />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("fiches.detail.historique")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {historique.length === 0 ? (
-              <p className="text-sm text-muted-foreground">—</p>
-            ) : (
-              <ol className="space-y-3">
-                {historique.map((h) => (
-                  <li key={h.id} className="flex items-start gap-3 text-sm">
-                    <span className="mt-1.5 size-2 shrink-0 rounded-full bg-chene" />
-                    <div>
-                      <p className="font-medium">
-                        {h.stage_from ? t(`stages.${h.stage_from}`) : "—"}
-                        {" → "}
-                        {t(`stages.${h.stage_to}`)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(h.created_at, "d MMM yyyy · HH:mm", locale)}{" "}
-                        · {names[h.user_id] ?? "—"}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </CardContent>
-        </Card>
+        <DetailTabs
+          suivi={<SuiviPanel fiche={fiche} relances={relances} />}
+          historique={
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("fiches.detail.historique")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {historique.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">—</p>
+                ) : (
+                  <ol className="space-y-3">
+                    {historique.map((h) => (
+                      <li key={h.id} className="flex items-start gap-3 text-sm">
+                        <span className="mt-1.5 size-2 shrink-0 rounded-full bg-chene" />
+                        <div>
+                          <p className="font-medium">
+                            {h.stage_from ? t(`stages.${h.stage_from}`) : "—"}
+                            {" → "}
+                            {t(`stages.${h.stage_to}`)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(
+                              h.created_at,
+                              "d MMM yyyy · HH:mm",
+                              locale,
+                            )}{" "}
+                            · {names[h.user_id] ?? "—"}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </CardContent>
+            </Card>
+          }
+        />
       </div>
     </div>
   );
