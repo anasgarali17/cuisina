@@ -35,6 +35,7 @@ import {
 interface Identite {
   client_nom: string;
   tel_domicile: string;
+  tel_bureau: string;
   tel_mobile: string;
   email: string;
   adresse_complete: string;
@@ -93,6 +94,7 @@ export function FicheWizard({
   const [identite, setIdentite] = useState<Identite>({
     client_nom: "",
     tel_domicile: "",
+    tel_bureau: "",
     tel_mobile: "",
     email: "",
     adresse_complete: "",
@@ -335,6 +337,18 @@ export function FicheWizard({
                 value={identite.tel_domicile}
                 onChange={(e) => {
                   setIdentite({ ...identite, tel_domicile: e.target.value });
+                  markDirty();
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="w-bureau">{t("fiches.wizard.telBureau")}</Label>
+              <Input
+                id="w-bureau"
+                inputMode="tel"
+                value={identite.tel_bureau}
+                onChange={(e) => {
+                  setIdentite({ ...identite, tel_bureau: e.target.value });
                   markDirty();
                 }}
               />

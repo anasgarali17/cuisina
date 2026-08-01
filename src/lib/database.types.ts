@@ -64,6 +64,7 @@ export interface FicheRow {
   client_nom: string;
   tel_domicile: string | null;
   tel_mobile: string | null;
+  tel_bureau: string | null;
   email: string | null;
   adresse_complete: string | null;
   code_postal: string | null;
@@ -82,6 +83,8 @@ export interface FicheRow {
   motif_perte: MotifPerte | null;
   date_prevue_remise_devis: string | null;
   date_effective_remise_devis: string | null;
+  date_prete_devis: string | null;
+  remarques_client: string | null;
   score_completude: number;
   photo_fiche_url: string | null;
   conseiller_id: string;

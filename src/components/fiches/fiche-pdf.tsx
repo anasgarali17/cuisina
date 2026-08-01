@@ -6,318 +6,388 @@ import {
   View,
 } from "@react-pdf/renderer";
 import { exigencesSchema, EXIGENCES_VIDES } from "@/lib/schemas/fiche";
-import type { FicheRow } from "@/lib/database.types";
+import type { FicheRelanceRow, FicheRow } from "@/lib/database.types";
 
 export type PdfStrings = Record<string, string>;
 
+const INK = "#1f1c18";
+
 const s = StyleSheet.create({
-  page: {
-    padding: 36,
-    fontSize: 9,
-    fontFamily: "Helvetica",
-    color: "#3A3733",
-  },
+  page: { padding: 30, fontSize: 9, fontFamily: "Helvetica", color: INK },
   headerRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    borderWidth: 1.5,
+    borderColor: INK,
   },
-  brand: { fontSize: 20, fontFamily: "Helvetica-Bold", letterSpacing: 1 },
-  tagline: { fontSize: 8, fontFamily: "Helvetica-Oblique", color: "#B98B54" },
-  formCode: {
-    borderWidth: 1,
-    borderColor: "#3A3733",
+  headerCell: { justifyContent: "center", alignItems: "center", padding: 6 },
+  logoBadge: {
+    backgroundColor: "#C1121F",
+    color: "#ffffff",
+    borderRadius: 10,
     paddingVertical: 3,
-    paddingHorizontal: 6,
-    fontSize: 7,
-    fontFamily: "Courier",
-  },
-  rule: { height: 3, backgroundColor: "#C1121F", marginTop: 8 },
-  reference: {
-    marginTop: 8,
-    fontSize: 11,
-    fontFamily: "Courier-Bold",
-    color: "#C1121F",
-  },
-  sectionTitle: {
-    marginTop: 14,
-    marginBottom: 6,
-    paddingBottom: 2,
-    borderBottomWidth: 1.5,
-    borderBottomColor: "#3A3733",
-    fontSize: 9,
+    paddingHorizontal: 10,
+    fontSize: 12,
     fontFamily: "Helvetica-Bold",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
-  grid: { flexDirection: "row", flexWrap: "wrap" },
-  fieldHalf: { width: "50%", marginBottom: 5, paddingRight: 8 },
-  fieldQuarter: { width: "25%", marginBottom: 5, paddingRight: 8 },
-  label: { fontSize: 6.5, color: "#8A8377", textTransform: "uppercase" },
-  value: { fontSize: 9, marginTop: 1 },
-  mono: { fontFamily: "Courier" },
-  checkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 3,
-    marginRight: 12,
+  tagline: { fontSize: 5, color: "#C1121F", marginTop: 2, letterSpacing: 1 },
+  title: {
+    fontSize: 19,
+    fontFamily: "Times-Bold",
+    letterSpacing: 2,
   },
-  checkbox: {
-    width: 8,
-    height: 8,
-    borderWidth: 1,
-    borderColor: "#3A3733",
-    marginRight: 4,
+  code: { fontFamily: "Times-Bold", fontSize: 10, textAlign: "center" },
+  label: {
+    fontFamily: "Helvetica-BoldOblique",
+    textDecoration: "underline",
+    fontSize: 9,
+  },
+  row: { flexDirection: "row", alignItems: "flex-end", marginTop: 4 },
+  dotted: {
+    flexGrow: 1,
+    borderBottomWidth: 0.8,
+    borderBottomColor: INK,
+    borderBottomStyle: "dotted",
+    paddingHorizontal: 3,
+    minHeight: 11,
+    fontSize: 9,
+  },
+  cols2: { flexDirection: "row", gap: 24 },
+  col: { flex: 1 },
+  box: { borderWidth: 1, borderColor: INK, padding: 6, marginTop: 8 },
+  band: {
+    backgroundColor: "#e8e2d8",
+    borderBottomWidth: 1,
+    borderBottomColor: INK,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+  },
+  sq: {
+    width: 7,
+    height: 7,
+    borderWidth: 0.9,
+    borderColor: INK,
+    marginRight: 3,
     alignItems: "center",
     justifyContent: "center",
   },
-  checkboxInner: { width: 4, height: 4, backgroundColor: "#3A3733" },
-  columns: { flexDirection: "row", marginTop: 4 },
-  column: { flex: 1, paddingRight: 10 },
-  columnTitle: {
-    fontSize: 7.5,
-    fontFamily: "Helvetica-Bold",
-    color: "#B98B54",
-    textTransform: "uppercase",
-    marginBottom: 4,
-  },
-  signatureBlock: {
-    marginTop: 30,
-    alignSelf: "flex-end",
-    width: 160,
-  },
-  signatureLine: { borderTopWidth: 1, borderTopColor: "#3A3733" },
-  signatureLabel: { fontSize: 6.5, color: "#8A8377", marginTop: 2 },
-  footer: {
-    position: "absolute",
-    bottom: 20,
-    left: 36,
-    right: 36,
-    fontSize: 6.5,
-    color: "#8A8377",
+  sqIn: { width: 3.4, height: 3.4, backgroundColor: INK },
+  opt: { flexDirection: "row", alignItems: "center", marginRight: 8 },
+  exGrid: { flexDirection: "row" },
+  exCol: { padding: 5, borderRightWidth: 0.8, borderRightColor: INK },
+  slogan: {
+    marginTop: 12,
     textAlign: "center",
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8.5,
+    textDecoration: "underline",
   },
 });
 
-function Check({ checked, label }: { checked: boolean; label: string }) {
+function Sq({ on }: { on?: boolean }) {
+  return <View style={s.sq}>{on ? <View style={s.sqIn} /> : null}</View>;
+}
+
+function Opt({ on, label }: { on?: boolean; label: string }) {
   return (
-    <View style={s.checkRow}>
-      <View style={s.checkbox}>{checked ? <View style={s.checkboxInner} /> : null}</View>
+    <View style={s.opt}>
+      <Sq on={on} />
       <Text>{label}</Text>
     </View>
   );
 }
 
-function Field({
+function Line({
   label,
   value,
   mono,
-  quarter,
 }: {
   label: string;
-  value: string;
+  value?: string | null;
   mono?: boolean;
-  quarter?: boolean;
 }) {
   return (
-    <View style={quarter ? s.fieldQuarter : s.fieldHalf}>
-      <Text style={s.label}>{label}</Text>
-      <Text style={mono ? [s.value, s.mono] : s.value}>{value || "—"}</Text>
+    <View style={s.row}>
+      <Text style={s.label}>{label} :</Text>
+      <Text style={mono ? [s.dotted, { fontFamily: "Courier" }] : s.dotted}>
+        {value ?? ""}
+      </Text>
     </View>
   );
 }
 
-/**
- * A4 document mirroring the paper FO-COM-02 — red header rule, boxed form
- * code, checkbox squares, three-column exigences, signature line.
- */
+/** A4 facsimile of the paper FO-COM-02 FICHE CONTACT. */
 export function buildFichePdfDoc({
   fiche,
   strings,
   conseillerName,
-  pdvName,
+  relances = [],
+  signatureDate = null,
 }: {
   fiche: FicheRow;
   strings: PdfStrings;
   conseillerName: string;
-  pdvName: string;
+  pdvName?: string;
+  relances?: FicheRelanceRow[];
+  signatureDate?: string | null;
 }) {
+  const g = (key: string) => strings[key] ?? key;
   const parsed = exigencesSchema.safeParse(fiche.exigences);
   const ex = parsed.success ? parsed.data : EXIGENCES_VIDES;
-  const g = (key: string) => strings[key] ?? key;
+  const e = ex.electromenager;
+  const d = ex.details_cuisine;
+  const f = ex.finition_facade;
 
-  const origines = ["bouche_a_oreille", "site_web", "foire", "publicite"];
-  const details: Record<string, string[]> = {
-    bouche_a_oreille: [
-      "prospection",
-      "architecte_decorateur",
-      "promoteur_entrepreneur",
-      "ami",
-    ],
-    publicite: ["spot_publicitaire", "magasine", "affiche_enseigne", "catalogue"],
-  };
+  const fmt = (iso: string | null) =>
+    iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : "";
 
-  const enc = (v: string | null) => (v ? g(v) : "—");
+  const byNumero = new Map<number, FicheRelanceRow>();
+  for (const r of relances) {
+    const prev = byNumero.get(r.numero_contact);
+    if (!prev || r.created_at > prev.created_at) byNumero.set(r.numero_contact, r);
+  }
+  const ORD = ["1er", "2ème", "3ème", "4ème", "5ème"];
 
   return (
     <Document title={fiche.reference}>
       <Page size="A4" style={s.page}>
+        {/* Header */}
         <View style={s.headerRow}>
-          <View>
-            <Text style={s.brand}>CUISINA</Text>
-            <Text style={s.tagline}>{g("tagline")}</Text>
+          <View style={[s.headerCell, { borderRightWidth: 1.5, borderRightColor: INK, width: 120 }]}>
+            <Text style={s.logoBadge}>CUISINA</Text>
+            <Text style={s.tagline}>{g("tagline").toUpperCase()}</Text>
           </View>
-          <Text style={s.formCode}>{g("formCode")}</Text>
-        </View>
-        <View style={s.rule} />
-        <Text style={s.reference}>{fiche.reference}</Text>
-
-        <Text style={s.sectionTitle}>{g("step1")}</Text>
-        <View style={s.grid}>
-          <Field label={g("clientNom")} value={fiche.client_nom} />
-          <Field label={g("telMobile")} value={fiche.tel_mobile ?? ""} mono />
-          <Field label={g("telDomicile")} value={fiche.tel_domicile ?? ""} mono />
-          <Field label={g("email")} value={fiche.email ?? ""} />
-          <Field label={g("adresse")} value={fiche.adresse_complete ?? ""} />
-          <Field
-            label={g("ville")}
-            value={[fiche.code_postal, fiche.ville].filter(Boolean).join(" ")}
-          />
-          <Field label={g("conseiller")} value={conseillerName} />
-          <Field label={g("pointDeVente")} value={pdvName} />
-        </View>
-
-        <Text style={s.sectionTitle}>{g("step2")}</Text>
-        <View style={s.grid}>
-          {origines.map((o) => (
-            <Check key={o} checked={fiche.origine === o} label={g(o)} />
-          ))}
-        </View>
-        {fiche.origine && details[fiche.origine] ? (
-          <View style={[s.grid, { marginLeft: 14, marginTop: 2 }]}>
-            {details[fiche.origine].map((d) => (
-              <Check key={d} checked={fiche.origine_detail === d} label={g(d)} />
-            ))}
+          <View style={[s.headerCell, { flex: 1 }]}>
+            <Text style={s.title}>FICHE CONTACT</Text>
           </View>
-        ) : null}
-
-        <Text style={s.sectionTitle}>{g("step3")}</Text>
-        <View style={s.grid}>
-          <Field label={g("nbCuisines")} value={String(fiche.nb_cuisines)} quarter />
-          <Field label={g("nbDressings")} value={String(fiche.nb_dressings)} quarter />
-          <Field label={g("nbSdb")} value={String(fiche.nb_sdb)} quarter />
-          <Field
-            label={g("etatChantier")}
-            value={fiche.etat_chantier ? g(fiche.etat_chantier) : "—"}
-            quarter
-          />
-          <Field
-            label={g("budget")}
-            value={
-              fiche.budget_estimatif != null
-                ? `${Math.round(fiche.budget_estimatif).toLocaleString("fr-TN")} DT`
-                : "—"
-            }
-            mono
-          />
-          <Field
-            label={g("dateLivraison")}
-            value={fiche.date_livraison_souhaitee ?? ""}
-            mono
-          />
-        </View>
-        {fiche.observations ? (
-          <Field label={g("observations")} value={fiche.observations} />
-        ) : null}
-
-        <Text style={s.sectionTitle}>{g("step4")}</Text>
-        <View style={s.columns}>
-          <View style={s.column}>
-            <Text style={s.columnTitle}>{g("finitionFacade")}</Text>
-            {(["bois_massif", "laque", "pvc"] as const).map((v) => (
-              <Check
-                key={v}
-                checked={ex.finition_facade.type === v}
-                label={g(v)}
-              />
-            ))}
-            {ex.finition_facade.type_detail ? (
-              <Field label="" value={ex.finition_facade.type_detail} />
-            ) : null}
-            <Field label={g("caisson")} value={ex.finition_facade.caisson} />
-            <Field
-              label={g("decorFacade")}
-              value={ex.finition_facade.decor_facade}
-            />
-          </View>
-          <View style={s.column}>
-            <Text style={s.columnTitle}>{g("electromenager")}</Text>
-            <Field
-              label={g("evier")}
-              value={
-                ex.electromenager.evier
-                  ? g(ex.electromenager.evier === "1_bac" ? "bac1" : "bac2")
-                  : "—"
-              }
-            />
-            <Field
-              label={g("plaque")}
-              value={ex.electromenager.plaque ?? "—"}
-            />
-            <Field label={g("hotte")} value={ex.electromenager.hotte ?? "—"} />
-            <Field
-              label={g("four")}
-              value={`${enc(ex.electromenager.four)}${ex.electromenager.four_taille ? ` · ${ex.electromenager.four_taille}` : ""}`}
-            />
-            <Field
-              label={g("microOnde")}
-              value={enc(ex.electromenager.micro_onde)}
-            />
-            <Field label={g("frigo")} value={enc(ex.electromenager.frigo)} />
-            <Field
-              label={g("laveVaisselle")}
-              value={enc(ex.electromenager.lave_vaisselle)}
-            />
-            {ex.electromenager.electro_autres ? (
-              <Field
-                label={g("electroAutres")}
-                value={ex.electromenager.electro_autres}
-              />
-            ) : null}
-          </View>
-          <View style={s.column}>
-            <Text style={s.columnTitle}>{g("detailsCuisine")}</Text>
-            <Field
-              label={g("avecRetour")}
-              value={
-                ex.details_cuisine.avec_retour === null
-                  ? "—"
-                  : g(ex.details_cuisine.avec_retour ? "oui" : "non")
-              }
-            />
-            <Field
-              label={g("ilotCentral")}
-              value={
-                ex.details_cuisine.ilot_central === null
-                  ? "—"
-                  : g(ex.details_cuisine.ilot_central ? "oui" : "non")
-              }
-            />
-            {ex.details_cuisine.autres_details ? (
-              <Field
-                label={g("autresDetails")}
-                value={ex.details_cuisine.autres_details}
-              />
-            ) : null}
+          <View style={[s.headerCell, { borderLeftWidth: 1.5, borderLeftColor: INK, width: 110 }]}>
+            <Text style={s.code}>FO-COM-02{"\n"}IE : 09 ;JUIL 2018</Text>
           </View>
         </View>
 
-        <View style={s.signatureBlock}>
-          <View style={s.signatureLine} />
-          <Text style={s.signatureLabel}>{g("signature")}</Text>
+        {/* ref + le : */}
+        <View style={[s.row, { justifyContent: "space-between" }]}>
+          <Text style={{ fontFamily: "Courier-Bold", color: "#C1121F" }}>
+            {fiche.reference}
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "flex-end", width: 180 }}>
+            <Text style={s.label}>{g("le")} :</Text>
+            <Text style={s.dotted}>{fmt(fiche.created_at.slice(0, 10))}</Text>
+          </View>
         </View>
 
-        <Text style={s.footer}>PROMOCUISINE · ISO 9001 · www.cuisina.tn</Text>
+        {/* Identity */}
+        <View style={[s.cols2, { marginTop: 2 }]}>
+          <View style={s.col}>
+            <Line label={g("client")} value={fiche.client_nom} />
+            <Line label={g("telDomicile")} value={fiche.tel_domicile} mono />
+            <Line label={g("mobile")} value={fiche.tel_mobile} mono />
+            <Line label={g("adresse")} value={fiche.adresse_complete} />
+          </View>
+          <View style={s.col}>
+            <Line label={g("commercial")} value={conseillerName} />
+            <Line label={g("bureau")} value={fiche.tel_bureau} mono />
+            <Line label={g("email")} value={fiche.email} />
+            <View style={s.row}>
+              <Text style={s.label}>{g("cp")} :</Text>
+              <Text style={[s.dotted, { flexGrow: 0, width: 50, fontFamily: "Courier" }]}>
+                {fiche.code_postal ?? ""}
+              </Text>
+              <Text style={[s.label, { marginLeft: 8 }]}>{g("ville")}:</Text>
+              <Text style={s.dotted}>{fiche.ville ?? ""}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Origine */}
+        <View style={s.box}>
+          <Text style={s.label}>{g("question")}</Text>
+          <View style={{ flexDirection: "row", marginTop: 4 }}>
+            <View style={{ width: "34%" }}>
+              <Opt on={fiche.origine === "bouche_a_oreille"} label={`${g("bouche_a_oreille")} :`} />
+              <View style={{ marginLeft: 12, marginTop: 3, gap: 3 }}>
+                <Opt on={fiche.origine_detail === "prospection"} label={g("prospection")} />
+                <Opt on={fiche.origine_detail === "architecte_decorateur"} label={g("architecte_decorateur")} />
+                <Opt on={fiche.origine_detail === "promoteur_entrepreneur"} label={g("promoteur_entrepreneur")} />
+                <Opt on={fiche.origine_detail === "ami"} label={g("ami")} />
+              </View>
+            </View>
+            <View style={{ width: "18%" }}>
+              <Opt on={fiche.origine === "site_web"} label={g("site_web")} />
+            </View>
+            <View style={{ width: "14%" }}>
+              <Opt on={fiche.origine === "foire"} label={g("foire")} />
+            </View>
+            <View style={{ width: "34%" }}>
+              <Opt on={fiche.origine === "publicite"} label={`${g("publicite")} :`} />
+              <View style={{ marginLeft: 12, marginTop: 3, gap: 3 }}>
+                <Opt on={fiche.origine_detail === "spot_publicitaire"} label={g("spot_publicitaire")} />
+                <Opt on={fiche.origine_detail === "magasine"} label={g("magasine")} />
+                <Opt on={fiche.origine_detail === "affiche_enseigne"} label={g("affiche_enseigne")} />
+                <Opt on={fiche.origine_detail === "catalogue"} label={g("catalogue")} />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Projet */}
+        <View style={[s.row, { gap: 14 }]}>
+          <Text style={s.label}>{g("typeProjet")} :</Text>
+          <View style={s.opt}>
+            <Text>
+              {g("nombre")} : {fiche.nb_cuisines || "…"} {g("cuisines")}{" "}
+            </Text>
+            <Sq on={fiche.nb_cuisines > 0} />
+          </View>
+          <View style={s.opt}>
+            <Text>
+              {g("nombre")} : {fiche.nb_dressings || "…"} {g("dressings")}{" "}
+            </Text>
+            <Sq on={fiche.nb_dressings > 0} />
+          </View>
+          <View style={s.opt}>
+            <Text>
+              {g("nombre")} : {fiche.nb_sdb || "…"} {g("sdb")}{" "}
+            </Text>
+            <Sq on={fiche.nb_sdb > 0} />
+          </View>
+        </View>
+        <View style={[s.row, { gap: 30 }]}>
+          <Text style={s.label}>{g("etatChantier")} :</Text>
+          <Opt on={fiche.etat_chantier === "en_cours"} label={g("enCours")} />
+          <Opt on={fiche.etat_chantier === "fini"} label={g("fini")} />
+        </View>
+        <Line
+          label={g("budget")}
+          value={
+            fiche.budget_estimatif != null
+              ? `${Math.round(fiche.budget_estimatif).toLocaleString("fr-TN")} DT`
+              : ""
+          }
+          mono
+        />
+        <Line label={g("dateLivraison")} value={fmt(fiche.date_livraison_souhaitee)} mono />
+        <Line label={g("observations")} value={fiche.observations} />
+
+        {/* Exigences */}
+        <View style={[s.box, { padding: 0 }]}>
+          <View style={s.band}>
+            <Text style={s.label}>{g("exigences")}</Text>
+          </View>
+          <View style={s.exGrid}>
+            <View style={[s.exCol, { width: "27%" }]}>
+              <Text style={[s.label, { marginBottom: 3 }]}>{g("finitionFacade")} :</Text>
+              <View style={{ gap: 3 }}>
+                <Opt on={f.type === "bois_massif"} label={g("bois_massif")} />
+                <Opt on={f.type === "laque"} label={`${g("laque")}${f.type === "laque" && f.type_detail ? ` — ${f.type_detail}` : ""}`} />
+                <Opt on={f.type === "pvc"} label={`${g("pvc")}${f.type === "pvc" && f.type_detail ? ` — ${f.type_detail}` : ""}`} />
+              </View>
+              <Line label={g("caisson")} value={f.caisson} />
+              <Line label={g("decorFacade")} value={f.decor_facade} />
+            </View>
+            <View style={[s.exCol, { width: "44%" }]}>
+              <Text style={[s.label, { marginBottom: 3 }]}>{g("electro")} :</Text>
+              <View style={{ gap: 3 }}>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={s.label}>{g("evier")} : </Text>
+                  <Opt on={e.evier === "1_bac"} label="1 bac" />
+                  <Opt on={e.evier === "2_bac"} label="2 bac" />
+                </View>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={s.label}>{g("plaque")} : </Text>
+                  <Opt on={e.plaque === "4F"} label="4 F" />
+                  <Opt on={e.plaque === "5F"} label="5 F" />
+                  <Opt on={e.plaque === "coin"} label={g("coin")} />
+                </View>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={s.label}>{g("hotte")} : </Text>
+                  <Opt on={e.hotte === "60"} label="60" />
+                  <Opt on={e.hotte === "90"} label="90" />
+                  <Opt on={e.hotte === "coin"} label={g("coin")} />
+                  <Opt on={e.hotte === "centrale"} label={g("centrale")} />
+                </View>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={s.label}>{g("four")} : </Text>
+                  <Opt on={e.four === "encastrable"} label={g("enc")} />
+                  <Opt on={e.four === "non_encastrable"} label={g("nonEnc")} />
+                  <Opt on={e.four_taille === "60"} label="60" />
+                  <Opt on={e.four_taille === "90"} label="90" />
+                </View>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={s.label}>{g("monde")} : </Text>
+                  <Opt on={e.micro_onde === "encastrable"} label={g("enc")} />
+                  <Opt on={e.micro_onde === "non_encastrable"} label={g("nonEnc")} />
+                </View>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={s.label}>{g("frigo")} : </Text>
+                  <Opt on={e.frigo === "encastrable"} label={g("enc")} />
+                  <Opt on={e.frigo === "non_encastrable"} label={g("nonEnc")} />
+                  <Opt on={Boolean(e.frigo_autres)} label={`${g("autres")} : ${e.frigo_autres}`} />
+                </View>
+                <View style={{ flexDirection: "row" }}>
+                  <Text style={s.label}>{g("lv")} : </Text>
+                  <Opt on={e.lave_vaisselle === "encastrable"} label={g("enc")} />
+                  <Opt on={e.lave_vaisselle === "non_encastrable"} label={g("nonEnc")} />
+                </View>
+                <Line label={g("autres")} value={e.electro_autres} />
+              </View>
+            </View>
+            <View style={[s.exCol, { width: "29%", borderRightWidth: 0 }]}>
+              <Text style={[s.label, { marginBottom: 3 }]}>{g("autresDetails")}:</Text>
+              <View style={{ gap: 4 }}>
+                <View style={{ flexDirection: "row" }}>
+                  <Text>{g("avecRetour")} </Text>
+                  <Opt on={d.avec_retour === true} label={g("oui")} />
+                  <Opt on={d.avec_retour === false} label={g("non")} />
+                </View>
+                <View style={{ flexDirection: "row" }}>
+                  <Text>{g("ilotCentral")} </Text>
+                  <Opt on={d.ilot_central === true} label={g("oui")} />
+                  <Opt on={d.ilot_central === false} label={g("non")} />
+                </View>
+                <Line label={g("autres")} value={d.autres_details} />
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Suivi commercial */}
+        <View style={[s.box, { padding: 0 }]}>
+          <View style={s.band}>
+            <Text style={s.label}>{g("suiviTitle")}</Text>
+          </View>
+          <View style={{ padding: 6 }}>
+            <Line label={g("datePrevue")} value={fmt(fiche.date_prevue_remise_devis)} mono />
+            <Line label={g("dateEffective")} value={fmt(fiche.date_effective_remise_devis)} mono />
+            <Line label={g("datePrete")} value={fmt(fiche.date_prete_devis)} mono />
+            <View style={{ marginTop: 6, gap: 7 }}>
+              {ORD.map((ord, i) => {
+                const r = byNumero.get(i + 1);
+                return (
+                  <Line
+                    key={ord}
+                    label={`${ord} ${g("contact")}`}
+                    value={
+                      r
+                        ? `${fmt(r.created_at.slice(0, 10))} — ${g(r.canal)} — ${g(r.resultat)}${r.commentaire ? ` · ${r.commentaire}` : ""}`
+                        : ""
+                    }
+                  />
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        {/* Footer */}
+        <Line
+          label={g("confirmation")}
+          value={signatureDate ? fmt(signatureDate.slice(0, 10)) : ""}
+          mono
+        />
+        <Line label={g("remarques")} value={fiche.remarques_client} />
+
+        <Text style={s.slogan}>{g("slogan")}</Text>
       </Page>
     </Document>
   );

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RelanceDialog } from "@/components/fiches/relance-dialog";
 
 const CANAL_ICONS: Record<Canal, typeof Phone> = {
@@ -43,6 +44,8 @@ export function SuiviPanel({
   const [effective, setEffective] = useState(
     fiche.date_effective_remise_devis ?? "",
   );
+  const [prete, setPrete] = useState(fiche.date_prete_devis ?? "");
+  const [remarques, setRemarques] = useState(fiche.remarques_client ?? "");
   const [message, setMessage] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -54,6 +57,8 @@ export function SuiviPanel({
         fiche_id: fiche.id,
         date_prevue_remise_devis: prevue || null,
         date_effective_remise_devis: effective || null,
+        date_prete_devis: prete || null,
+        remarques_client: remarques,
       });
       setMessage(
         result.ok
@@ -87,6 +92,24 @@ export function SuiviPanel({
               id="suivi-effective"
               value={effective}
               onChange={setEffective}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="suivi-prete">
+              {t("fiches.detail.datePreteDevis")}
+            </Label>
+            <DatePicker id="suivi-prete" value={prete} onChange={setPrete} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="suivi-remarques">
+              {t("fiches.detail.remarquesClient")}
+            </Label>
+            <Textarea
+              id="suivi-remarques"
+              className="min-h-16"
+              value={remarques}
+              onChange={(e) => setRemarques(e.target.value)}
+              maxLength={1000}
             />
           </div>
           <div className="flex items-center gap-3">

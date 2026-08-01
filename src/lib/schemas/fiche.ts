@@ -57,6 +57,7 @@ const telephone = z
 export const ficheIdentiteSchema = z.object({
   client_nom: z.string().min(2, "nom_requis").max(120),
   tel_domicile: telephone.default(""),
+  tel_bureau: telephone.default(""),
   tel_mobile: telephone.min(8, "mobile_requis"),
   email: z.union([z.literal(""), z.string().email("email_invalide")]).default(""),
   adresse_complete: z.string().max(300).default(""),
@@ -128,6 +129,8 @@ export const suiviSchema = z.object({
   fiche_id: z.string().uuid(),
   date_prevue_remise_devis: z.string().date().nullable(),
   date_effective_remise_devis: z.string().date().nullable(),
+  date_prete_devis: z.string().date().nullable().default(null),
+  remarques_client: z.string().max(1000).default(""),
 });
 
 /* — Completion score : % of filled fields across the whole fiche — */

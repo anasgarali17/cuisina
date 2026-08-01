@@ -51,6 +51,7 @@ export async function saveFiche(
   const row = {
     client_nom: draft.identite.client_nom,
     tel_domicile: draft.identite.tel_domicile ?? null,
+    tel_bureau: draft.identite.tel_bureau ?? null,
     tel_mobile: draft.identite.tel_mobile ?? null,
     email: draft.identite.email || null,
     adresse_complete: draft.identite.adresse_complete ?? null,
@@ -201,6 +202,8 @@ export async function updateSuivi(
     .update({
       date_prevue_remise_devis: parsed.data.date_prevue_remise_devis,
       date_effective_remise_devis: parsed.data.date_effective_remise_devis,
+      date_prete_devis: parsed.data.date_prete_devis,
+      remarques_client: parsed.data.remarques_client || null,
     })
     .eq("id", parsed.data.fiche_id);
   if (error) return fail("db");

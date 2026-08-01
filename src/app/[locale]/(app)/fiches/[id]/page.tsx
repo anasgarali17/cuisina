@@ -51,12 +51,20 @@ export default async function FicheDetailPage({
             fiche={fiche}
             conseillerName={names[fiche.conseiller_id] ?? "—"}
             pdvName={pdvName}
+            relances={relances}
+            signatureDate={
+              historique.find((h) => h.stage_to === "signe")?.created_at ?? null
+            }
           />
         </div>
         <FichePaper
           fiche={fiche}
           conseillerName={names[fiche.conseiller_id] ?? "—"}
           pdvName={pdvName}
+          relances={relances}
+          signatureDate={
+            historique.find((h) => h.stage_to === "signe")?.created_at ?? null
+          }
         />
       </div>
 

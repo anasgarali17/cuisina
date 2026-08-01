@@ -159,6 +159,7 @@ export const demoFiches: FicheRow[] = ficheSeeds.map((s, i) => {
     reference: `FC-2026-${String(120 + i).padStart(4, "0")}`,
     client_nom: s.nom,
     tel_domicile: i % 3 === 0 ? `71 ${400 + i} ${300 + i}` : null,
+    tel_bureau: null,
     tel_mobile: `98 ${100 + i * 7} ${200 + i * 3}`,
     email: i % 2 === 0 ? `${s.nom.toLowerCase().replace(/[^a-z]+/g, ".")}@gmail.com` : null,
     adresse_complete: `${10 + i} rue des Jasmins, ${s.ville}`,
@@ -210,6 +211,8 @@ export const demoFiches: FicheRow[] = ficheSeeds.map((s, i) => {
       s.devisPrevu != null ? dateOnly(daysAhead(s.devisPrevu)) : null,
     date_effective_remise_devis:
       s.devisEffectif != null ? dateOnly(daysAhead(s.devisEffectif)) : null,
+    date_prete_devis: null,
+    remarques_client: null,
     score_completude: s.score,
     photo_fiche_url: null,
     conseiller_id: conseiller.id,
