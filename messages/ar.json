@@ -355,7 +355,25 @@
       "signeesMois": "Fiches موقّعة هذا الشهر",
       "dernieresFiches": "أحدث الـ Fiches",
       "produits": "المنتجات المطلوبة",
-      "produitsHint": "في الـ Fiches النشطة"
+      "produitsHint": "في الـ Fiches النشطة",
+      "heroLabel": "الإيرادات الموقّعة",
+      "vsM1": "مقارنة بالشهر الماضي",
+      "enAttente": "قيد الانتظار",
+      "derniersMois": "آخر 12 شهرًا",
+      "valeurPipeline": "قيمة المسار",
+      "activite": "نشاط الـ Showroom",
+      "activiteSub": "الـ Fiches الجديدة يومًا بيوم.",
+      "topClients": "أفضل العملاء حسب الإيرادات",
+      "pipelineCommercial": "المسار التجاري",
+      "echeances": "المواعيد القادمة",
+      "echeancesEmpty": "لا مواعيد قادمة — خطّط لمتابعة أو موعد.",
+      "enCours": "قيد الإنجاز",
+      "topClient": "أفضل عميل",
+      "clientsActifs": "عملاء نشطون",
+      "prochainRdv": "الموعد القادم",
+      "fichesActives": "Fiches نشطة",
+      "jours7": "7 أيام",
+      "jours30": "30 يومًا"
     }
   },
   "taches": {

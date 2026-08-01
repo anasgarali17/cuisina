@@ -355,7 +355,25 @@
       "signeesMois": "Fiches signées ce mois",
       "dernieresFiches": "Dernières fiches",
       "produits": "Produits demandés",
-      "produitsHint": "Sur les fiches actives"
+      "produitsHint": "Sur les fiches actives",
+      "heroLabel": "CA signé",
+      "vsM1": "vs M-1",
+      "enAttente": "En attente",
+      "derniersMois": "12 derniers mois",
+      "valeurPipeline": "Valeur pipeline",
+      "activite": "Activité du showroom",
+      "activiteSub": "Nouvelles fiches créées, jour par jour.",
+      "topClients": "Top clients par revenu",
+      "pipelineCommercial": "Pipeline commercial",
+      "echeances": "Échéances à venir",
+      "echeancesEmpty": "Aucune échéance à venir — planifiez une relance ou un RDV.",
+      "enCours": "En cours",
+      "topClient": "Top client",
+      "clientsActifs": "Clients actifs",
+      "prochainRdv": "Prochain RDV",
+      "fichesActives": "Fiches actives",
+      "jours7": "7 j",
+      "jours30": "30 j"
     }
   },
   "taches": {

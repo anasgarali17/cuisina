@@ -15,15 +15,15 @@
   --vert-plan: #2f7d53;
   --ambre: #d08a2c;
 
-  /* — Semantic: shadcn neutral — */
+  /* — Semantic: light SaaS, violet primary — */
   --background: hsl(0 0% 100%);
-  --foreground: hsl(0 0% 3.9%);
+  --foreground: hsl(224 15% 12%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(0 0% 3.9%);
+  --card-foreground: hsl(224 15% 12%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(0 0% 3.9%);
-  --primary: hsl(0 0% 9%);
-  --primary-foreground: hsl(0 0% 98%);
+  --popover-foreground: hsl(224 15% 12%);
+  --primary: hsl(262 83% 58%);
+  --primary-foreground: hsl(0 0% 100%);
   --secondary: hsl(0 0% 96%);
   --secondary-foreground: hsl(0 0% 9%);
   --muted: hsl(0 0% 96%);
@@ -31,13 +31,14 @@
   --accent: hsl(0 0% 96%);
   --accent-foreground: hsl(0 0% 9%);
   --destructive: hsl(0 84.2% 60.2%);
-  --border: hsl(0 0% 90%);
-  --input: hsl(0 0% 89.8%);
-  --ring: hsl(0 0% 3.9%);
+  --border: hsl(220 14% 91%);
+  --input: hsl(220 14% 89%);
+  --ring: hsl(262 83% 58%);
   --success: var(--vert-plan);
   --warning: var(--ambre);
 
-  --radius: 0.75rem;
+  --violet: hsl(262 83% 58%);
+  --radius: 1rem;
 }
 
 .dark {
@@ -191,6 +192,57 @@ body {
 }
 .glass-card {
   background: var(--card);
+}
+
+/* — buildingfit-style vivid hero + pastel stat cards — */
+.hero-gradient {
+  background:
+    radial-gradient(60% 120% at 85% 10%, rgba(255, 255, 255, 0.16), transparent 55%),
+    linear-gradient(115deg, #6d28d9 0%, #7c3aed 48%, #8b5cf6 100%);
+}
+
+.tone-green {
+  --tone: #059669;
+  background: linear-gradient(150deg, #ecfdf5, #ffffff 80%);
+  border-color: #a7f3d0;
+}
+.tone-blue {
+  --tone: #2563eb;
+  background: linear-gradient(150deg, #eff6ff, #ffffff 80%);
+  border-color: #bfdbfe;
+}
+.tone-violet {
+  --tone: #7c3aed;
+  background: linear-gradient(150deg, #f5f3ff, #ffffff 80%);
+  border-color: #ddd6fe;
+}
+.tone-amber {
+  --tone: #b45309;
+  background: linear-gradient(150deg, #fffbeb, #ffffff 80%);
+  border-color: #fde68a;
+}
+.tone-orange {
+  --tone: #c2410c;
+  background: linear-gradient(150deg, #fff7ed, #ffffff 80%);
+  border-color: #fed7aa;
+}
+.dark .tone-green,
+.dark .tone-blue,
+.dark .tone-violet,
+.dark .tone-amber,
+.dark .tone-orange {
+  background: var(--card);
+  border-color: var(--border);
+}
+.tone-title {
+  color: var(--tone);
+}
+.tone-value {
+  color: var(--tone);
+}
+.tone-badge {
+  color: var(--tone);
+  background: color-mix(in srgb, var(--tone) 12%, transparent);
 }
 
 /* — Emphasis (formerly brutalist; now shadcn-quiet) — */

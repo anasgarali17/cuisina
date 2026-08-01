@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import {
+  ArrowRight,
   CircleDashed,
   FileClock,
   Ruler,
@@ -32,23 +33,27 @@ export async function InsightsPanel({ insights }: { insights: Insight[] }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <span
-            aria-hidden
-            className="grid size-6 shrink-0 place-items-center rounded-full bg-secondary"
-          >
-            <Sparkles className="size-3.5" />
-          </span>
+      <CardHeader className="flex-row items-center gap-3">
+        <span
+          aria-hidden
+          className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground"
+        >
+          <Sparkles className="size-5" />
+        </span>
+        <CardTitle className="font-display text-lg font-semibold normal-case tracking-normal text-foreground">
           {t("dashboard.insights.title")}
-          {insights.length > 0 && (
-            <span aria-hidden className="size-2 rounded-full bg-ambre" />
-          )}
         </CardTitle>
+        <Link
+          href="/fiches"
+          className="ms-auto flex shrink-0 items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+        >
+          {t("app.seeAll")}
+          <ArrowRight className="size-3.5 rtl:-scale-x-100" />
+        </Link>
       </CardHeader>
-      <CardContent className="px-3">
+      <CardContent>
         {insights.length === 0 ? (
-          <p className="px-3 text-sm italic text-muted-foreground">
+          <p className="text-sm italic text-muted-foreground">
             {t("dashboard.insights.empty")}
           </p>
         ) : (
@@ -59,7 +64,7 @@ export async function InsightsPanel({ insights }: { insights: Insight[] }) {
                 <li key={`${insight.type}-${insight.ficheId}`}>
                   <Link
                     href={`/fiches/${insight.ficheId}`}
-                    className="flex items-start gap-3 rounded-xl px-3 py-2 text-sm transition-colors hover:bg-secondary"
+                    className="mb-2 flex items-start gap-3 rounded-2xl bg-muted/60 px-4 py-3 text-sm transition-colors hover:bg-secondary"
                   >
                     <Icon className={`mt-0.5 size-4 shrink-0 ${className}`} />
                     <span className="min-w-0">

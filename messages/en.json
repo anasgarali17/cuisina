@@ -355,7 +355,25 @@
       "signeesMois": "Fiches signed this month",
       "dernieresFiches": "Latest fiches",
       "produits": "Requested products",
-      "produitsHint": "Across active fiches"
+      "produitsHint": "Across active fiches",
+      "heroLabel": "Signed revenue",
+      "vsM1": "vs last month",
+      "enAttente": "Pending",
+      "derniersMois": "Last 12 months",
+      "valeurPipeline": "Pipeline value",
+      "activite": "Showroom activity",
+      "activiteSub": "New fiches created, day by day.",
+      "topClients": "Top clients by revenue",
+      "pipelineCommercial": "Sales pipeline",
+      "echeances": "Upcoming deadlines",
+      "echeancesEmpty": "No upcoming deadline — schedule a follow-up or a meeting.",
+      "enCours": "In progress",
+      "topClient": "Top client",
+      "clientsActifs": "Active clients",
+      "prochainRdv": "Next meeting",
+      "fichesActives": "Active fiches",
+      "jours7": "7 d",
+      "jours30": "30 d"
     }
   },
   "taches": {

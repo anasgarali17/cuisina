@@ -2,49 +2,47 @@
 
 import { Fragment } from "react";
 import { useTranslations } from "next-intl";
-import { Settings } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { NAV_GROUPS } from "@/components/shell/nav-config";
+import { NAV_GROUPS } from "./nav-config";
+import { signOut } from "@/lib/actions/auth-actions";
 import { cn } from "@/lib/utils";
-
-const CONFIG_HREF = "/configuration";
 
 export function NavRail() {
   const t = useTranslations("nav");
+  const tApp = useTranslations("app");
   const pathname = usePathname();
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
-  /* Configuration lives in the bottom cluster — keep it out of the main list. */
-  const groups = NAV_GROUPS.map((group) => ({
-    key: group.key,
-    items: group.items.filter((item) => item.href !== CONFIG_HREF),
-  })).filter((group) => group.items.length > 0);
-
-  const configActive = isActive(CONFIG_HREF);
-
   return (
-    <aside className="no-print sticky top-0 hidden h-screen w-18 shrink-0 flex-col border-e border-border bg-card md:flex">
-      <div className="flex h-16 shrink-0 items-center justify-center">
-        <Link
-          href="/ma-journee"
-          aria-label={t("maJournee")}
-          className="grid size-10 place-items-center rounded-2xl bg-rouge font-display text-lg font-bold text-white"
-        >
+    <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-e border-border bg-card md:flex">
+      <div className="flex h-16 shrink-0 items-center gap-3 px-4">
+        <span className="relative grid size-9 shrink-0 place-items-center rounded-xl bg-noir-atelier font-display font-bold text-white">
           C
-        </Link>
+          <span
+            aria-hidden="true"
+            className="absolute -bottom-0.5 -end-0.5 size-2.5 rounded-full bg-rouge ring-2 ring-card"
+          />
+        </span>
+        <p className="truncate font-display font-bold tracking-tight">
+          CUISINA <span className="text-primary">PRO</span>
+        </p>
       </div>
 
-      <nav className="flex flex-1 flex-col items-center overflow-y-auto py-2">
-        {groups.map((group, groupIndex) => (
+      <nav className="flex-1 overflow-y-auto px-3 pb-4">
+        {NAV_GROUPS.map((group) => (
           <Fragment key={group.key}>
-            {groupIndex > 0 && (
-              <span
+            <div className="mb-1 mt-5 flex items-center justify-between px-3 first:mt-2">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {t(`groups.${group.key}`)}
+              </p>
+              <ChevronDown
                 aria-hidden="true"
-                className="mx-auto my-2 h-px w-8 shrink-0 bg-border"
+                className="size-3.5 text-muted-foreground"
               />
-            )}
+            </div>
             {group.items.map((item) => {
               const active = isActive(item.href);
               const Icon = item.icon;
@@ -52,13 +50,23 @@ export function NavRail() {
                 <Link
                   key={item.key}
                   href={item.href}
-                  data-active={active ? "true" : undefined}
                   aria-current={active ? "page" : undefined}
-                  title={t(item.key)}
-                  aria-label={t(item.key)}
-                  className={cn("rail-btn shrink-0", !item.ready && "opacity-40")}
+                  className={cn(
+                    "flex h-10 items-center gap-3 rounded-xl px-3 text-sm",
+                    active
+                      ? "bg-secondary font-semibold text-foreground"
+                      : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
+                    !item.ready && "opacity-50",
+                  )}
                 >
-                  <Icon className="size-5" />
+                  <Icon className="size-4.5 shrink-0" />
+                  <span className="truncate">{t(item.key)}</span>
+                  {!item.ready && (
+                    <span
+                      aria-hidden="true"
+                      className="ms-auto size-1.5 shrink-0 rounded-full bg-border"
+                    />
+                  )}
                 </Link>
               );
             })}
@@ -66,17 +74,15 @@ export function NavRail() {
         ))}
       </nav>
 
-      <div className="mt-auto flex shrink-0 flex-col items-center pb-4 pt-2">
-        <Link
-          href={CONFIG_HREF}
-          data-active={configActive ? "true" : undefined}
-          aria-current={configActive ? "page" : undefined}
-          title={t("configuration")}
-          aria-label={t("configuration")}
-          className="rail-btn"
+      <div className="border-t border-border p-3">
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="flex h-10 w-full items-center gap-3 rounded-xl px-3 text-sm text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
         >
-          <Settings className="size-5" />
-        </Link>
+          <LogOut className="size-4.5 shrink-0" />
+          {tApp("logout")}
+        </button>
       </div>
     </aside>
   );

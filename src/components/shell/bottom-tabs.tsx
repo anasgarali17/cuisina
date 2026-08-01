@@ -37,8 +37,7 @@ export function BottomTabs() {
             <span
               className={cn(
                 "grid size-9 place-items-center rounded-full",
-                active &&
-                  "bg-noir-atelier text-ivoire dark:bg-ivoire dark:text-noir-atelier",
+                active && "bg-primary text-primary-foreground",
               )}
             >
               <Icon className="size-5" />
