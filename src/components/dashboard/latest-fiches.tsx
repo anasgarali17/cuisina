@@ -5,14 +5,57 @@ import { ArrowUpRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import type { FicheRow } from "@/lib/database.types";
 import { formatDate } from "@/lib/dates";
+import { STAGES, type StageOrPerdu } from "@/lib/domain";
 import { cn, formatDT } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { stageBadgeVariant } from "@/components/fiches/fiches-list";
 
-const CELL = "border-e border-border px-4 py-3 align-middle last:border-e-0";
+const CELL = "px-4 py-4 align-middle";
 
-/** The reference's bottom strip: filter pills + a compact gridded table. */
+/** Tinted stage chips — reference-style pills with a leading dot glyph. */
+const STAGE_CHIP: Record<StageOrPerdu, string> = {
+  nouveau_contact: "bg-violet-50 text-violet-700 border-violet-200",
+  contacte: "bg-violet-50 text-violet-700 border-violet-200",
+  rdv_showroom: "bg-sky-50 text-sky-700 border-sky-200",
+  metre_releve: "bg-sky-50 text-sky-700 border-sky-200",
+  conception_devis: "bg-sky-50 text-sky-700 border-sky-200",
+  devis_envoye: "bg-amber-50 text-amber-700 border-amber-200",
+  negociation: "bg-amber-50 text-amber-700 border-amber-200",
+  signe: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  perdu: "bg-red-50 text-red-600 border-red-200",
+};
+
+function StageChip({ stage, label }: { stage: StageOrPerdu; label: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        STAGE_CHIP[stage],
+      )}
+    >
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-current" />
+      {label}
+    </span>
+  );
+}
+
+function stageProgress(stage: StageOrPerdu): number {
+  if (stage === "perdu") return 0;
+  return Math.round(((STAGES.indexOf(stage) + 1) / STAGES.length) * 100);
+}
+
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w.charAt(0))
+    .join("")
+    .toUpperCase();
+}
+
+/** The reference's bottom strip: filter pills + an airy borderless table. */
 export function LatestFiches({
   fiches,
   conseillers,
@@ -56,7 +99,7 @@ export function LatestFiches({
       <Card className="hidden overflow-hidden md:block">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-border bg-secondary/50 text-xs uppercase tracking-wide text-muted-foreground">
+            <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
               <th className={cn(CELL, "text-start font-medium")}>
                 {t("fiches.columns.client")}
               </th>
@@ -73,59 +116,93 @@ export function LatestFiches({
                 {t("fiches.columns.conseiller")}
               </th>
               <th className={cn(CELL, "text-start font-medium")}>
+                {t("fiches.table.avancement")}
+              </th>
+              <th className={cn(CELL, "text-start font-medium")}>
                 {t("fiches.columns.date")}
               </th>
             </tr>
           </thead>
           <tbody>
-            {fiches.map((f) => (
-              <tr
-                key={f.id}
-                className="border-b border-border transition-colors last:border-b-0 hover:bg-secondary/50"
-              >
-                <td className={CELL}>
-                  <Link
-                    href={`/fiches/${f.id}`}
-                    className="font-semibold hover:underline"
+            {fiches.map((f) => {
+              const progress = stageProgress(f.stage);
+              return (
+                <tr
+                  key={f.id}
+                  className="border-b border-border transition-colors last:border-b-0 hover:bg-secondary/40"
+                >
+                  <td className={CELL}>
+                    <div className="flex items-center gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-semibold"
+                      >
+                        {initials(f.client_nom)}
+                      </span>
+                      <div className="min-w-0">
+                        <Link
+                          href={`/fiches/${f.id}`}
+                          className="font-semibold hover:underline"
+                        >
+                          {f.client_nom}
+                        </Link>
+                        <p className="font-mono text-xs text-muted-foreground">
+                          {f.reference}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className={CELL}>
+                    {f.nb_cuisines > 0 &&
+                      t("pipeline.projectChips.cuisine", { n: f.nb_cuisines })}
+                    {f.nb_dressings > 0 && (
+                      <>
+                        {f.nb_cuisines > 0 && " · "}
+                        {t("pipeline.projectChips.dressing", {
+                          n: f.nb_dressings,
+                        })}
+                      </>
+                    )}
+                    {f.nb_sdb > 0 && (
+                      <>
+                        {(f.nb_cuisines > 0 || f.nb_dressings > 0) && " · "}
+                        {t("pipeline.projectChips.sdb", { n: f.nb_sdb })}
+                      </>
+                    )}
+                  </td>
+                  <td className={cn(CELL, "font-semibold tabular-nums")}>
+                    {formatDT(f.budget_estimatif)}
+                  </td>
+                  <td className={CELL}>
+                    <StageChip stage={f.stage} label={t(`stages.${f.stage}`)} />
+                  </td>
+                  <td className={CELL}>
+                    {conseillers[f.conseiller_id] ?? "—"}
+                  </td>
+                  <td className={CELL}>
+                    <div className="min-w-24">
+                      <span className="font-bold tabular-nums">
+                        {progress}
+                        <span className="text-xs font-medium text-muted-foreground">
+                          %
+                        </span>
+                      </span>
+                      <div className="mt-1.5 h-1.5 w-full rounded-full bg-secondary">
+                        <div
+                          className="h-full rounded-full bg-emerald-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td
+                    className={cn(CELL, "whitespace-nowrap text-muted-foreground")}
                   >
-                    {f.client_nom}
-                  </Link>
-                  <p className="font-mono text-xs text-muted-foreground">
-                    {f.reference}
-                  </p>
-                </td>
-                <td className={CELL}>
-                  {f.nb_cuisines > 0 &&
-                    t("pipeline.projectChips.cuisine", { n: f.nb_cuisines })}
-                  {f.nb_dressings > 0 && (
-                    <>
-                      {f.nb_cuisines > 0 && " · "}
-                      {t("pipeline.projectChips.dressing", {
-                        n: f.nb_dressings,
-                      })}
-                    </>
-                  )}
-                  {f.nb_sdb > 0 && (
-                    <>
-                      {(f.nb_cuisines > 0 || f.nb_dressings > 0) && " · "}
-                      {t("pipeline.projectChips.sdb", { n: f.nb_sdb })}
-                    </>
-                  )}
-                </td>
-                <td className={cn(CELL, "font-mono")}>
-                  {formatDT(f.budget_estimatif)}
-                </td>
-                <td className={CELL}>
-                  <Badge variant={stageBadgeVariant(f.stage)}>
-                    {t(`stages.${f.stage}`)}
-                  </Badge>
-                </td>
-                <td className={CELL}>{conseillers[f.conseiller_id] ?? "—"}</td>
-                <td className={cn(CELL, "whitespace-nowrap text-muted-foreground")}>
-                  {formatDate(f.updated_at, "d MMM", locale)}
-                </td>
-              </tr>
-            ))}
+                    {formatDate(f.updated_at, "d MMM", locale)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </Card>

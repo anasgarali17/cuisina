@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Plus } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { getCurrentProfile } from "@/lib/auth";
-import { listFiches, listProfiles } from "@/lib/data/queries";
+import { listFiches, listPdvs, listProfiles } from "@/lib/data/queries";
 import { PageHeader } from "@/components/shell/page-header";
 import { FichesList } from "@/components/fiches/fiches-list";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,9 +14,10 @@ export default async function FichesPage() {
   ]);
   if (!profile) return null;
 
-  const [fiches, profiles] = await Promise.all([
+  const [fiches, profiles, pdvs] = await Promise.all([
     listFiches(profile),
     listProfiles(),
+    listPdvs(),
   ]);
 
   const conseillers = Object.fromEntries(
@@ -37,7 +38,7 @@ export default async function FichesPage() {
           </Link>
         }
       />
-      <FichesList fiches={fiches} conseillers={conseillers} />
+      <FichesList fiches={fiches} conseillers={conseillers} pdvs={pdvs} />
     </>
   );
 }

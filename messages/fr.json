@@ -319,6 +319,11 @@
       "confirmation": "Date de confirmation et signature du contrat",
       "remarques": "Remarques et suggestions client",
       "slogan": "Notre Passion est d'aménager votre Cuisine avec notre savoir faire et Contribuer à votre bien être"
+    },
+    "table": {
+      "exportList": "Télécharger la liste",
+      "avancement": "Avancement",
+      "score": "Score"
     }
   },
   "canaux": {

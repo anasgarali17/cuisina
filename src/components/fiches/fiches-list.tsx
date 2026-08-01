@@ -14,20 +14,20 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { GripVertical, Plus, Search } from "lucide-react";
+import { ChevronRight, Download, GripVertical, Plus, Search } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
 import { changeStage } from "@/lib/actions/fiche-actions";
-import type { FicheRow } from "@/lib/database.types";
+import type { FicheRow, PointDeVenteRow } from "@/lib/database.types";
 import {
   ALL_STAGES,
   MOTIFS_PERTE,
+  STAGES,
   type MotifPerte,
   type StageOrPerdu,
 } from "@/lib/domain";
 import { formatDate } from "@/lib/dates";
 import { cn, formatDT } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -42,6 +42,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioCard, RadioGroup } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const ALL = "__all__";
 
 export type StageBadgeVariant =
   | "default"
@@ -67,6 +76,94 @@ export function stageBadgeVariant(stage: StageOrPerdu): StageBadgeVariant {
     default:
       return "outline";
   }
+}
+
+/** Stage → tinted chip classes (reference look: soft pill + border). */
+function stageChip(stage: StageOrPerdu): string {
+  switch (stage) {
+    case "signe":
+      return "bg-emerald-50 text-emerald-700 border-emerald-200";
+    case "devis_envoye":
+    case "negociation":
+      return "bg-amber-50 text-amber-700 border-amber-200";
+    case "nouveau_contact":
+    case "contacte":
+      return "bg-violet-50 text-violet-700 border-violet-200";
+    case "rdv_showroom":
+    case "metre_releve":
+    case "conception_devis":
+      return "bg-sky-50 text-sky-700 border-sky-200";
+    case "perdu":
+      return "bg-red-50 text-red-600 border-red-200";
+  }
+}
+
+function StageChip({ stage }: { stage: StageOrPerdu }) {
+  const t = useTranslations();
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        stageChip(stage),
+      )}
+    >
+      <span aria-hidden className="text-[8px] leading-none">
+        ●
+      </span>
+      {t(`stages.${stage}`)}
+    </span>
+  );
+}
+
+function gradeOf(score: number): { letter: string; className: string } {
+  if (score >= 85) return { letter: "A", className: "bg-emerald-500" };
+  if (score >= 70) return { letter: "B", className: "bg-lime-500" };
+  if (score >= 50) return { letter: "C", className: "bg-amber-500" };
+  return { letter: "D", className: "bg-red-400" };
+}
+
+function GradeBadge({ score }: { score: number }) {
+  const grade = gradeOf(score);
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="font-semibold tabular-nums">{score}</span>
+      <span
+        aria-hidden
+        className={cn(
+          "grid size-5 place-items-center rounded-md text-[11px] font-bold text-white",
+          grade.className,
+        )}
+      >
+        {grade.letter}
+      </span>
+    </span>
+  );
+}
+
+/** Pipeline progress for a fiche, in percent (perdu counts as 0). */
+function stageProgress(stage: StageOrPerdu): number {
+  if (stage === "perdu") return 0;
+  return Math.round(((STAGES.indexOf(stage) + 1) / STAGES.length) * 100);
+}
+
+function MetricCell({ value }: { value: number }) {
+  return (
+    <div className="min-w-20 max-w-28">
+      <p className="whitespace-nowrap">
+        <span className="font-semibold tabular-nums">{value}</span>
+        <span className="ms-0.5 text-xs text-muted-foreground">%</span>
+      </p>
+      <div
+        aria-hidden
+        className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary"
+      >
+        <div
+          className="h-full rounded-full bg-emerald-500"
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  );
 }
 
 function nameInitials(name: string): string {
@@ -137,24 +234,69 @@ function ConseillerCell({ name }: { name: string }) {
   );
 }
 
-const CELL = "border-e border-border px-4 py-3 align-top last:border-e-0";
+function FilterPill({
+  label,
+  value,
+  onChange,
+  options,
+  allLabel,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  allLabel: string;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        aria-label={label}
+        className="h-10 w-auto min-w-36 rounded-xl border-border bg-card text-sm"
+      >
+        <span className="text-muted-foreground">{label}</span>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={ALL}>{allLabel}</SelectItem>
+        {options.map((o) => (
+          <SelectItem key={o.value} value={o.value}>
+            {o.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function csvCell(value: string | number | null | undefined): string {
+  const s = value == null ? "" : String(value);
+  return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+const CELL = "px-4 py-4 align-middle";
 
 /**
- * Fiches as a gridded table, grouped by étape: each group is a drop target —
+ * Fiches as a table grouped by étape: each group is a drop target —
  * drag a row onto another group to move the lead through the pipeline.
  */
 export function FichesList({
   fiches: initialFiches,
   conseillers,
+  pdvs,
 }: {
   fiches: FicheRow[];
   conseillers: Record<string, string>;
+  pdvs: PointDeVenteRow[];
 }) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
   const [fiches, setFiches] = useState(initialFiches);
   const [query, setQuery] = useState("");
+  const [stageFilter, setStageFilter] = useState<string>(ALL);
+  const [conseillerFilter, setConseillerFilter] = useState<string>(ALL);
+  const [pdvFilter, setPdvFilter] = useState<string>(ALL);
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pendingPerte, setPendingPerte] = useState<string | null>(null);
   const [motif, setMotif] = useState<MotifPerte | null>(null);
@@ -162,8 +304,12 @@ export function FichesList({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return fiches;
     return fiches.filter((f) => {
+      if (stageFilter !== ALL && f.stage !== stageFilter) return false;
+      if (conseillerFilter !== ALL && f.conseiller_id !== conseillerFilter)
+        return false;
+      if (pdvFilter !== ALL && f.point_de_vente_id !== pdvFilter) return false;
+      if (!q) return true;
       const haystack = [
         f.client_nom,
         f.reference,
@@ -174,7 +320,7 @@ export function FichesList({
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [fiches, query]);
+  }, [fiches, query, stageFilter, conseillerFilter, pdvFilter]);
 
   const byStage = useMemo(() => {
     const map = new Map<StageOrPerdu, FicheRow[]>();
@@ -189,6 +335,51 @@ export function FichesList({
       activationConstraint: { delay: 200, tolerance: 8 },
     }),
   );
+
+  function toggleExpanded(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function exportCsv() {
+    const header = [
+      t("fiches.reference"),
+      t("fiches.columns.client"),
+      t("fiches.columns.ville"),
+      t("fiches.columns.stage"),
+      t("fiches.columns.budget"),
+      t("fiches.table.score"),
+      t("fiches.columns.conseiller"),
+      t("fiches.columns.date"),
+    ];
+    const rows = filtered.map((f) => [
+      f.reference,
+      f.client_nom,
+      f.ville ?? "",
+      t(`stages.${f.stage}`),
+      f.budget_estimatif ?? "",
+      f.score_completude,
+      conseillers[f.conseiller_id] ?? "",
+      f.created_at.slice(0, 10),
+    ]);
+    const csv =
+      "\uFEFF" +
+      [header, ...rows].map((row) => row.map(csvCell).join(";")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "fiches.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   function applyStage(
     ficheId: string,
@@ -257,8 +448,9 @@ export function FichesList({
 
   return (
     <div>
+      {/* Top bar: search + filter pills + export */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <div className="relative w-full max-w-sm">
+        <div className="relative w-full max-w-xs">
           <Label htmlFor="fiche-search" className="sr-only">
             {t("fiches.searchPlaceholder")}
           </Label>
@@ -272,12 +464,47 @@ export function FichesList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t("fiches.searchPlaceholder")}
-            className="rounded-full ps-11"
+            className="h-10 rounded-xl ps-11"
           />
         </div>
+        <FilterPill
+          label={t("fiches.columns.stage")}
+          value={stageFilter}
+          onChange={setStageFilter}
+          options={ALL_STAGES.map((s) => ({
+            value: s,
+            label: t(`stages.${s}`),
+          }))}
+          allLabel={t("pipeline.filters.all")}
+        />
+        <FilterPill
+          label={t("pipeline.filters.conseiller")}
+          value={conseillerFilter}
+          onChange={setConseillerFilter}
+          options={Object.entries(conseillers).map(([id, name]) => ({
+            value: id,
+            label: name,
+          }))}
+          allLabel={t("pipeline.filters.all")}
+        />
+        <FilterPill
+          label={t("pipeline.filters.pointDeVente")}
+          value={pdvFilter}
+          onChange={setPdvFilter}
+          options={pdvs.map((p) => ({ value: p.id, label: p.nom }))}
+          allLabel={t("pipeline.filters.all")}
+        />
         <span className="rounded-full border border-border px-3 py-1 font-mono text-xs text-muted-foreground">
           {t("fiches.count", { count: filtered.length })}
         </span>
+        <button
+          type="button"
+          onClick={exportCsv}
+          className="ms-auto inline-flex h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-emerald-600 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+        >
+          <Download aria-hidden className="size-4" />
+          {t("fiches.table.exportList")}
+        </button>
       </div>
 
       {error && (
@@ -299,43 +526,53 @@ export function FichesList({
           onDragStart={onDragStart}
           onDragEnd={onDragEnd}
         >
-          {/* Desktop: gridded table grouped by étape */}
+          {/* Desktop: airy table grouped by étape */}
           <Card className="hidden overflow-hidden md:block">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border bg-secondary/50 text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className={cn(CELL, "w-8 py-3")} aria-hidden />
-                  <th className={cn(CELL, "text-start font-medium")}>
-                    {t("fiches.columns.client")}
-                  </th>
-                  <th className={cn(CELL, "text-start font-medium")}>
-                    {t("fiches.columns.ville")}
-                  </th>
-                  <th className={cn(CELL, "text-start font-medium")}>
-                    {t("fiches.columns.projet")}
-                  </th>
-                  <th className={cn(CELL, "text-start font-medium")}>
-                    {t("fiches.columns.budget")}
-                  </th>
-                  <th className={cn(CELL, "text-start font-medium")}>
-                    {t("fiches.columns.conseiller")}
-                  </th>
-                  <th className={cn(CELL, "text-start font-medium")}>
-                    {t("fiches.columns.date")}
-                  </th>
-                </tr>
-              </thead>
-              {ALL_STAGES.map((stage) => (
-                <StageGroup
-                  key={stage}
-                  stage={stage}
-                  fiches={byStage.get(stage) ?? []}
-                  conseillers={conseillers}
-                  locale={locale}
-                  onOpen={(id) => router.push(`/fiches/${id}`)}
-                />
-              ))}
-            </table>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="w-16 px-4 py-3" aria-hidden />
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.columns.client")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.columns.ville")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.columns.projet")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.columns.budget")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.table.score")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.table.avancement")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.columns.conseiller")}
+                    </th>
+                    <th className="px-4 py-3 text-start font-medium">
+                      {t("fiches.columns.date")}
+                    </th>
+                  </tr>
+                </thead>
+                {ALL_STAGES.map((stage) => (
+                  <StageGroup
+                    key={stage}
+                    stage={stage}
+                    fiches={byStage.get(stage) ?? []}
+                    conseillers={conseillers}
+                    locale={locale}
+                    expandedIds={expanded}
+                    onToggle={toggleExpanded}
+                    onOpen={(id) => router.push(`/fiches/${id}`)}
+                  />
+                ))}
+              </table>
+            </div>
           </Card>
 
           <DragOverlay>
@@ -370,9 +607,7 @@ export function FichesList({
                         {f.reference}
                       </p>
                     </div>
-                    <Badge variant={stageBadgeVariant(f.stage)}>
-                      {t(`stages.${f.stage}`)}
-                    </Badge>
+                    <StageChip stage={f.stage} />
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {f.ville ?? "—"} ·{" "}
@@ -383,7 +618,7 @@ export function FichesList({
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <ConseillerCell name={conseiller} />
-                    <span className="font-mono text-sm">
+                    <span className="font-semibold tabular-nums text-sm">
                       {formatDT(f.budget_estimatif)}
                     </span>
                   </div>
@@ -445,12 +680,16 @@ function StageGroup({
   fiches,
   conseillers,
   locale,
+  expandedIds,
+  onToggle,
   onOpen,
 }: {
   stage: StageOrPerdu;
   fiches: FicheRow[];
   conseillers: Record<string, string>;
   locale: string;
+  expandedIds: Set<string>;
+  onToggle: (id: string) => void;
   onOpen: (id: string) => void;
 }) {
   const t = useTranslations();
@@ -467,16 +706,14 @@ function StageGroup({
       )}
     >
       <tr className="bg-secondary/30">
-        <td colSpan={7} className="px-4 py-2">
+        <td colSpan={9} className="px-4 py-2">
           <span className="flex items-center gap-2">
-            <Badge variant={stageBadgeVariant(stage)}>
-              {t(`stages.${stage}`)}
-            </Badge>
+            <StageChip stage={stage} />
             <span className="rounded-full bg-secondary px-2 font-mono text-xs text-muted-foreground">
               {fiches.length}
             </span>
             {total > 0 && (
-              <span className="ms-auto font-mono text-xs text-muted-foreground">
+              <span className="ms-auto font-semibold tabular-nums text-xs text-muted-foreground">
                 {formatDT(total)}
               </span>
             )}
@@ -486,7 +723,7 @@ function StageGroup({
       {fiches.length === 0 ? (
         <tr>
           <td
-            colSpan={7}
+            colSpan={9}
             className="px-4 py-2.5 text-xs italic text-muted-foreground"
           >
             {t("pipeline.emptyColumn")}
@@ -499,6 +736,8 @@ function StageGroup({
             fiche={f}
             conseiller={conseillers[f.conseiller_id] ?? "—"}
             locale={locale}
+            expanded={expandedIds.has(f.id)}
+            onToggle={onToggle}
             onOpen={onOpen}
           />
         ))
@@ -507,15 +746,38 @@ function StageGroup({
   );
 }
 
+function DetailField({
+  label,
+  value,
+  mono,
+  className,
+}: {
+  label: string;
+  value: string | null;
+  mono?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={cn("mt-0.5", mono && "font-mono")}>{value || "—"}</p>
+    </div>
+  );
+}
+
 function DraggableRow({
   fiche,
   conseiller,
   locale,
+  expanded,
+  onToggle,
   onOpen,
 }: {
   fiche: FicheRow;
   conseiller: string;
   locale: string;
+  expanded: boolean;
+  onToggle: (id: string) => void;
   onOpen: (id: string) => void;
 }) {
   const t = useTranslations();
@@ -524,52 +786,120 @@ function DraggableRow({
   });
 
   return (
-    <tr
-      ref={setNodeRef}
-      onClick={() => onOpen(fiche.id)}
-      className={cn(
-        "cursor-pointer border-b border-border transition-colors last:border-b-0 hover:bg-secondary/50",
-        isDragging && "opacity-40",
+    <>
+      <tr
+        ref={setNodeRef}
+        onClick={() => onOpen(fiche.id)}
+        className={cn(
+          "cursor-pointer border-b border-border transition-colors hover:bg-secondary/40",
+          !expanded && "last:border-b-0",
+          isDragging && "opacity-40",
+        )}
+      >
+        <td className="w-16 px-2 py-4 align-middle">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle(fiche.id);
+              }}
+              aria-expanded={expanded}
+              aria-label={`${t("app.seeAll")} — ${fiche.client_nom}`}
+              className="grid size-7 place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground"
+            >
+              <ChevronRight
+                aria-hidden
+                className={cn(
+                  "size-4 transition-transform",
+                  expanded ? "rotate-90" : "rtl:rotate-180",
+                )}
+              />
+            </button>
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`${t("fiches.columns.stage")} — ${fiche.client_nom}`}
+              className="grid size-7 cursor-grab place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground active:cursor-grabbing"
+            >
+              <GripVertical className="size-4" />
+            </button>
+          </div>
+        </td>
+        <td className={CELL}>
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden
+              className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-semibold"
+            >
+              {nameInitials(fiche.client_nom)}
+            </span>
+            <div className="min-w-0">
+              <Link
+                href={`/fiches/${fiche.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="font-semibold hover:underline"
+              >
+                {fiche.client_nom}
+              </Link>
+              <p className="font-mono text-xs text-muted-foreground">
+                {fiche.reference}
+              </p>
+            </div>
+          </div>
+        </td>
+        <td className={CELL}>{fiche.ville ?? "—"}</td>
+        <td className={CELL}>
+          <ProjectChips fiche={fiche} />
+        </td>
+        <td className={cn(CELL, "whitespace-nowrap font-semibold tabular-nums")}>
+          {formatDT(fiche.budget_estimatif)}
+        </td>
+        <td className={CELL}>
+          <GradeBadge score={fiche.score_completude} />
+        </td>
+        <td className={CELL}>
+          <MetricCell value={stageProgress(fiche.stage)} />
+        </td>
+        <td className={CELL}>
+          <ConseillerCell name={conseiller} />
+        </td>
+        <td className={cn(CELL, "whitespace-nowrap text-muted-foreground")}>
+          {formatDate(fiche.created_at, "d MMM yyyy", locale)}
+        </td>
+      </tr>
+      {expanded && (
+        <tr className="border-b border-border last:border-b-0">
+          <td colSpan={9} className="p-0">
+            <div className="grid gap-4 bg-secondary/30 px-6 py-4 text-sm sm:grid-cols-3">
+              <DetailField
+                label={t("fiches.wizard.telMobile")}
+                value={fiche.tel_mobile}
+                mono
+              />
+              <DetailField
+                label={t("fiches.wizard.email")}
+                value={fiche.email}
+              />
+              <DetailField
+                label={t("fiches.wizard.adresse")}
+                value={fiche.adresse_complete}
+              />
+              <DetailField
+                label={t("fiches.wizard.budget")}
+                value={formatDT(fiche.budget_estimatif)}
+              />
+              <DetailField
+                label={t("fiches.wizard.observations")}
+                value={fiche.observations}
+                className="sm:col-span-2"
+              />
+            </div>
+          </td>
+        </tr>
       )}
-    >
-      <td className={cn(CELL, "w-8 px-2")}>
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-          aria-label={`${t("fiches.columns.stage")} — ${fiche.client_nom}`}
-          className="grid size-7 cursor-grab place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground active:cursor-grabbing"
-        >
-          <GripVertical className="size-4" />
-        </button>
-      </td>
-      <td className={CELL}>
-        <Link
-          href={`/fiches/${fiche.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="font-semibold hover:underline"
-        >
-          {fiche.client_nom}
-        </Link>
-        <p className="font-mono text-xs text-muted-foreground">
-          {fiche.reference}
-        </p>
-        <Completude score={fiche.score_completude} />
-      </td>
-      <td className={CELL}>{fiche.ville ?? "—"}</td>
-      <td className={CELL}>
-        <ProjectChips fiche={fiche} />
-      </td>
-      <td className={cn(CELL, "font-mono")}>
-        {formatDT(fiche.budget_estimatif)}
-      </td>
-      <td className={CELL}>
-        <ConseillerCell name={conseiller} />
-      </td>
-      <td className={cn(CELL, "whitespace-nowrap text-muted-foreground")}>
-        {formatDate(fiche.created_at, "d MMM yyyy", locale)}
-      </td>
-    </tr>
+    </>
   );
 }
