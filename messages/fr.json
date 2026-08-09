@@ -122,7 +122,8 @@
     "devis_envoye": "Devis envoyé",
     "negociation": "Négociation",
     "signe": "Signé",
-    "perdu": "Perdu"
+    "perdu": "Perdu",
+    "en_pause": "En pause"
   },
   "motifsPerte": {
     "title": "Motif de perte",
@@ -361,6 +362,26 @@
       "cuisine": "Cuisine ×{n}",
       "dressing": "Dressing ×{n}",
       "sdb": "SDB ×{n}"
+    },
+    "pause": {
+      "title": "Mettre le lead en pause",
+      "prompt": "Pourquoi ce projet est-il en attente ? Le client reste suivi automatiquement.",
+      "chantier_en_cours": "Chantier en cours",
+      "budget_non_pret": "Budget pas encore prêt",
+      "reflexion": "En réflexion",
+      "autre": "Autre raison",
+      "cadence": "Reprise de contact",
+      "cadenceHint": "Un message WhatsApp sera programmé à ce rythme.",
+      "jours": "{n} jours",
+      "pauseLane": "Leads en pause",
+      "reprisePrevue": "Reprise le {date}",
+      "emptyLane": "Aucun lead en pause. Glissez-en un ici s'il attend."
+    },
+    "motifLibre": {
+      "label": "Autre raison (précisez)",
+      "placeholder": "Écrivez la raison…",
+      "save": "Ajouter cette raison à la liste",
+      "saveHint": "Elle sera proposée à toute l'équipe la prochaine fois."
     }
   },
   "dashboard": {

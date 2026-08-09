@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   ETATS_CHANTIER,
+  MOTIFS_PAUSE,
   MOTIFS_PERTE,
   ORIGINES,
   ORIGINE_DETAILS,
@@ -118,12 +119,34 @@ export const stageChangeSchema = z
   .object({
     fiche_id: z.string().uuid(),
     stage: z.enum(ALL_STAGES),
+    /** Preset loss reason, or "autre" when a free-text reason is given. */
     motif_perte: z.enum(MOTIFS_PERTE).nullable().default(null),
+    /** Free-text loss reason typed by the conseiller. */
+    motif_perte_libre: z.string().max(200).default(""),
+    /** Pause reason + re-check cadence. */
+    motif_pause: z.enum(MOTIFS_PAUSE).nullable().default(null),
+    motif_pause_detail: z.string().max(200).default(""),
+    pause_cadence_jours: z.coerce.number().int().min(1).max(365).nullable().default(null),
+    /** Persist the free-text reason so it appears in the list next time. */
+    enregistrer_motif: z.boolean().default(false),
   })
-  .refine((v) => v.stage !== "perdu" || v.motif_perte != null, {
-    message: "motif_perte_requis",
-    path: ["motif_perte"],
+  .refine(
+    (v) =>
+      v.stage !== "perdu" ||
+      v.motif_perte != null ||
+      v.motif_perte_libre.trim().length > 0,
+    { message: "motif_perte_requis", path: ["motif_perte"] },
+  )
+  .refine((v) => v.stage !== "en_pause" || v.motif_pause != null, {
+    message: "motif_pause_requis",
+    path: ["motif_pause"],
   });
+
+/** Adding a reusable custom reason from the pipeline dialogs. */
+export const motifPersonnaliseSchema = z.object({
+  type: z.enum(["perte", "pause"]),
+  libelle: z.string().min(2).max(120),
+});
 
 export const suiviSchema = z.object({
   fiche_id: z.string().uuid(),

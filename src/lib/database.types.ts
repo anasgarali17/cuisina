@@ -6,6 +6,7 @@
 import type {
   Canal,
   EtatChantier,
+  MotifPause,
   MotifPerte,
   Origine,
   Priorite,
@@ -81,6 +82,11 @@ export interface FicheRow {
   exigences: Json;
   stage: StageOrPerdu;
   motif_perte: MotifPerte | null;
+  motif_perte_libre: string | null;
+  motif_pause: MotifPause | null;
+  motif_pause_detail: string | null;
+  pause_cadence_jours: number | null;
+  pause_reprise_le: string | null;
   date_prevue_remise_devis: string | null;
   date_effective_remise_devis: string | null;
   date_prete_devis: string | null;
@@ -111,6 +117,17 @@ export interface FicheRelanceRow {
   resultat: string;
   commentaire: string | null;
   user_id: string;
+  created_at: string;
+}
+
+export interface MotifPersonnaliseRow {
+  id: string;
+  type: "perte" | "pause";
+  libelle: string;
+  point_de_vente_id: string | null;
+  cree_par: string | null;
+  utilisations: number;
+  actif: boolean;
   created_at: string;
 }
 
@@ -173,6 +190,11 @@ export interface Database {
         "id"
       >;
       taches: TableOf<TacheRow, "titre" | "assigne_a", "id">;
+      motifs_personnalises: TableOf<
+        MotifPersonnaliseRow,
+        "type" | "libelle",
+        "id"
+      >;
       rendez_vous: TableOf<
         RendezVousRow,
         "titre" | "debut" | "fin" | "conseiller_id" | "point_de_vente_id",

@@ -122,7 +122,8 @@
     "devis_envoye": "Devis sent",
     "negociation": "Negotiation",
     "signe": "Signed",
-    "perdu": "Lost"
+    "perdu": "Lost",
+    "en_pause": "On hold"
   },
   "motifsPerte": {
     "title": "Loss reason",
@@ -361,6 +362,26 @@
       "cuisine": "Kitchen ×{n}",
       "dressing": "Dressing ×{n}",
       "sdb": "Bathroom ×{n}"
+    },
+    "pause": {
+      "title": "Put the lead on hold",
+      "prompt": "Why is this project waiting? The client stays followed up automatically.",
+      "chantier_en_cours": "Building works in progress",
+      "budget_non_pret": "Budget not ready yet",
+      "reflexion": "Still deciding",
+      "autre": "Other reason",
+      "cadence": "Check back in",
+      "cadenceHint": "A WhatsApp message will be scheduled at this rhythm.",
+      "jours": "{n} days",
+      "pauseLane": "Leads on hold",
+      "reprisePrevue": "Check back on {date}",
+      "emptyLane": "No lead on hold. Drag one here if it is waiting."
+    },
+    "motifLibre": {
+      "label": "Other reason (specify)",
+      "placeholder": "Write the reason…",
+      "save": "Add this reason to the list",
+      "saveHint": "It will be offered to the whole team next time."
     }
   },
   "dashboard": {

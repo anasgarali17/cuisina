@@ -18,30 +18,21 @@ import { ChevronRight, Download, GripVertical, Plus, Search } from "lucide-react
 import { Link, useRouter } from "@/i18n/navigation";
 import { changeStage } from "@/lib/actions/fiche-actions";
 import type { FicheRow, PointDeVenteRow } from "@/lib/database.types";
+import { ALL_STAGES, type StageOrPerdu } from "@/lib/domain";
+import { STAGE_CHIP, stageProgress } from "@/lib/stage-ui";
 import {
-  ALL_STAGES,
-  MOTIFS_PERTE,
-  STAGES,
-  type MotifPerte,
-  type StageOrPerdu,
-} from "@/lib/domain";
+  EMPTY_REASON,
+  StageReasonDialog,
+  type StageReason,
+} from "@/components/pipeline/stage-reason-dialog";
 import { formatDate } from "@/lib/dates";
 import { cn, formatDT } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { RadioCard, RadioGroup } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -78,33 +69,13 @@ export function stageBadgeVariant(stage: StageOrPerdu): StageBadgeVariant {
   }
 }
 
-/** Stage → tinted chip classes (reference look: soft pill + border). */
-function stageChip(stage: StageOrPerdu): string {
-  switch (stage) {
-    case "signe":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "devis_envoye":
-    case "negociation":
-      return "bg-amber-50 text-amber-700 border-amber-200";
-    case "nouveau_contact":
-    case "contacte":
-      return "bg-violet-50 text-violet-700 border-violet-200";
-    case "rdv_showroom":
-    case "metre_releve":
-    case "conception_devis":
-      return "bg-sky-50 text-sky-700 border-sky-200";
-    case "perdu":
-      return "bg-red-50 text-red-600 border-red-200";
-  }
-}
-
 function StageChip({ stage }: { stage: StageOrPerdu }) {
   const t = useTranslations();
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium",
-        stageChip(stage),
+        STAGE_CHIP[stage],
       )}
     >
       <span aria-hidden className="text-[8px] leading-none">
@@ -138,12 +109,6 @@ function GradeBadge({ score }: { score: number }) {
       </span>
     </span>
   );
-}
-
-/** Pipeline progress for a fiche, in percent (perdu counts as 0). */
-function stageProgress(stage: StageOrPerdu): number {
-  if (stage === "perdu") return 0;
-  return Math.round(((STAGES.indexOf(stage) + 1) / STAGES.length) * 100);
 }
 
 function MetricCell({ value }: { value: number }) {
@@ -298,8 +263,10 @@ export function FichesList({
   const [pdvFilter, setPdvFilter] = useState<string>(ALL);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [pendingPerte, setPendingPerte] = useState<string | null>(null);
-  const [motif, setMotif] = useState<MotifPerte | null>(null);
+  const [pending, setPending] = useState<{
+    ficheId: string;
+    stage: "perdu" | "en_pause";
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
@@ -384,38 +351,43 @@ export function FichesList({
   function applyStage(
     ficheId: string,
     stage: StageOrPerdu,
-    motifPerte: MotifPerte | null,
+    reason: StageReason = EMPTY_REASON,
   ) {
     const previous = fiches;
     setFiches((list) =>
       list.map((f) =>
-        f.id === ficheId ? { ...f, stage, motif_perte: motifPerte } : f,
+        f.id === ficheId
+          ? {
+              ...f,
+              stage,
+              motif_perte: reason.motif_perte,
+              motif_perte_libre: reason.motif_perte_libre || null,
+              motif_pause: reason.motif_pause,
+              motif_pause_detail: reason.motif_pause_detail || null,
+              pause_cadence_jours: reason.pause_cadence_jours,
+            }
+          : f,
       ),
     );
     setError(null);
-    void changeStage({ fiche_id: ficheId, stage, motif_perte: motifPerte }).then(
-      (result) => {
-        if (!result.ok) {
-          setFiches(previous);
-          setError(
-            result.error === "demo_mode"
-              ? t("app.demoReadOnly")
-              : t("app.error"),
-          );
-        }
-      },
-    );
+    void changeStage({ fiche_id: ficheId, stage, ...reason }).then((result) => {
+      if (!result.ok) {
+        setFiches(previous);
+        setError(
+          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+        );
+      }
+    });
   }
 
   function requestMove(ficheId: string, stage: StageOrPerdu) {
     const fiche = fiches.find((f) => f.id === ficheId);
     if (!fiche || fiche.stage === stage) return;
-    if (stage === "perdu") {
-      setMotif(null);
-      setPendingPerte(ficheId);
+    if (stage === "perdu" || stage === "en_pause") {
+      setPending({ ficheId, stage });
       return;
     }
-    applyStage(ficheId, stage, null);
+    applyStage(ficheId, stage);
   }
 
   function onDragStart(event: DragStartEvent) {
@@ -630,47 +602,20 @@ export function FichesList({
         </ul>
       )}
 
-      {/* Motif de perte — mandatory when dropping into Perdu */}
-      <Dialog
-        open={pendingPerte !== null}
+      {/* Why the fiche left the funnel — mandatory for perdu and en pause */}
+      <StageReasonDialog
+        mode={pending?.stage ?? null}
+        open={pending !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingPerte(null);
+          if (!open) setPending(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("motifsPerte.title")}</DialogTitle>
-            <DialogDescription>{t("motifsPerte.prompt")}</DialogDescription>
-          </DialogHeader>
-          <RadioGroup
-            value={motif ?? ""}
-            onValueChange={(v) => setMotif(v as MotifPerte)}
-            className="gap-2"
-          >
-            {MOTIFS_PERTE.map((m) => (
-              <RadioCard key={m} value={m}>
-                {t(`motifsPerte.${m}`)}
-              </RadioCard>
-            ))}
-          </RadioGroup>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setPendingPerte(null)}>
-              {t("app.cancel")}
-            </Button>
-            <Button
-              disabled={!motif}
-              onClick={() => {
-                if (pendingPerte && motif) {
-                  applyStage(pendingPerte, "perdu", motif);
-                  setPendingPerte(null);
-                }
-              }}
-            >
-              {t("app.confirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onConfirm={(reason) => {
+          if (pending) {
+            applyStage(pending.ficheId, pending.stage, reason);
+            setPending(null);
+          }
+        }}
+      />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -5,8 +6,11 @@ import { cookies } from "next/headers";
  * Untyped on purpose: row types are enforced at the data-layer boundaries
  * (src/lib/data/queries.ts, src/lib/actions/*) via the interfaces in
  * database.types.ts.
+ *
+ * Cached per request — a page issuing six queries used to build (and re-read
+ * cookies for) six clients.
  */
-export async function createClient() {
+export const createClient = cache(async () => {
   const cookieStore = await cookies();
 
   return createServerClient(
@@ -29,4 +33,4 @@ export async function createClient() {
       },
     },
   );
-}
+});

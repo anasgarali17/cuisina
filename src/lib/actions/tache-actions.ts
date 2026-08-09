@@ -26,7 +26,10 @@ export async function toggleTache(
     .update({ statut: parsed.data.done ? "fait" : "a_faire" })
     .eq("id", parsed.data.id);
   if (error) return fail("db");
-  revalidatePath("/", "layout");
+  // The caller already flipped the checkbox optimistically; only the views
+  // that count tasks need to re-render.
+  revalidatePath("/taches");
+  revalidatePath("/ma-journee");
   return succeed(undefined);
 }
 
@@ -60,7 +63,8 @@ export async function createTache(
     cree_par: profile.id,
   });
   if (error) return fail("db");
-  revalidatePath("/", "layout");
+  revalidatePath("/taches");
+  revalidatePath("/ma-journee");
   return succeed(undefined);
 }
 
@@ -85,6 +89,7 @@ export async function updateObjectif(
     .update({ objectif_mensuel: parsed.data.objectif_mensuel })
     .eq("id", parsed.data.profile_id);
   if (error) return fail("db");
-  revalidatePath("/", "layout");
+  revalidatePath("/equipe");
+  revalidatePath("/ma-journee");
   return succeed(undefined);
 }

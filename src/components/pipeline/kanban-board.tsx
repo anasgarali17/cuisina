@@ -19,26 +19,21 @@ import { Link } from "@/i18n/navigation";
 import { changeStage } from "@/lib/actions/fiche-actions";
 import {
   ALL_STAGES,
-  MOTIFS_PERTE,
   ORIGINES,
   STAGES,
-  type MotifPerte,
   type Role,
   type Stage,
   type StageOrPerdu,
 } from "@/lib/domain";
+import {
+  EMPTY_REASON,
+  StageReasonDialog,
+  type StageReason,
+} from "@/components/pipeline/stage-reason-dialog";
 import type { FicheRow, PointDeVenteRow, ProfileRow } from "@/lib/database.types";
 import { cn, formatDT, initials } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,7 +43,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { RadioCard, RadioGroup } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -77,9 +71,10 @@ const EMPTY_FILTERS: Filters = {
   types: { cuisine: false, dressing: false, sdb: false },
 };
 
-interface PendingPerte {
+/** A drop that needs a reason before it can be persisted. */
+interface PendingReason {
   ficheId: string;
-  fromStage: StageOrPerdu;
+  stage: "perdu" | "en_pause";
 }
 
 export function KanbanBoard({
@@ -99,8 +94,7 @@ export function KanbanBoard({
   const [fiches, setFiches] = useState(initialFiches);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [pendingPerte, setPendingPerte] = useState<PendingPerte | null>(null);
-  const [motif, setMotif] = useState<MotifPerte | null>(null);
+  const [pending, setPending] = useState<PendingReason | null>(null);
   const [error, setError] = useState<string | null>(null);
   const columnRefs = useRef(new Map<string, HTMLDivElement>());
 
@@ -151,38 +145,44 @@ export function KanbanBoard({
   function applyStage(
     ficheId: string,
     stage: StageOrPerdu,
-    motifPerte: MotifPerte | null,
+    reason: StageReason = EMPTY_REASON,
   ) {
     const previous = fiches;
     setFiches((list) =>
       list.map((f) =>
-        f.id === ficheId ? { ...f, stage, motif_perte: motifPerte } : f,
+        f.id === ficheId
+          ? {
+              ...f,
+              stage,
+              motif_perte: reason.motif_perte,
+              motif_perte_libre: reason.motif_perte_libre || null,
+              motif_pause: reason.motif_pause,
+              motif_pause_detail: reason.motif_pause_detail || null,
+              pause_cadence_jours: reason.pause_cadence_jours,
+            }
+          : f,
       ),
     );
     setError(null);
-    void changeStage({ fiche_id: ficheId, stage, motif_perte: motifPerte }).then(
-      (result) => {
-        if (!result.ok) {
-          setFiches(previous);
-          setError(
-            result.error === "demo_mode"
-              ? t("app.demoReadOnly")
-              : t("app.error"),
-          );
-        }
-      },
-    );
+    void changeStage({ fiche_id: ficheId, stage, ...reason }).then((result) => {
+      if (!result.ok) {
+        setFiches(previous);
+        setError(
+          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+        );
+      }
+    });
   }
 
   function requestMove(ficheId: string, stage: StageOrPerdu) {
     const fiche = fiches.find((f) => f.id === ficheId);
     if (!fiche || fiche.stage === stage) return;
-    if (stage === "perdu") {
-      setMotif(null);
-      setPendingPerte({ ficheId, fromStage: fiche.stage });
+    // Leaving the funnel always asks why.
+    if (stage === "perdu" || stage === "en_pause") {
+      setPending({ ficheId, stage });
       return;
     }
-    applyStage(ficheId, stage, null);
+    applyStage(ficheId, stage);
   }
 
   function onDragStart(event: DragStartEvent) {
@@ -345,13 +345,27 @@ export function KanbanBoard({
           ))}
         </div>
 
-        {/* Perdu lane */}
-        <PerduLane
-          fiches={byStage.get("perdu") ?? []}
-          profileById={profileById}
-          overdue={overdue}
-          onMove={requestMove}
-        />
+        {/* Out-of-funnel lanes: parked and lost */}
+        <div className="mt-2 grid grid-cols-1 gap-3 lg:grid-cols-2">
+          <OutOfFunnelLane
+            stage="en_pause"
+            title={t("pipeline.pause.pauseLane")}
+            empty={t("pipeline.pause.emptyLane")}
+            fiches={byStage.get("en_pause") ?? []}
+            profileById={profileById}
+            overdue={overdue}
+            onMove={requestMove}
+          />
+          <OutOfFunnelLane
+            stage="perdu"
+            title={t("pipeline.perduLane")}
+            empty={t("pipeline.emptyColumn")}
+            fiches={byStage.get("perdu") ?? []}
+            profileById={profileById}
+            overdue={overdue}
+            onMove={requestMove}
+          />
+        </div>
 
         <DragOverlay>
           {activeFiche && (
@@ -366,47 +380,20 @@ export function KanbanBoard({
         </DragOverlay>
       </DndContext>
 
-      {/* Motif de perte — mandatory */}
-      <Dialog
-        open={pendingPerte !== null}
+      {/* Why the fiche left the funnel — mandatory for perdu and en pause */}
+      <StageReasonDialog
+        mode={pending?.stage ?? null}
+        open={pending !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingPerte(null);
+          if (!open) setPending(null);
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("motifsPerte.title")}</DialogTitle>
-            <DialogDescription>{t("motifsPerte.prompt")}</DialogDescription>
-          </DialogHeader>
-          <RadioGroup
-            value={motif ?? ""}
-            onValueChange={(v) => setMotif(v as MotifPerte)}
-            className="gap-2"
-          >
-            {MOTIFS_PERTE.map((m) => (
-              <RadioCard key={m} value={m}>
-                {t(`motifsPerte.${m}`)}
-              </RadioCard>
-            ))}
-          </RadioGroup>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setPendingPerte(null)}>
-              {t("app.cancel")}
-            </Button>
-            <Button
-              disabled={!motif}
-              onClick={() => {
-                if (pendingPerte && motif) {
-                  applyStage(pendingPerte.ficheId, "perdu", motif);
-                  setPendingPerte(null);
-                }
-              }}
-            >
-              {t("app.confirm")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onConfirm={(reason) => {
+          if (pending) {
+            applyStage(pending.ficheId, pending.stage, reason);
+            setPending(null);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -508,40 +495,52 @@ function KanbanColumn({
   );
 }
 
-function PerduLane({
+/** Parked / lost lanes: drop targets outside the linear funnel. */
+function OutOfFunnelLane({
+  stage,
+  title,
+  empty,
   fiches,
   profileById,
   overdue,
   onMove,
 }: {
+  stage: "en_pause" | "perdu";
+  title: string;
+  empty: string;
   fiches: FicheRow[];
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
 }) {
-  const t = useTranslations();
-  const { setNodeRef, isOver } = useDroppable({ id: "perdu" });
+  const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const isPause = stage === "en_pause";
 
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "mt-2 rounded-3xl border-2 border-dashed border-border p-4 transition-colors",
-        isOver && "border-ambre bg-ambre/5",
+        "rounded-3xl border-2 border-dashed border-border p-4 transition-colors",
+        isOver && (isPause ? "border-primary bg-primary/5" : "border-ambre bg-ambre/5"),
       )}
     >
-      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
-        {t("pipeline.perduLane")}{" "}
+      <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+        <span
+          aria-hidden
+          className={cn(
+            "size-2 rounded-full",
+            isPause ? "bg-primary" : "bg-ambre",
+          )}
+        />
+        {title}
         <span className="rounded-full bg-secondary px-2 font-mono text-xs">
           {fiches.length}
         </span>
       </h2>
       {fiches.length === 0 ? (
-        <p className="text-xs italic text-muted-foreground">
-          {t("pipeline.emptyColumn")}
-        </p>
+        <p className="text-xs italic text-muted-foreground">{empty}</p>
       ) : (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {fiches.map((f) => (
             <DraggableFicheCard
               key={f.id}
@@ -662,10 +661,25 @@ function FicheCard({
         </div>
       )}
 
-      {fiche.motif_perte && (
+      {fiche.stage === "perdu" && (fiche.motif_perte_libre || fiche.motif_perte) && (
         <p className="mt-2 text-[10px] font-medium text-ambre">
-          {t(`motifsPerte.${fiche.motif_perte}`)}
+          {fiche.motif_perte_libre ?? t(`motifsPerte.${fiche.motif_perte}`)}
         </p>
+      )}
+
+      {fiche.stage === "en_pause" && fiche.motif_pause && (
+        <div className="mt-2 space-y-0.5">
+          <p className="text-[10px] font-medium text-primary">
+            {fiche.motif_pause_detail ?? t(`pipeline.pause.${fiche.motif_pause}`)}
+          </p>
+          {fiche.pause_reprise_le && (
+            <p className="text-[10px] text-muted-foreground">
+              {t("pipeline.pause.reprisePrevue", {
+                date: fiche.pause_reprise_le,
+              })}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="mt-3 flex items-center justify-between gap-2">

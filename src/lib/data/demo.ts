@@ -207,6 +207,11 @@ export const demoFiches: FicheRow[] = ficheSeeds.map((s, i) => {
         : (EXIGENCES_VIDES as unknown as FicheRow["exigences"]),
     stage: s.stage,
     motif_perte: s.motifPerte ?? null,
+    motif_perte_libre: null,
+    motif_pause: null,
+    motif_pause_detail: null,
+    pause_cadence_jours: null,
+    pause_reprise_le: null,
     date_prevue_remise_devis:
       s.devisPrevu != null ? dateOnly(daysAhead(s.devisPrevu)) : null,
     date_effective_remise_devis:

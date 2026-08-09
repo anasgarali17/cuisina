@@ -10,24 +10,12 @@ import {
   listProfiles,
 } from "@/lib/data/queries";
 import { formatDate } from "@/lib/dates";
-import { STAGES, type StageOrPerdu } from "@/lib/domain";
+import { STAGE_CHIP, stageProgress } from "@/lib/stage-ui";
 import { cn, formatDT, initials } from "@/lib/utils";
 import { PageHeader } from "@/components/shell/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { ObjectifDialog } from "@/components/equipe/objectif-dialog";
-
-const STAGE_CHIP: Record<StageOrPerdu, string> = {
-  nouveau_contact: "bg-violet-50 text-violet-700 border-violet-200",
-  contacte: "bg-violet-50 text-violet-700 border-violet-200",
-  rdv_showroom: "bg-sky-50 text-sky-700 border-sky-200",
-  metre_releve: "bg-sky-50 text-sky-700 border-sky-200",
-  conception_devis: "bg-sky-50 text-sky-700 border-sky-200",
-  devis_envoye: "bg-amber-50 text-amber-700 border-amber-200",
-  negociation: "bg-amber-50 text-amber-700 border-amber-200",
-  signe: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  perdu: "bg-red-50 text-red-600 border-red-200",
-};
 
 export default async function ShowroomDetailPage({
   params,
@@ -223,12 +211,7 @@ export default async function ShowroomDetailPage({
         ) : (
           <ul className="mt-3 divide-y divide-border">
             {latest.map((f) => {
-              const progress =
-                f.stage === "perdu"
-                  ? 0
-                  : Math.round(
-                      ((STAGES.indexOf(f.stage) + 1) / STAGES.length) * 100,
-                    );
+              const progress = stageProgress(f.stage);
               return (
                 <li key={f.id}>
                   <Link

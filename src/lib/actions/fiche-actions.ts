@@ -11,7 +11,7 @@ import {
   stageChangeSchema,
   suiviSchema,
 } from "@/lib/schemas/fiche";
-import { CANAUX, RELANCE_RESULTATS } from "@/lib/domain";
+import { CADENCE_PAR_MOTIF, CANAUX, RELANCE_RESULTATS } from "@/lib/domain";
 import type { FicheRow } from "@/lib/database.types";
 import { type ActionResult, fail, succeed } from "./result";
 
@@ -99,9 +99,12 @@ export async function saveFiche(
 }
 
 /**
- * Moves a fiche through the pipeline: persists the stage, writes history,
- * generates relance tasks (contacté → J+3 · devis envoyé → J+3 and J+7)
- * and creates the client record on signature.
+ * Moves a fiche through the pipeline and wires the consequences across the
+ * app: history, auto-relances (contacté → J+3 · devis envoyé → J+3/J+7),
+ * the client record on signature, and — for a parked lead — a recurring
+ * WhatsApp check-in at the chosen cadence. Any open auto-relance is closed
+ * when a fiche leaves the active funnel, so Mes Tâches never nags about a
+ * lead that is paused or lost.
  */
 export async function changeStage(
   input: unknown,
@@ -113,24 +116,66 @@ export async function changeStage(
   const profile = await getCurrentProfile();
   if (!profile) return fail("unauthenticated");
 
-  const { fiche_id, stage, motif_perte } = parsed.data;
+  const {
+    fiche_id,
+    stage,
+    motif_perte,
+    motif_perte_libre,
+    motif_pause,
+    motif_pause_detail,
+    pause_cadence_jours,
+    enregistrer_motif,
+  } = parsed.data;
   const supabase = await createClient();
 
   const { data: fiche } = await supabase
     .from("fiches_contact")
-    .select("*")
+    .select(
+      "id, stage, client_nom, tel_mobile, email, adresse_complete, ville, budget_estimatif, conseiller_id, point_de_vente_id, client_id",
+    )
     .eq("id", fiche_id)
     .single();
   if (!fiche) return fail("not_found");
   if (fiche.stage === stage) return succeed(undefined);
 
-  const typedFiche = fiche as FicheRow;
+  const typedFiche = fiche as Pick<
+    FicheRow,
+    | "id"
+    | "stage"
+    | "client_nom"
+    | "tel_mobile"
+    | "email"
+    | "adresse_complete"
+    | "ville"
+    | "budget_estimatif"
+    | "conseiller_id"
+    | "point_de_vente_id"
+    | "client_id"
+  >;
+
+  const today = new Date();
+  const cadence =
+    stage === "en_pause"
+      ? (pause_cadence_jours ??
+        (motif_pause ? CADENCE_PAR_MOTIF[motif_pause] : 14))
+      : null;
 
   const { error: updateError } = await supabase
     .from("fiches_contact")
     .update({
       stage,
       motif_perte: stage === "perdu" ? motif_perte : null,
+      motif_perte_libre:
+        stage === "perdu" && motif_perte_libre.trim()
+          ? motif_perte_libre.trim()
+          : null,
+      motif_pause: stage === "en_pause" ? motif_pause : null,
+      motif_pause_detail:
+        stage === "en_pause" && motif_pause_detail.trim()
+          ? motif_pause_detail.trim()
+          : null,
+      pause_cadence_jours: cadence,
+      pause_reprise_le: cadence ? addDays(today, cadence) : null,
     })
     .eq("id", fiche_id);
   if (updateError) return fail("db");
@@ -143,8 +188,17 @@ export async function changeStage(
   });
   if (histError) return fail("db");
 
+  // Leaving the funnel: close the open auto-relances for this fiche.
+  if (stage === "perdu" || stage === "en_pause") {
+    await supabase
+      .from("taches")
+      .update({ statut: "fait" })
+      .eq("fiche_id", fiche_id)
+      .eq("statut", "a_faire")
+      .eq("auto_generee", true);
+  }
+
   // Auto-generated relances — the digital heir of the paper's five contact lines.
-  const today = new Date();
   const relanceOffsets =
     stage === "contacte" ? [3] : stage === "devis_envoye" ? [3, 7] : [];
   if (relanceOffsets.length > 0) {
@@ -160,6 +214,35 @@ export async function changeStage(
         canal: "appel" as const,
       })),
     );
+  }
+
+  // Parked lead: schedule the first WhatsApp check-in at the cadence.
+  if (stage === "en_pause" && cadence) {
+    await supabase.from("taches").insert({
+      titre: `Reprise de contact — ${typedFiche.client_nom}`,
+      description: motif_pause_detail.trim() || null,
+      echeance: addDays(today, cadence),
+      priorite: "normale" as const,
+      fiche_id,
+      assigne_a: typedFiche.conseiller_id,
+      cree_par: profile.id,
+      auto_generee: true,
+      canal: "whatsapp" as const,
+    });
+  }
+
+  // A reason the conseiller typed by hand, kept for everyone next time.
+  if (enregistrer_motif) {
+    const libelle =
+      stage === "perdu" ? motif_perte_libre.trim() : motif_pause_detail.trim();
+    if (libelle.length >= 2) {
+      await supabase.from("motifs_personnalises").insert({
+        type: stage === "perdu" ? "perte" : "pause",
+        libelle,
+        point_de_vente_id: profile.point_de_vente_id,
+        cree_par: profile.id,
+      });
+    }
   }
 
   if (stage === "signe" && !typedFiche.client_id) {
@@ -185,7 +268,13 @@ export async function changeStage(
     }
   }
 
-  revalidatePath("/", "layout");
+  // Targeted: the board updated optimistically, so only the views that read
+  // this data need re-rendering — not the whole layout tree.
+  revalidatePath("/pipeline");
+  revalidatePath("/fiches");
+  revalidatePath("/ma-journee");
+  revalidatePath("/taches");
+  revalidatePath(`/fiches/${fiche_id}`);
   return succeed(undefined);
 }
 
@@ -207,7 +296,7 @@ export async function updateSuivi(
     })
     .eq("id", parsed.data.fiche_id);
   if (error) return fail("db");
-  revalidatePath("/", "layout");
+  revalidatePath(`/fiches/${parsed.data.fiche_id}`);
   return succeed(undefined);
 }
 
@@ -255,28 +344,62 @@ export async function logRelance(
     await supabase.from("taches").update({ statut: "fait" }).eq("id", tache_id);
   }
 
-  if (prochaine_relance) {
-    const { data: fiche } = await supabase
+  const { data: fiche } = await supabase
+    .from("fiches_contact")
+    .select("client_nom, conseiller_id, stage, pause_cadence_jours")
+    .eq("id", fiche_id)
+    .single();
+
+  if (prochaine_relance && fiche) {
+    await supabase.from("taches").insert({
+      titre: `Relance ${fiche.client_nom}`,
+      echeance: prochaine_relance,
+      priorite: "haute",
+      fiche_id,
+      assigne_a: fiche.conseiller_id,
+      cree_par: profile.id,
+      auto_generee: true,
+      canal,
+    });
+  } else if (fiche?.stage === "en_pause" && fiche.pause_cadence_jours) {
+    // A parked lead keeps its rhythm: log a check-in, the next one is booked.
+    const next = addDays(new Date(), fiche.pause_cadence_jours);
+    await supabase.from("taches").insert({
+      titre: `Reprise de contact — ${fiche.client_nom}`,
+      echeance: next,
+      priorite: "normale",
+      fiche_id,
+      assigne_a: fiche.conseiller_id,
+      cree_par: profile.id,
+      auto_generee: true,
+      canal: "whatsapp",
+    });
+    await supabase
       .from("fiches_contact")
-      .select("client_nom, conseiller_id")
-      .eq("id", fiche_id)
-      .single();
-    if (fiche) {
-      await supabase.from("taches").insert({
-        titre: `Relance ${fiche.client_nom}`,
-        echeance: prochaine_relance,
-        priorite: "haute",
-        fiche_id,
-        assigne_a: fiche.conseiller_id,
-        cree_par: profile.id,
-        auto_generee: true,
-        canal,
-      });
-    }
+      .update({ pause_reprise_le: next })
+      .eq("id", fiche_id);
   }
 
-  revalidatePath("/", "layout");
+  revalidatePath("/taches");
+  revalidatePath("/ma-journee");
+  revalidatePath(`/fiches/${fiche_id}`);
   return succeed({ numero });
+}
+
+/** Reusable custom reasons, newest-used first, for the pipeline dialogs. */
+export async function listMotifsPersonnalises(
+  type: "perte" | "pause",
+): Promise<string[]> {
+  if (!supabaseConfigured()) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("motifs_personnalises")
+    .select("libelle")
+    .eq("type", type)
+    .eq("actif", true)
+    .order("utilisations", { ascending: false })
+    .limit(20);
+  return (data ?? []).map((row) => row.libelle);
 }
 
 const photoSchema = z.object({

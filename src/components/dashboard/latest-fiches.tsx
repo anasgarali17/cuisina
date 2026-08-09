@@ -5,7 +5,8 @@ import { ArrowUpRight } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import type { FicheRow } from "@/lib/database.types";
 import { formatDate } from "@/lib/dates";
-import { STAGES, type StageOrPerdu } from "@/lib/domain";
+import type { StageOrPerdu } from "@/lib/domain";
+import { STAGE_CHIP, stageProgress } from "@/lib/stage-ui";
 import { cn, formatDT } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,17 +15,6 @@ import { stageBadgeVariant } from "@/components/fiches/fiches-list";
 const CELL = "px-4 py-4 align-middle";
 
 /** Tinted stage chips — reference-style pills with a leading dot glyph. */
-const STAGE_CHIP: Record<StageOrPerdu, string> = {
-  nouveau_contact: "bg-violet-50 text-violet-700 border-violet-200",
-  contacte: "bg-violet-50 text-violet-700 border-violet-200",
-  rdv_showroom: "bg-sky-50 text-sky-700 border-sky-200",
-  metre_releve: "bg-sky-50 text-sky-700 border-sky-200",
-  conception_devis: "bg-sky-50 text-sky-700 border-sky-200",
-  devis_envoye: "bg-amber-50 text-amber-700 border-amber-200",
-  negociation: "bg-amber-50 text-amber-700 border-amber-200",
-  signe: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  perdu: "bg-red-50 text-red-600 border-red-200",
-};
 
 function StageChip({ stage, label }: { stage: StageOrPerdu; label: string }) {
   return (
@@ -38,11 +28,6 @@ function StageChip({ stage, label }: { stage: StageOrPerdu; label: string }) {
       {label}
     </span>
   );
-}
-
-function stageProgress(stage: StageOrPerdu): number {
-  if (stage === "perdu") return 0;
-  return Math.round(((STAGES.indexOf(stage) + 1) / STAGES.length) * 100);
 }
 
 function initials(name: string): string {
