@@ -8,6 +8,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import {
   computeScoreCompletude,
   ficheDraftSchema,
+  saveCroquisSchema,
   stageChangeSchema,
   suiviSchema,
 } from "@/lib/schemas/fiche";
@@ -384,6 +385,28 @@ export async function logRelance(
   revalidatePath("/ma-journee");
   revalidatePath(`/fiches/${fiche_id}`);
   return succeed({ numero });
+}
+
+/** Persists the métré sketch drawn on the fiche. */
+export async function saveCroquis(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = saveCroquisSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("fiches_contact")
+    .update({ croquis: parsed.data.croquis })
+    .eq("id", parsed.data.fiche_id);
+  if (error) return fail("db");
+
+  revalidatePath(`/fiches/${parsed.data.fiche_id}`);
+  return succeed(undefined);
 }
 
 /** Reusable custom reasons, newest-used first, for the pipeline dialogs. */

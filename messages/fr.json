@@ -325,6 +325,20 @@
       "exportList": "Télécharger la liste",
       "avancement": "Avancement",
       "score": "Score"
+    },
+    "croquis": {
+      "title": "Croquis du métré",
+      "hint": "Dessinez la pièce, les meubles et notez les cotes. Enregistré avec la fiche.",
+      "crayon": "Crayon",
+      "rectangle": "Rectangle",
+      "cote": "Cote (flèche)",
+      "texte": "Texte",
+      "gomme": "Gomme",
+      "annuler": "Annuler le dernier tracé",
+      "effacer": "Tout effacer",
+      "textePrompt": "Texte à écrire sur le croquis :",
+      "cotePrompt": "Dimension à afficher (ex. 3,20 m) — laisser vide si aucune :",
+      "vide": "Aucun croquis pour cette fiche."
     }
   },
   "canaux": {

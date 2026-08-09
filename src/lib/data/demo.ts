@@ -220,6 +220,7 @@ export const demoFiches: FicheRow[] = ficheSeeds.map((s, i) => {
     remarques_client: null,
     score_completude: s.score,
     photo_fiche_url: null,
+    croquis: null,
     conseiller_id: conseiller.id,
     point_de_vente_id: conseiller.point_de_vente_id ?? demoPdvs[0].id,
     client_id: null,

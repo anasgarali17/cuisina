@@ -68,7 +68,11 @@ export function ClientsList({ clients }: { clients: ClientRow[] }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {filtered.map((client) => (
-          <Link key={client.id} href={`/clients/${client.id}`}>
+          <Link
+            key={client.id}
+            href={`/clients/${client.id}`}
+            prefetch={false}
+          >
             <Card className="card-lift h-full p-5">
               <div className="flex items-center gap-3">
                 <Avatar>

@@ -127,6 +127,7 @@ export function LatestFiches({
                       <div className="min-w-0">
                         <Link
                           href={`/fiches/${f.id}`}
+                          prefetch={false}
                           className="font-semibold hover:underline"
                         >
                           {f.client_nom}

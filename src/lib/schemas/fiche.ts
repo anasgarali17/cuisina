@@ -142,6 +142,61 @@ export const stageChangeSchema = z
     path: ["motif_pause"],
   });
 
+/* — Métré sketch — vector shapes on a 1000×700 logical canvas — */
+
+export const CROQUIS_W = 1000;
+export const CROQUIS_H = 700;
+
+const point = z.object({ x: z.number(), y: z.number() });
+
+export const croquisShapeSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("trait"),
+    points: z.array(point).min(2).max(4000),
+    couleur: z.string().max(20),
+    epaisseur: z.number().min(1).max(20),
+  }),
+  z.object({
+    type: z.literal("rectangle"),
+    x: z.number(),
+    y: z.number(),
+    w: z.number(),
+    h: z.number(),
+    couleur: z.string().max(20),
+    epaisseur: z.number().min(1).max(20),
+  }),
+  z.object({
+    type: z.literal("ligne"),
+    x1: z.number(),
+    y1: z.number(),
+    x2: z.number(),
+    y2: z.number(),
+    couleur: z.string().max(20),
+    epaisseur: z.number().min(1).max(20),
+    /** Cotation shown at the midpoint, e.g. "3,20 m". */
+    cote: z.string().max(24).default(""),
+  }),
+  z.object({
+    type: z.literal("texte"),
+    x: z.number(),
+    y: z.number(),
+    contenu: z.string().min(1).max(80),
+    couleur: z.string().max(20),
+  }),
+]);
+export type CroquisShape = z.infer<typeof croquisShapeSchema>;
+
+export const croquisSchema = z.object({
+  v: z.literal(1).default(1),
+  shapes: z.array(croquisShapeSchema).max(500),
+});
+export type Croquis = z.infer<typeof croquisSchema>;
+
+export const saveCroquisSchema = z.object({
+  fiche_id: z.string().uuid(),
+  croquis: croquisSchema,
+});
+
 /** Adding a reusable custom reason from the pipeline dialogs. */
 export const motifPersonnaliseSchema = z.object({
   type: z.enum(["perte", "pause"]),

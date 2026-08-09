@@ -325,6 +325,20 @@
       "exportList": "Download full list",
       "avancement": "Progress",
       "score": "Score"
+    },
+    "croquis": {
+      "title": "Measurement sketch",
+      "hint": "Draw the room and units, and write the dimensions. Saved with the fiche.",
+      "crayon": "Pen",
+      "rectangle": "Rectangle",
+      "cote": "Dimension (arrow)",
+      "texte": "Text",
+      "gomme": "Eraser",
+      "annuler": "Undo last shape",
+      "effacer": "Clear all",
+      "textePrompt": "Text to write on the sketch:",
+      "cotePrompt": "Dimension to show (e.g. 3.20 m) — leave empty for none:",
+      "vide": "No sketch for this fiche."
     }
   },
   "canaux": {

@@ -50,6 +50,11 @@ export function NavRail() {
                 <Link
                   key={item.key}
                   href={item.href}
+                  // Forced: the sidebar scrolls, and Next only auto-prefetches
+                  // links already in the viewport — which left the bottom
+                  // entries (Conseillers & Points de Vente) paying a full
+                  // round trip before the URL would even commit.
+                  prefetch
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "flex h-10 items-center gap-3 rounded-xl px-3 text-sm",

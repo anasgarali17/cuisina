@@ -611,6 +611,9 @@ function FicheCard({
         <div className="min-w-0">
           <Link
             href={`/fiches/${fiche.id}`}
+            // A board shows dozens of cards; prefetching a full fiche payload
+            // for each one floods the network for a page the user may never open.
+            prefetch={false}
             onPointerDown={(e) => e.stopPropagation()}
             className="block truncate text-sm font-medium hover:underline"
           >

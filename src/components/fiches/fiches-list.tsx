@@ -570,6 +570,7 @@ export function FichesList({
               <li key={f.id}>
                 <Link
                   href={`/fiches/${f.id}`}
+                  prefetch={false}
                   className="card-lift block rounded-2xl border border-border bg-card p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -784,6 +785,7 @@ function DraggableRow({
             <div className="min-w-0">
               <Link
                 href={`/fiches/${fiche.id}`}
+                prefetch={false}
                 onClick={(e) => e.stopPropagation()}
                 className="font-semibold hover:underline"
               >

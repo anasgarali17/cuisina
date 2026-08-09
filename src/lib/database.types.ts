@@ -93,6 +93,7 @@ export interface FicheRow {
   remarques_client: string | null;
   score_completude: number;
   photo_fiche_url: string | null;
+  croquis: Json | null;
   conseiller_id: string;
   point_de_vente_id: string;
   client_id: string | null;

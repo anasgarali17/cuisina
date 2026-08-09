@@ -5,6 +5,7 @@ import { getFicheDetail, listPdvs, listProfiles } from "@/lib/data/queries";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/dates";
+import { CroquisPad } from "@/components/fiches/croquis-pad";
 import { DetailTabs } from "@/components/fiches/detail-tabs";
 import { FichePaper } from "@/components/fiches/fiche-paper";
 import { SuiviPanel } from "@/components/fiches/suivi-panel";
@@ -66,6 +67,10 @@ export default async function FicheDetailPage({
             historique.find((h) => h.stage_to === "signe")?.created_at ?? null
           }
         />
+
+        <div className="mt-4">
+          <CroquisPad ficheId={fiche.id} initial={fiche.croquis} />
+        </div>
       </div>
 
       <div className="no-print space-y-4">
