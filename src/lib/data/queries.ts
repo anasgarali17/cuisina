@@ -74,7 +74,7 @@ function defaultSince(): string {
   return d.toISOString();
 }
 
-const getSnapshot = cache(async (): Promise<Snapshot> => {
+export const getSnapshot = cache(async (): Promise<Snapshot> => {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("app_snapshot", {
     p_since: defaultSince(),
