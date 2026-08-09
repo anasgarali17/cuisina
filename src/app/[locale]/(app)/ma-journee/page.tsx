@@ -518,6 +518,8 @@ export default async function MaJourneePage({
           subtitle={t("dashboard.hub.activiteSub")}
           label7={t("dashboard.hub.jours7")}
           label30={t("dashboard.hub.jours30")}
+          seriesLabel={t("dashboard.hub.fichesJour")}
+          trendLabel={t("dashboard.hub.tendance")}
         />
         <TopClients clients={topClients} />
       </div>

@@ -432,7 +432,9 @@
       "prochainRdv": "Next meeting",
       "fichesActives": "Active fiches",
       "jours7": "7 d",
-      "jours30": "30 d"
+      "jours30": "30 d",
+      "fichesJour": "Fiches / day",
+      "tendance": "Trend"
     }
   },
   "taches": {
@@ -488,7 +490,17 @@
       "chef_showroom": "Showroom manager",
       "direction": "Management",
       "admin": "Administrator"
-    }
+    },
+    "voirDetail": "View showroom",
+    "equipeTitle": "Showroom team",
+    "perf": "Performance",
+    "caCumule": "Signed revenue (month)",
+    "tauxConversion": "Conversion",
+    "panierMoyen": "Average deal",
+    "fichesRecentes": "Recent fiches",
+    "aucuneFiche": "No fiche for this showroom yet.",
+    "depuis": "Open since",
+    "activite": "Showroom activity"
   },
   "rdv": {
     "types": {

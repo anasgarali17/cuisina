@@ -432,7 +432,9 @@
       "prochainRdv": "Prochain RDV",
       "fichesActives": "Fiches actives",
       "jours7": "7 j",
-      "jours30": "30 j"
+      "jours30": "30 j",
+      "fichesJour": "Fiches / jour",
+      "tendance": "Tendance"
     }
   },
   "taches": {
@@ -488,7 +490,17 @@
       "chef_showroom": "Chef de showroom",
       "direction": "Direction",
       "admin": "Administrateur"
-    }
+    },
+    "voirDetail": "Voir le showroom",
+    "equipeTitle": "Équipe du showroom",
+    "perf": "Performance",
+    "caCumule": "CA signé (mois)",
+    "tauxConversion": "Conversion",
+    "panierMoyen": "Panier moyen",
+    "fichesRecentes": "Fiches récentes",
+    "aucuneFiche": "Aucune fiche pour ce showroom pour l'instant.",
+    "depuis": "Ouvert depuis",
+    "activite": "Activité du showroom"
   },
   "rdv": {
     "types": {

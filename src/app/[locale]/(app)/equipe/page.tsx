@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import {
   listFiches,
@@ -64,9 +65,12 @@ export default async function EquipePage() {
             <Card key={pdv.id} className="p-5">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h2 className="font-display text-lg font-semibold">
+                  <Link
+                    href={`/equipe/${pdv.id}`}
+                    className="font-display text-lg font-semibold hover:underline"
+                  >
                     {pdv.nom}
-                  </h2>
+                  </Link>
                   <p className="text-xs text-muted-foreground">
                     {pdv.ville}
                     {pdv.telephone && (
@@ -77,6 +81,12 @@ export default async function EquipePage() {
                     )}
                   </p>
                 </div>
+                <Link
+                  href={`/equipe/${pdv.id}`}
+                  className="shrink-0 rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                >
+                  {t("equipe.voirDetail")}
+                </Link>
               </div>
 
               <dl className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-secondary/60 p-3">

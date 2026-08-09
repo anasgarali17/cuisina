@@ -432,7 +432,9 @@
       "prochainRdv": "الموعد القادم",
       "fichesActives": "Fiches نشطة",
       "jours7": "7 أيام",
-      "jours30": "30 يومًا"
+      "jours30": "30 يومًا",
+      "fichesJour": "Fiches / يوم",
+      "tendance": "الاتجاه"
     }
   },
   "taches": {
@@ -488,7 +490,17 @@
       "chef_showroom": "رئيس الـ Showroom",
       "direction": "الإدارة",
       "admin": "مسؤول النظام"
-    }
+    },
+    "voirDetail": "عرض الـ Showroom",
+    "equipeTitle": "فريق الـ Showroom",
+    "perf": "الأداء",
+    "caCumule": "الإيرادات الموقّعة (الشهر)",
+    "tauxConversion": "التحويل",
+    "panierMoyen": "متوسط الصفقة",
+    "fichesRecentes": "أحدث الـ Fiches",
+    "aucuneFiche": "لا توجد Fiches لهذا الـ Showroom بعد.",
+    "depuis": "مفتوح منذ",
+    "activite": "نشاط الـ Showroom"
   },
   "rdv": {
     "types": {

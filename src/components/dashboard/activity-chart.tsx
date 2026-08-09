@@ -1,15 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Area,
-  AreaChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { Card } from "@/components/ui/card";
+import { CurveChart, type CurvePoint } from "@/components/ui/curve-chart";
 import { cn } from "@/lib/utils";
 
 export interface ActivityPoint {
@@ -19,8 +12,8 @@ export interface ActivityPoint {
 }
 
 /**
- * Showroom activity — dashed violet area of fiches created per day, with a
- * 7 / 30 day pill toggle. Labels arrive translated via props.
+ * Showroom activity — price-chart-style curve of fiches created per day with
+ * its moving-average trend, plus a 7 / 30 day pill toggle.
  */
 export function ActivityChart({
   data,
@@ -28,15 +21,21 @@ export function ActivityChart({
   subtitle,
   label7,
   label30,
+  seriesLabel,
+  trendLabel,
 }: {
   data: ActivityPoint[];
   title: string;
   subtitle: string;
   label7: string;
   label30: string;
+  seriesLabel: string;
+  trendLabel: string;
 }) {
   const [range, setRange] = useState<7 | 30>(30);
-  const shown = data.slice(-range);
+  const curve: CurvePoint[] = data
+    .slice(-range)
+    .map((p) => ({ label: p.label, full: p.d, value: p.v }));
 
   return (
     <Card className="p-6">
@@ -66,51 +65,12 @@ export function ActivityChart({
       </div>
 
       <div className="mt-4">
-        <ResponsiveContainer width="100%" height={240}>
-          <AreaChart
-            data={shown}
-            margin={{ top: 8, right: 8, bottom: 0, left: 8 }}
-          >
-            <defs>
-              <linearGradient id="activity-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7c3aed" stopOpacity={0.28} />
-                <stop offset="100%" stopColor="#7c3aed" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis
-              dataKey="label"
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
-              minTickGap={24}
-            />
-            <YAxis hide allowDecimals={false} />
-            <Tooltip
-              cursor={{ stroke: "var(--brume)" }}
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null;
-                const point = payload[0].payload as ActivityPoint;
-                return (
-                  <div className="rounded-lg border border-border bg-card px-2 py-1 text-xs shadow-sm">
-                    <span className="text-muted-foreground">{point.d}</span>{" "}
-                    <span className="font-mono font-medium">{point.v}</span>
-                  </div>
-                );
-              }}
-            />
-            <Area
-              type="monotone"
-              dataKey="v"
-              stroke="#7c3aed"
-              strokeWidth={2}
-              strokeDasharray="6 4"
-              fill="url(#activity-fill)"
-              dot={false}
-              activeDot={{ r: 3 }}
-              isAnimationActive={false}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <CurveChart
+          data={curve}
+          seriesLabel={seriesLabel}
+          trendLabel={trendLabel}
+          trendWindow={range === 7 ? 3 : 7}
+        />
       </div>
     </Card>
   );
