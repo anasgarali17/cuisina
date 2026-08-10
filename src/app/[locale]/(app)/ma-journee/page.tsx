@@ -511,7 +511,7 @@ export default async function MaJourneePage({
       </div>
 
       {/* — Activity + top clients — */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <ActivityChart
           data={fiches30d}
           title={t("dashboard.hub.activite")}
@@ -525,7 +525,7 @@ export default async function MaJourneePage({
       </div>
 
       {/* — Pipeline + échéances — */}
-      <div className="mt-4 grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <PipelineCounters counts={pipelineCounts} total={fiches.length} />
         <Echeances items={echeances} locale={locale} />
       </div>

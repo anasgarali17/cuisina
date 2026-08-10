@@ -1,18 +1,31 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowUpRight } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronsUpDown,
+  MoreVertical,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import type { FicheRow } from "@/lib/database.types";
 import { formatDate } from "@/lib/dates";
 import type { StageOrPerdu } from "@/lib/domain";
-import { STAGE_CHIP, stageProgress } from "@/lib/stage-ui";
+import { STAGE_CHIP } from "@/lib/stage-ui";
 import { cn, formatDT } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { stageBadgeVariant } from "@/components/fiches/fiches-list";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const CELL = "px-4 py-4 align-middle";
+const HEAD = "px-4 py-3 text-start text-xs font-medium uppercase tracking-wide";
 
 /** Tinted stage chips — reference-style pills with a leading dot glyph. */
 
@@ -40,7 +53,17 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-/** The reference's bottom strip: filter pills + an airy borderless table. */
+/** A header label with the reference's sort affordance (decorative only). */
+function SortableHead({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {label}
+      <ChevronsUpDown aria-hidden="true" className="size-3 opacity-40" />
+    </span>
+  );
+}
+
+/** The reference's bottom strip: filter pills + a "Recent Transaction" card. */
 export function LatestFiches({
   fiches,
   conseillers,
@@ -52,13 +75,51 @@ export function LatestFiches({
 }) {
   const t = useTranslations();
   const locale = useLocale();
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return fiches;
+    return fiches.filter(
+      (f) =>
+        f.client_nom.toLowerCase().includes(q) ||
+        f.reference.toLowerCase().includes(q),
+    );
+  }, [fiches, query]);
+
+  const allVisibleSelected =
+    visible.length > 0 && visible.every((f) => selected.has(f.id));
+  const someVisibleSelected =
+    !allVisibleSelected && visible.some((f) => selected.has(f.id));
+  const headerChecked: boolean | "indeterminate" = someVisibleSelected
+    ? "indeterminate"
+    : allVisibleSelected;
+
+  function toggleAll(checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const f of visible) {
+        if (checked) next.add(f.id);
+        else next.delete(f.id);
+      }
+      return next;
+    });
+  }
+
+  function toggleOne(id: string, checked: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
 
   return (
     <div>
+      {/* The card below carries the heading; these are just quick links. */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <h2 className="me-2 font-display text-lg font-semibold">
-          {t("dashboard.hub.dernieresFiches")}
-        </h2>
         <Link
           href="/fiches"
           className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary"
@@ -82,49 +143,103 @@ export function LatestFiches({
       </div>
 
       <Card className="hidden overflow-hidden md:block">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
-              <th className={cn(CELL, "text-start font-medium")}>
-                {t("fiches.columns.client")}
-              </th>
-              <th className={cn(CELL, "text-start font-medium")}>
-                {t("fiches.columns.projet")}
-              </th>
-              <th className={cn(CELL, "text-start font-medium")}>
-                {t("fiches.columns.budget")}
-              </th>
-              <th className={cn(CELL, "text-start font-medium")}>
-                {t("fiches.columns.stage")}
-              </th>
-              <th className={cn(CELL, "text-start font-medium")}>
-                {t("fiches.columns.conseiller")}
-              </th>
-              <th className={cn(CELL, "text-start font-medium")}>
-                {t("fiches.table.avancement")}
-              </th>
-              <th className={cn(CELL, "text-start font-medium")}>
-                {t("fiches.columns.date")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {fiches.map((f) => {
-              const progress = stageProgress(f.stage);
-              return (
-                <tr
-                  key={f.id}
-                  className="border-b border-border transition-colors last:border-b-0 hover:bg-secondary/40"
-                >
-                  <td className={CELL}>
-                    <div className="flex items-center gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-semibold"
-                      >
-                        {initials(f.client_nom)}
-                      </span>
-                      <div className="min-w-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <h3 className="font-display text-lg font-semibold">
+            {t("dashboard.hub.dernieresFiches")}
+          </h3>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("fiches.table.rechercher")}
+                aria-label={t("fiches.table.rechercher")}
+                className="h-9 w-56 rounded-xl border border-transparent bg-secondary/60 ps-9 pe-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:border-ring"
+              />
+            </div>
+            <button
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-xl border border-border px-3 text-sm hover:bg-secondary"
+            >
+              <SlidersHorizontal aria-hidden="true" className="size-4" />
+              {t("fiches.table.filtrer")}
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
+                <th className={cn(HEAD, "w-10")}>
+                  <Checkbox
+                    checked={headerChecked}
+                    onCheckedChange={(c) => toggleAll(c === true)}
+                    aria-label={t("fiches.columns.client")}
+                  />
+                </th>
+                <th className={HEAD}>
+                  <SortableHead label={t("fiches.reference")} />
+                </th>
+                <th className={HEAD}>
+                  <SortableHead label={t("fiches.columns.client")} />
+                </th>
+                <th className={HEAD}>
+                  <SortableHead label={t("fiches.columns.conseiller")} />
+                </th>
+                <th className={HEAD}>
+                  <SortableHead label={t("fiches.columns.date")} />
+                </th>
+                <th className={HEAD}>
+                  <SortableHead label={t("fiches.columns.budget")} />
+                </th>
+                <th className={HEAD}>
+                  <SortableHead label={t("fiches.columns.stage")} />
+                </th>
+                <th className={cn(HEAD, "w-12")}>
+                  <span className="sr-only">{t("fiches.table.actions")}</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((f) => {
+                const isSelected = selected.has(f.id);
+                return (
+                  <tr
+                    key={f.id}
+                    className={cn(
+                      "border-b border-border transition-colors last:border-b-0 hover:bg-secondary/40",
+                      isSelected && "bg-primary/5",
+                    )}
+                  >
+                    <td className={CELL}>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(c) => toggleOne(f.id, c === true)}
+                        aria-label={f.client_nom}
+                      />
+                    </td>
+                    <td
+                      className={cn(
+                        CELL,
+                        "whitespace-nowrap font-mono text-xs text-muted-foreground",
+                      )}
+                    >
+                      {f.reference}
+                    </td>
+                    <td className={CELL}>
+                      <div className="flex items-center gap-3">
+                        <span
+                          aria-hidden="true"
+                          className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-semibold"
+                        >
+                          {initials(f.client_nom)}
+                        </span>
                         <Link
                           href={`/fiches/${f.id}`}
                           prefetch={false}
@@ -132,65 +247,54 @@ export function LatestFiches({
                         >
                           {f.client_nom}
                         </Link>
-                        <p className="font-mono text-xs text-muted-foreground">
-                          {f.reference}
-                        </p>
                       </div>
-                    </div>
-                  </td>
-                  <td className={CELL}>
-                    {f.nb_cuisines > 0 &&
-                      t("pipeline.projectChips.cuisine", { n: f.nb_cuisines })}
-                    {f.nb_dressings > 0 && (
-                      <>
-                        {f.nb_cuisines > 0 && " · "}
-                        {t("pipeline.projectChips.dressing", {
-                          n: f.nb_dressings,
-                        })}
-                      </>
-                    )}
-                    {f.nb_sdb > 0 && (
-                      <>
-                        {(f.nb_cuisines > 0 || f.nb_dressings > 0) && " · "}
-                        {t("pipeline.projectChips.sdb", { n: f.nb_sdb })}
-                      </>
-                    )}
-                  </td>
-                  <td className={cn(CELL, "font-semibold tabular-nums")}>
-                    {formatDT(f.budget_estimatif)}
-                  </td>
-                  <td className={CELL}>
-                    <StageChip stage={f.stage} label={t(`stages.${f.stage}`)} />
-                  </td>
-                  <td className={CELL}>
-                    {conseillers[f.conseiller_id] ?? "—"}
-                  </td>
-                  <td className={CELL}>
-                    <div className="min-w-24">
-                      <span className="font-bold tabular-nums">
-                        {progress}
-                        <span className="text-xs font-medium text-muted-foreground">
-                          %
-                        </span>
-                      </span>
-                      <div className="mt-1.5 h-1.5 w-full rounded-full bg-secondary">
-                        <div
-                          className="h-full rounded-full bg-emerald-500"
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td
-                    className={cn(CELL, "whitespace-nowrap text-muted-foreground")}
-                  >
-                    {formatDate(f.updated_at, "d MMM", locale)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                    </td>
+                    <td className={cn(CELL, "text-muted-foreground")}>
+                      {conseillers[f.conseiller_id] ?? "—"}
+                    </td>
+                    <td
+                      className={cn(
+                        CELL,
+                        "whitespace-nowrap text-muted-foreground",
+                      )}
+                    >
+                      {formatDate(f.updated_at, "d MMM yyyy", locale)}
+                    </td>
+                    <td className={cn(CELL, "font-semibold tabular-nums")}>
+                      {formatDT(f.budget_estimatif)}
+                    </td>
+                    <td className={CELL}>
+                      <StageChip
+                        stage={f.stage}
+                        label={t(`stages.${f.stage}`)}
+                      />
+                    </td>
+                    <td className={CELL}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label={t("fiches.table.actions")}
+                            className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-secondary"
+                          >
+                            <MoreVertical aria-hidden="true" className="size-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/fiches/${f.id}`} prefetch={false}>
+                              {t("app.seeAll")}
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {/* Mobile: compact rows */}
@@ -209,9 +313,7 @@ export function LatestFiches({
                   {formatDT(f.budget_estimatif)}
                 </span>
               </span>
-              <Badge variant={stageBadgeVariant(f.stage)}>
-                {t(`stages.${f.stage}`)}
-              </Badge>
+              <StageChip stage={f.stage} label={t(`stages.${f.stage}`)} />
             </Link>
           </li>
         ))}
