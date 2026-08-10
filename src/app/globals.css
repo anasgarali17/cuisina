@@ -15,29 +15,29 @@
   --vert-plan: #2f7d53;
   --ambre: #d08a2c;
 
-  /* — Semantic: light SaaS, violet primary — */
-  --background: hsl(0 0% 100%);
-  --foreground: hsl(224 15% 12%);
+  /* — Semantic: the house colours — cream canvas, white cards, Cuisina red — */
+  --background: hsl(40 44% 98%);
+  --foreground: hsl(24 10% 12%);
   --card: hsl(0 0% 100%);
-  --card-foreground: hsl(224 15% 12%);
+  --card-foreground: hsl(24 10% 12%);
   --popover: hsl(0 0% 100%);
-  --popover-foreground: hsl(224 15% 12%);
-  --primary: hsl(262 83% 58%);
+  --popover-foreground: hsl(24 10% 12%);
+  --primary: hsl(356 83% 41%);
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(0 0% 96%);
-  --secondary-foreground: hsl(0 0% 9%);
-  --muted: hsl(0 0% 96%);
-  --muted-foreground: hsl(0 0% 45.1%);
-  --accent: hsl(0 0% 96%);
-  --accent-foreground: hsl(0 0% 9%);
-  --destructive: hsl(0 84.2% 60.2%);
-  --border: hsl(220 14% 91%);
-  --input: hsl(220 14% 89%);
-  --ring: hsl(262 83% 58%);
+  --secondary: hsl(36 25% 95.5%);
+  --secondary-foreground: hsl(24 10% 12%);
+  --muted: hsl(36 25% 95.5%);
+  --muted-foreground: hsl(30 6% 45%);
+  --accent: hsl(36 25% 95.5%);
+  --accent-foreground: hsl(24 10% 12%);
+  /* Kept a touch brighter than --primary so a delete never reads as a CTA. */
+  --destructive: hsl(0 72% 51%);
+  --border: hsl(35 18% 90%);
+  --input: hsl(35 18% 88%);
+  --ring: hsl(356 83% 41%);
   --success: var(--vert-plan);
   --warning: var(--ambre);
 
-  --violet: hsl(262 83% 58%);
   --radius: 1rem;
 }
 
@@ -194,11 +194,11 @@ body {
   background: var(--card);
 }
 
-/* — buildingfit-style vivid hero + pastel stat cards — */
+/* — Hero + pastel stat cards, in the house red — */
 .hero-gradient {
   background:
-    radial-gradient(60% 120% at 85% 10%, rgba(255, 255, 255, 0.16), transparent 55%),
-    linear-gradient(115deg, #6d28d9 0%, #7c3aed 48%, #8b5cf6 100%);
+    radial-gradient(60% 120% at 85% 10%, rgba(255, 255, 255, 0.18), transparent 55%),
+    linear-gradient(115deg, #7d0a13 0%, #c1121f 52%, #e0454f 100%);
 }
 
 .tone-green {
@@ -211,10 +211,10 @@ body {
   background: linear-gradient(150deg, #eff6ff, #ffffff 80%);
   border-color: #bfdbfe;
 }
-.tone-violet {
-  --tone: #7c3aed;
-  background: linear-gradient(150deg, #f5f3ff, #ffffff 80%);
-  border-color: #ddd6fe;
+.tone-rouge {
+  --tone: #c1121f;
+  background: linear-gradient(150deg, #fdf2f2, #ffffff 80%);
+  border-color: #f6cdcf;
 }
 .tone-amber {
   --tone: #b45309;
@@ -228,7 +228,7 @@ body {
 }
 .dark .tone-green,
 .dark .tone-blue,
-.dark .tone-violet,
+.dark .tone-rouge,
 .dark .tone-amber,
 .dark .tone-orange {
   background: var(--card);

@@ -23,7 +23,7 @@ interface HeroBannerProps {
 }
 
 /**
- * Vivid violet hero banner (buildingfit reference): headline CA with delta
+ * Hero banner in the house red: headline CA with delta
  * chip, 12-month sparkline tile and pipeline-value tile on frosted glass.
  * All strings arrive translated via props — this component renders only.
  */

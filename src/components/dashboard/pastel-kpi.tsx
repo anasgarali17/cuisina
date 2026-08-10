@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export type PastelTone = "green" | "blue" | "violet" | "amber" | "orange";
+export type PastelTone = "green" | "blue" | "rouge" | "amber" | "orange";
 
 const TONE_CLASS: Record<PastelTone, string> = {
   green: "tone-green",
   blue: "tone-blue",
-  violet: "tone-violet",
+  rouge: "tone-rouge",
   amber: "tone-amber",
   orange: "tone-orange",
 };

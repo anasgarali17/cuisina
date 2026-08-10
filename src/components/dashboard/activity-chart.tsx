@@ -20,8 +20,12 @@ export interface ActivityPoint {
   v: number;
 }
 
-/** Main series violet, trend amber — kept in sync with the legend dots. */
-const MAIN = "#7c3aed";
+/**
+ * Main series in the house red, trend in amber — kept in sync with the legend
+ * dots. The two carry a ~19-point lightness gap plus solid-vs-dashed strokes,
+ * so they stay separable without relying on hue alone.
+ */
+const MAIN = "#c1121f";
 const TREND = "#f0a842";
 
 interface Row {

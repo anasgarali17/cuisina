@@ -54,10 +54,12 @@ interface CategoryStyle {
 }
 
 export const CATEGORY_STYLES: Record<EventCategory, CategoryStyle> = {
+  // The showroom visit is the house's signature appointment, so it carries the
+  // brand red; every other category stays a distinct hue around it.
   showroom: {
-    chip: "bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200",
-    dot: "bg-violet-500",
-    block: "bg-violet-100 text-violet-900 border-violet-300 dark:bg-violet-500/25 dark:text-violet-100 dark:border-violet-400/40",
+    chip: "bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-200",
+    dot: "bg-red-600",
+    block: "bg-red-100 text-red-900 border-red-300 dark:bg-red-500/25 dark:text-red-100 dark:border-red-400/40",
   },
   metre: {
     chip: "bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-200",
@@ -79,10 +81,12 @@ export const CATEGORY_STYLES: Record<EventCategory, CategoryStyle> = {
     dot: "bg-slate-500",
     block: "bg-slate-200 text-slate-900 border-slate-400 dark:bg-slate-400/25 dark:text-slate-100 dark:border-slate-400/40",
   },
+  // Moved off rose so it cannot be mistaken for a showroom visit now that
+  // showroom owns the red; warm stone keeps it distinct from cool interne.
   tache: {
-    chip: "bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200",
-    dot: "bg-rose-500",
-    block: "bg-rose-100 text-rose-900 border-rose-300 dark:bg-rose-500/25 dark:text-rose-100 dark:border-rose-400/40",
+    chip: "bg-stone-200 text-stone-800 dark:bg-stone-400/20 dark:text-stone-200",
+    dot: "bg-stone-500",
+    block: "bg-stone-200 text-stone-900 border-stone-400 dark:bg-stone-400/25 dark:text-stone-100 dark:border-stone-400/40",
   },
 };
 

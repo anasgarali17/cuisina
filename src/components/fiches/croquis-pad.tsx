@@ -35,7 +35,7 @@ const PRESETS = [
   "#2563eb",
   "#059669",
   "#d08a2c",
-  "#7c3aed",
+  "#475569",
   "#ffffff",
 ] as const;
 

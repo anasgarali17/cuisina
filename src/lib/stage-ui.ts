@@ -1,9 +1,16 @@
 import { STAGES, type StageOrPerdu } from "@/lib/domain";
 
-/** Tinted chip classes per stage — one source for every table and board. */
+/**
+ * Tinted chip classes per stage — one source for every table and board.
+ *
+ * Red is reserved for `perdu`: it is the one state that must read as a stop.
+ * The opening stages therefore take the brand's warm cream rather than another
+ * red, so the funnel still runs cream → blue → amber → green with a single red
+ * exit.
+ */
 export const STAGE_CHIP: Record<StageOrPerdu, string> = {
-  nouveau_contact: "bg-violet-50 text-violet-700 border-violet-200",
-  contacte: "bg-violet-50 text-violet-700 border-violet-200",
+  nouveau_contact: "bg-stone-100 text-stone-700 border-stone-200",
+  contacte: "bg-stone-100 text-stone-700 border-stone-200",
   rdv_showroom: "bg-sky-50 text-sky-700 border-sky-200",
   metre_releve: "bg-sky-50 text-sky-700 border-sky-200",
   conception_devis: "bg-sky-50 text-sky-700 border-sky-200",

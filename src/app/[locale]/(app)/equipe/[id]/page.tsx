@@ -96,8 +96,8 @@ export default async function ShowroomDetailPage({
           style={{
             backgroundImage: [
               "linear-gradient(to top, rgba(23,23,23,0.85) 0%, rgba(23,23,23,0.25) 55%, rgba(23,23,23,0.35) 100%)",
-              "radial-gradient(70% 90% at 80% 10%, rgba(124,58,237,0.55), transparent 65%)",
-              "linear-gradient(120deg, #312e81 0%, #6d28d9 55%, #a78bfa 100%)",
+              "radial-gradient(70% 90% at 80% 10%, rgba(193,18,31,0.55), transparent 65%)",
+              "linear-gradient(120deg, #5c0a11 0%, #a30f1a 55%, #e0454f 100%)",
             ].join(", "),
           }}
         >

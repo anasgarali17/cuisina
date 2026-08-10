@@ -20,7 +20,7 @@ function wordInitials(nom: string): string {
   );
 }
 
-/** Top 5 clients by cumulated revenue, with violet progress tracks. */
+/** Top 5 clients by cumulated revenue, with red progress tracks. */
 export async function TopClients({ clients }: { clients: TopClientItem[] }) {
   const t = await getTranslations();
   const max = clients.reduce((m, c) => Math.max(m, c.ca), 0);

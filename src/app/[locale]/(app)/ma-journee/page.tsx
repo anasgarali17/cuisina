@@ -466,7 +466,7 @@ export default async function MaJourneePage({
           icon={<FileClock className="size-5" />}
         />
         <PastelKpi
-          tone="violet"
+          tone="rouge"
           title={t("dashboard.kpi.tauxConversion")}
           value={`${conversion}%`}
           hint={t("dashboard.kpi.conversionWindow")}
@@ -492,7 +492,7 @@ export default async function MaJourneePage({
           icon={<CalendarDays className="size-5" />}
         />
         <PastelKpi
-          tone="violet"
+          tone="rouge"
           title={t("dashboard.hub.topClient")}
           value={
             <span className="block truncate text-2xl">
