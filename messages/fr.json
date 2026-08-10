@@ -72,14 +72,6 @@
       "title": "Devis & Factures",
       "description": "Génération et numérotation des devis et factures, directement depuis la fiche contact, avec suivi des versions."
     },
-    "agendaEquipe": {
-      "title": "Agenda Équipe",
-      "description": "Le calendrier partagé du showroom : rendez-vous, métrés, livraisons et poses de toute l'équipe."
-    },
-    "agendaClient": {
-      "title": "Agenda Client",
-      "description": "La ligne de vie de chaque projet client : chaque rendez-vous, chaque étape, sur une seule frise."
-    },
     "sequences": {
       "title": "Séquences WhatsApp",
       "description": "Des relances WhatsApp automatiques déclenchées par les étapes du pipeline. Vous gardez la main, l'outil n'oublie jamais."
@@ -324,7 +316,10 @@
     "table": {
       "exportList": "Télécharger la liste",
       "avancement": "Avancement",
-      "score": "Score"
+      "score": "Score",
+      "actions": "Actions",
+      "filtrer": "Filtrer",
+      "rechercher": "Rechercher…"
     },
     "croquis": {
       "title": "Croquis du métré",
@@ -552,5 +547,46 @@
       "pose": "Pose",
       "interne": "Interne"
     }
+  },
+  "agenda": {
+    "equipe": {
+      "title": "Agenda Équipe",
+      "subtitle": "Le calendrier partagé du showroom : rendez-vous, métrés, livraisons, poses, réunions internes et échéances de tâches."
+    },
+    "client": {
+      "title": "Agenda Client",
+      "subtitle": "Tous les rendez-vous auxquels le client participe : showroom, métré, livraison et pose."
+    },
+    "newEvent": "Nouvel événement",
+    "previous": "Période précédente",
+    "next": "Période suivante",
+    "views": {
+      "mois": "Mois",
+      "semaine": "Semaine",
+      "jour": "Jour"
+    },
+    "allAdvisors": "Toute l’équipe",
+    "allTypes": "Tous les types",
+    "taskType": "Tâche",
+    "allDay": "Journée",
+    "eventCount": "{count, plural, =0 {Aucun événement} one {# événement} other {# événements}}",
+    "emptyDay": "Rien de prévu ce jour-là.",
+    "dragHint": "Glissez un événement sur un autre jour pour le déplacer.",
+    "kindRdv": "Rendez-vous",
+    "kindTache": "Tâche",
+    "fTitle": "Intitulé",
+    "fType": "Type de rendez-vous",
+    "fDate": "Date",
+    "fStart": "Heure de début",
+    "fDuration": "Durée",
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "fDueDate": "Échéance",
+    "fPriority": "Priorité",
+    "fOwner": "Assigné à",
+    "fFiche": "Fiche contact",
+    "noFiche": "Aucune fiche",
+    "fPdv": "Point de vente",
+    "fPlace": "Lieu",
+    "fNotes": "Notes"
   }
 }

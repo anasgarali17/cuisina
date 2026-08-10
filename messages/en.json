@@ -72,14 +72,6 @@
       "title": "Devis & Invoices",
       "description": "Generate and number Devis and invoices straight from the Fiche Contact, with version tracking."
     },
-    "agendaEquipe": {
-      "title": "Team Agenda",
-      "description": "The Showroom's shared calendar: appointments, Métrés, deliveries and installations for the whole team."
-    },
-    "agendaClient": {
-      "title": "Client Agenda",
-      "description": "The lifeline of every client project: each appointment, each step, on a single timeline."
-    },
     "sequences": {
       "title": "WhatsApp Sequences",
       "description": "Automatic WhatsApp follow-ups triggered by pipeline stages. You stay in control — the tool never forgets."
@@ -324,7 +316,10 @@
     "table": {
       "exportList": "Download full list",
       "avancement": "Progress",
-      "score": "Score"
+      "score": "Score",
+      "actions": "Actions",
+      "filtrer": "Filter",
+      "rechercher": "Search…"
     },
     "croquis": {
       "title": "Measurement sketch",
@@ -552,5 +547,46 @@
       "pose": "Installation",
       "interne": "Internal"
     }
+  },
+  "agenda": {
+    "equipe": {
+      "title": "Team Calendar",
+      "subtitle": "The showroom’s shared calendar: appointments, measurements, deliveries, installations, internal meetings and task due dates."
+    },
+    "client": {
+      "title": "Client Calendar",
+      "subtitle": "Every appointment the client takes part in: showroom, measurement, delivery and installation."
+    },
+    "newEvent": "New event",
+    "previous": "Previous period",
+    "next": "Next period",
+    "views": {
+      "mois": "Month",
+      "semaine": "Week",
+      "jour": "Day"
+    },
+    "allAdvisors": "Whole team",
+    "allTypes": "All types",
+    "taskType": "Task",
+    "allDay": "All day",
+    "eventCount": "{count, plural, =0 {No events} one {# event} other {# events}}",
+    "emptyDay": "Nothing scheduled for this day.",
+    "dragHint": "Drag an event onto another day to move it.",
+    "kindRdv": "Appointment",
+    "kindTache": "Task",
+    "fTitle": "Title",
+    "fType": "Appointment type",
+    "fDate": "Date",
+    "fStart": "Start time",
+    "fDuration": "Duration",
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "fDueDate": "Due date",
+    "fPriority": "Priority",
+    "fOwner": "Assigned to",
+    "fFiche": "Contact record",
+    "noFiche": "No record",
+    "fPdv": "Point of sale",
+    "fPlace": "Location",
+    "fNotes": "Notes"
   }
 }

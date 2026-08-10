@@ -355,47 +355,66 @@ export const demoTaches: TacheRow[] = [
   },
 ];
 
-export const demoRdv: RendezVousRow[] = [
-  {
-    id: "00000000-0000-4000-8000-000000000600",
-    titre: "RDV showroom — Mohamed Ben Romdhane",
-    type: "showroom",
-    debut: daysAhead(0, 10),
-    fin: daysAhead(0, 11),
-    fiche_id: demoFiches[0].id,
-    client_id: null,
-    conseiller_id: demoCurrentProfile.id,
-    point_de_vente_id: demoPdvs[0].id,
-    lieu: "Showroom Tunis",
-    notes: null,
-    created_at: daysAgo(2),
-  },
-  {
-    id: "00000000-0000-4000-8000-000000000601",
-    titre: "Métré — Youssef Mansouri",
-    type: "metre",
-    debut: daysAhead(0, 15),
-    fin: daysAhead(0, 16),
-    fiche_id: demoFiches[4].id,
-    client_id: null,
-    conseiller_id: demoCurrentProfile.id,
-    point_de_vente_id: demoPdvs[0].id,
-    lieu: "La Soukra",
-    notes: "Prendre le laser et les catalogues laqué.",
-    created_at: daysAgo(1),
-  },
-  {
-    id: "00000000-0000-4000-8000-000000000602",
-    titre: "Livraison — Walid Chatti",
-    type: "livraison",
-    debut: daysAhead(2, 9),
-    fin: daysAhead(2, 12),
-    fiche_id: demoFiches[14].id,
-    client_id: demoFiches[14].client_id,
-    conseiller_id: demoCurrentProfile.id,
-    point_de_vente_id: demoPdvs[0].id,
-    lieu: "La Marsa",
-    notes: null,
-    created_at: daysAgo(5),
-  },
+/**
+ * A month of showroom activity: client appointments across the four client
+ * types plus the team's own internal meetings, spread over several advisors so
+ * the agendas have something to show before Supabase is connected.
+ */
+interface RdvSeed {
+  /** Days from today — negative is the recent past. */
+  jour: number;
+  heure: number;
+  duree: number;
+  type: RendezVousRow['type'];
+  titre: string;
+  fiche?: number;
+  conseiller?: number;
+  lieu?: string;
+  notes?: string;
+}
+
+const rdvSeeds: RdvSeed[] = [
+  { jour: -9, heure: 9, duree: 1.5, type: 'showroom', titre: 'Découverte projet', fiche: 2, lieu: 'Showroom Tunis' },
+  { jour: -7, heure: 14, duree: 2, type: 'metre', titre: 'Métré appartement', fiche: 3, lieu: 'Ariana', conseiller: 1 },
+  { jour: -5, heure: 10, duree: 1, type: 'showroom', titre: 'Présentation plan 3D', fiche: 5, lieu: 'Showroom Tunis' },
+  { jour: -4, heure: 8, duree: 1, type: 'interne', titre: 'Point hebdo équipe', lieu: 'Salle de réunion' },
+  { jour: -2, heure: 15, duree: 3, type: 'pose', titre: 'Pose cuisine', fiche: 7, lieu: 'La Marsa', conseiller: 2 },
+  { jour: -1, heure: 11, duree: 1, type: 'showroom', titre: 'Choix des façades', fiche: 8, lieu: 'Showroom Tunis' },
+  { jour: 0, heure: 10, duree: 1, type: 'showroom', titre: 'RDV showroom', fiche: 0, lieu: 'Showroom Tunis', notes: 'Apporter le nuancier laqué.' },
+  { jour: 0, heure: 14, duree: 1.5, type: 'metre', titre: 'Métré sur site', fiche: 4, lieu: 'La Soukra', notes: 'Prendre le laser et les catalogues laqué.' },
+  { jour: 0, heure: 17, duree: 1, type: 'interne', titre: 'Débrief journée', lieu: 'Showroom Tunis' },
+  { jour: 1, heure: 9, duree: 2, type: 'livraison', titre: 'Livraison caissons', fiche: 6, lieu: 'Menzah 6', conseiller: 1 },
+  { jour: 1, heure: 15, duree: 1, type: 'showroom', titre: 'Signature devis', fiche: 9, lieu: 'Showroom Tunis' },
+  { jour: 2, heure: 9, duree: 3, type: 'livraison', titre: 'Livraison cuisine complète', fiche: 14, lieu: 'La Marsa' },
+  { jour: 2, heure: 16, duree: 1, type: 'metre', titre: 'Contre-métré', fiche: 10, lieu: 'Le Bardo', conseiller: 2 },
+  { jour: 3, heure: 8, duree: 1, type: 'interne', titre: 'Réunion commerciale mensuelle', lieu: 'Salle de réunion' },
+  { jour: 3, heure: 11, duree: 1.5, type: 'showroom', titre: 'Visite clients Sousse', fiche: 11, lieu: 'Showroom Sousse', conseiller: 1 },
+  { jour: 4, heure: 9, duree: 4, type: 'pose', titre: 'Pose dressing', fiche: 12, lieu: 'Carthage', conseiller: 2 },
+  { jour: 5, heure: 10, duree: 1, type: 'showroom', titre: 'Présentation budget', fiche: 13, lieu: 'Showroom Tunis' },
+  { jour: 7, heure: 14, duree: 2, type: 'metre', titre: 'Métré villa', fiche: 15, lieu: 'Gammarth' },
+  { jour: 8, heure: 9, duree: 1, type: 'interne', titre: 'Formation nouveau catalogue', lieu: 'Salle de réunion' },
+  { jour: 9, heure: 10, duree: 3, type: 'pose', titre: 'Pose plan de travail', fiche: 16, lieu: 'Ennasr', conseiller: 1 },
+  { jour: 11, heure: 15, duree: 1, type: 'showroom', titre: 'Remise des clés', fiche: 17, lieu: 'Showroom Tunis' },
+  { jour: 14, heure: 9, duree: 2, type: 'livraison', titre: 'Livraison électroménager', fiche: 18, lieu: 'Manouba', conseiller: 2 },
+  { jour: 17, heure: 8, duree: 1, type: 'interne', titre: 'Point hebdo équipe', lieu: 'Salle de réunion' },
 ];
+
+export const demoRdv: RendezVousRow[] = rdvSeeds.map((s, i) => {
+  const fiche = s.fiche === undefined ? null : demoFiches[s.fiche % demoFiches.length];
+  const conseiller = demoProfiles[s.conseiller ?? 0];
+  const debut = new Date(daysAhead(s.jour, s.heure));
+  return {
+    id: `00000000-0000-4000-8000-0000000006${String(i).padStart(2, "0")}`,
+    titre: fiche ? `${s.titre} — ${fiche.client_nom}` : s.titre,
+    type: s.type,
+    debut: debut.toISOString(),
+    fin: new Date(debut.getTime() + s.duree * 3_600_000).toISOString(),
+    fiche_id: fiche?.id ?? null,
+    client_id: fiche?.client_id ?? null,
+    conseiller_id: conseiller.id,
+    point_de_vente_id: conseiller.point_de_vente_id ?? demoPdvs[0].id,
+    lieu: s.lieu ?? null,
+    notes: s.notes ?? null,
+    created_at: daysAgo(Math.max(1, 10 - i)),
+  };
+});

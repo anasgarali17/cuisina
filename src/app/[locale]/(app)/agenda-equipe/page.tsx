@@ -1,5 +1,38 @@
-import { ComingSoon } from "@/components/shell/coming-soon";
+import { getCurrentProfile } from "@/lib/auth";
+import {
+  listFiches,
+  listPdvs,
+  listProfiles,
+  listRdv,
+  listTaches,
+} from "@/lib/data/queries";
+import { AgendaView } from "@/components/agenda/agenda-view";
 
-export default function Page() {
-  return <ComingSoon moduleKey="agendaEquipe" />;
+export default async function AgendaEquipePage() {
+  const profile = await getCurrentProfile();
+  if (!profile) return null;
+
+  const [rdv, taches, fiches, profiles, pdvs] = await Promise.all([
+    listRdv(profile),
+    listTaches(profile),
+    listFiches(profile),
+    listProfiles(),
+    listPdvs(),
+  ]);
+
+  return (
+    <AgendaView
+      variant="equipe"
+      rdv={rdv}
+      taches={taches}
+      profiles={profiles}
+      pdvs={pdvs}
+      fiches={fiches.map((f) => ({
+        id: f.id,
+        reference: f.reference,
+        client: f.client_nom,
+      }))}
+      currentProfile={profile}
+    />
+  );
 }

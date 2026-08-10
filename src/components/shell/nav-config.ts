@@ -50,8 +50,8 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "organisation",
     items: [
-      { key: "agendaEquipe", href: "/agenda-equipe", icon: CalendarDays, ready: false },
-      { key: "agendaClient", href: "/agenda-client", icon: CalendarClock, ready: false },
+      { key: "agendaEquipe", href: "/agenda-equipe", icon: CalendarDays, ready: true },
+      { key: "agendaClient", href: "/agenda-client", icon: CalendarClock, ready: true },
       { key: "taches", href: "/taches", icon: SquareCheck, ready: true },
     ],
   },
