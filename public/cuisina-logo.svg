@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" role="img" aria-label="CUISINA — Votre cuisine autrement">
+  <rect width="300" height="300" fill="#C1121F"/>
+  <text x="150" y="158"
+        text-anchor="middle"
+        fill="#ffffff"
+        font-family="Georgia, 'Times New Roman', 'Playfair Display', serif"
+        font-size="54"
+        letter-spacing="4">CUISINA</text>
+  <text x="150" y="186"
+        text-anchor="middle"
+        fill="#ffffff"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="13.5"
+        letter-spacing="2.6">VOTRE CUISINE AUTREMENT</text>
+</svg>

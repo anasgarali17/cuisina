@@ -18,15 +18,14 @@ export function NavRail() {
 
   return (
     <aside className="no-print sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-e border-border bg-card md:flex">
-      <div className="flex h-16 shrink-0 items-center gap-3 px-4">
-        <span className="relative grid size-9 shrink-0 place-items-center rounded-xl bg-noir-atelier font-display font-bold text-white">
-          C
-          <span
-            aria-hidden="true"
-            className="absolute -bottom-0.5 -end-0.5 size-2.5 rounded-full bg-rouge ring-2 ring-card"
-          />
-        </span>
-        <p className="truncate font-display font-bold tracking-tight">
+      <div className="flex h-16 shrink-0 items-center gap-2.5 px-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/cuisina-mark.svg"
+          alt="CUISINA"
+          className="size-9 shrink-0 rounded-lg"
+        />
+        <p className="truncate font-display text-sm font-bold tracking-tight">
           CUISINA <span className="text-primary">PRO</span>
         </p>
       </div>

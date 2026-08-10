@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" role="img" aria-label="CUISINA">
+  <!-- Small-size variant: the tagline is dropped below ~64px, where it would
+       only render as a smudge. Full lockup lives in cuisina-logo.svg. -->
+  <rect width="300" height="300" fill="#C1121F"/>
+  <text x="150" y="172"
+        text-anchor="middle"
+        fill="#ffffff"
+        font-family="Georgia, 'Times New Roman', 'Playfair Display', serif"
+        font-size="58"
+        letter-spacing="2">CUISINA</text>
+</svg>

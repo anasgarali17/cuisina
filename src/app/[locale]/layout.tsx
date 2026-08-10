@@ -42,10 +42,11 @@ export const metadata: Metadata = {
     template: "%s · CUISINA",
   },
   description: "Votre cuisine autrement — l'outil des conseillers Cuisina.",
+  icons: { icon: "/cuisina-logo.svg" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#16130F",
+  themeColor: "#C1121F",
   width: "device-width",
   initialScale: 1,
 };

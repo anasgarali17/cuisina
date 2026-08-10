@@ -36,9 +36,12 @@ export default function LoginPage() {
       />
 
       <div className="relative z-10 flex w-full max-w-md flex-col items-center">
-        <span className="grid size-12 place-items-center rounded-2xl bg-rouge font-display text-2xl font-bold text-white">
-          C
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/cuisina-logo.svg"
+          alt="CUISINA — Votre cuisine autrement"
+          className="size-24 rounded-2xl shadow-sm"
+        />
         <h1 className="mt-5 text-center font-display text-4xl font-bold tracking-tight md:text-5xl">
           {tApp("tagline")}
         </h1>
