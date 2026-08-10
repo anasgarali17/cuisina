@@ -68,6 +68,30 @@ export async function createTache(
   return succeed(undefined);
 }
 
+const echeanceSchema = z.object({
+  id: z.string().uuid(),
+  echeance: z.string().date().nullable(),
+});
+
+/** Reassigns a task to a new due date — how a drag between kanban columns lands. */
+export async function updateTacheEcheance(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = echeanceSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("taches")
+    .update({ echeance: parsed.data.echeance })
+    .eq("id", parsed.data.id);
+  if (error) return fail("db");
+  revalidatePath("/taches");
+  revalidatePath("/ma-journee");
+  return succeed(undefined);
+}
+
 const objectifSchema = z.object({
   profile_id: z.string().uuid(),
   objectif_mensuel: z.coerce.number().min(0).max(10_000_000),

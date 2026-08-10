@@ -338,7 +338,11 @@
       "effacer": "Clear all",
       "textePrompt": "Text to write on the sketch:",
       "cotePrompt": "Dimension to show (e.g. 3.20 m) — leave empty for none:",
-      "vide": "No sketch for this fiche."
+      "vide": "No sketch for this fiche.",
+      "couleurPerso": "Custom color",
+      "codeCouleur": "Color code (hex)",
+      "texteHint": "Write here…",
+      "coteHint": "Dimension (e.g. 3.20 m)"
     }
   },
   "canaux": {
@@ -494,7 +498,10 @@
     "auto": "Auto",
     "relanceTaskTitle": "Follow up with {client}",
     "done": "Done",
-    "markDone": "Mark as done"
+    "markDone": "Mark as done",
+    "fait": "Done",
+    "retardLocked": "Automatic — cannot be moved",
+    "emptyColonne": "Nothing here."
   },
   "clients": {
     "title": "Clients",

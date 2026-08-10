@@ -338,7 +338,11 @@
       "effacer": "مسح الكل",
       "textePrompt": "النص المراد كتابته على الرسم:",
       "cotePrompt": "البعد المراد عرضه (مثل 3,20 m) — اتركه فارغًا إن لم يوجد:",
-      "vide": "لا يوجد رسم لهذه الـ Fiche."
+      "vide": "لا يوجد رسم لهذه الـ Fiche.",
+      "couleurPerso": "لون مخصص",
+      "codeCouleur": "رمز اللون (hex)",
+      "texteHint": "اكتب هنا…",
+      "coteHint": "البعد (مثل 3.20 م)"
     }
   },
   "canaux": {
@@ -494,7 +498,10 @@
     "auto": "تلقائي",
     "relanceTaskTitle": "متابعة {client}",
     "done": "تم",
-    "markDone": "وضع علامة \"تم\""
+    "markDone": "وضع علامة \"تم\"",
+    "fait": "تم",
+    "retardLocked": "تلقائي — لا يمكن نقله",
+    "emptyColonne": "لا شيء هنا."
   },
   "clients": {
     "title": "العملاء",

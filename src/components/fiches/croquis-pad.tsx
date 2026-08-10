@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  Check,
   Eraser,
   Minus,
   Pencil,
@@ -10,6 +11,7 @@ import {
   Square,
   Trash2,
   Type,
+  X,
 } from "lucide-react";
 import { saveCroquis } from "@/lib/actions/fiche-actions";
 import {
@@ -25,7 +27,27 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Tool = "trait" | "rectangle" | "ligne" | "texte" | "gomme";
 
-const COULEURS = ["#0a0a0a", "#c1121f", "#2563eb", "#059669"] as const;
+/** Quick presets — brand colors first, plus a full spectrum picker beside them. */
+const PRESETS = [
+  "#0a0a0a",
+  "#c1121f",
+  "#b98b54",
+  "#2563eb",
+  "#059669",
+  "#d08a2c",
+  "#7c3aed",
+  "#ffffff",
+] as const;
+
+const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+interface EditorState {
+  mode: "texte" | "cote";
+  screenX: number;
+  screenY: number;
+  commit: (value: string) => void;
+  cancel: () => void;
+}
 
 /** Where a pointer landed, in the canvas's logical 1000×700 space. */
 function toLogical(
@@ -105,7 +127,7 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
   ctx.lineJoin = "round";
 
   for (const s of shapes) {
-    ctx.strokeStyle = s.type === "texte" ? s.couleur : s.couleur;
+    ctx.strokeStyle = s.couleur;
     ctx.fillStyle = s.couleur;
     if (s.type !== "texte") ctx.lineWidth = s.epaisseur;
 
@@ -172,6 +194,7 @@ export function CroquisPad({
   initial: unknown;
 }) {
   const t = useTranslations();
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const startRef = useRef<{ x: number; y: number } | null>(null);
@@ -182,7 +205,10 @@ export function CroquisPad({
   );
   const [draft, setDraft] = useState<CroquisShape | null>(null);
   const [tool, setTool] = useState<Tool>("trait");
-  const [couleur, setCouleur] = useState<string>(COULEURS[0]);
+  const [couleur, setCouleur] = useState<string>(PRESETS[0] as string);
+  const [hexInput, setHexInput] = useState<string>(PRESETS[0] as string);
+  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [editorValue, setEditorValue] = useState("");
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -192,13 +218,74 @@ export function CroquisPad({
     if (ctx) draw(ctx, draft ? [...shapes, draft] : shapes);
   }, [shapes, draft]);
 
+  /** Selecting a color (preset or picker) keeps the hex field in sync. */
+  function selectColor(c: string) {
+    setCouleur(c);
+    setHexInput(c);
+  }
+
+  /** Maps a logical canvas point to a CSS pixel position inside the wrapper. */
+  function logicalToScreen(p: { x: number; y: number }) {
+    const canvas = canvasRef.current;
+    const wrapper = wrapperRef.current;
+    if (!canvas || !wrapper) return { x: 0, y: 0 };
+    const cr = canvas.getBoundingClientRect();
+    const wr = wrapper.getBoundingClientRect();
+    return {
+      x: cr.left - wr.left + (p.x / CROQUIS_W) * cr.width,
+      y: cr.top - wr.top + (p.y / CROQUIS_H) * cr.height,
+    };
+  }
+
   function commit(next: CroquisShape[]) {
     setShapes(next);
     setDirty(true);
     setMessage(null);
   }
 
+  function openTextEditor(logicalPoint: { x: number; y: number }) {
+    const screen = logicalToScreen(logicalPoint);
+    setEditorValue("");
+    setEditor({
+      mode: "texte",
+      screenX: screen.x,
+      screenY: screen.y,
+      commit: (value) => {
+        const trimmed = value.trim().slice(0, 80);
+        if (trimmed) {
+          commit([
+            ...shapes,
+            { type: "texte", x: logicalPoint.x, y: logicalPoint.y, contenu: trimmed, couleur },
+          ]);
+        }
+        setEditor(null);
+      },
+      cancel: () => setEditor(null),
+    });
+  }
+
+  function openCoteEditor(ligne: Extract<CroquisShape, { type: "ligne" }>) {
+    const mid = { x: (ligne.x1 + ligne.x2) / 2, y: (ligne.y1 + ligne.y2) / 2 };
+    const screen = logicalToScreen(mid);
+    setEditorValue("");
+    setEditor({
+      mode: "cote",
+      screenX: screen.x,
+      screenY: screen.y,
+      commit: (value) => {
+        commit([...shapes, { ...ligne, cote: value.trim().slice(0, 24) }]);
+        setEditor(null);
+      },
+      // The line itself is already drawn — cancelling only skips the label.
+      cancel: () => {
+        commit([...shapes, { ...ligne, cote: "" }]);
+        setEditor(null);
+      },
+    });
+  }
+
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (editor) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.setPointerCapture(e.pointerId);
@@ -211,13 +298,7 @@ export function CroquisPad({
     }
 
     if (tool === "texte") {
-      const contenu = window.prompt(t("fiches.croquis.textePrompt"));
-      if (contenu?.trim()) {
-        commit([
-          ...shapes,
-          { type: "texte", x: p.x, y: p.y, contenu: contenu.trim().slice(0, 80), couleur },
-        ]);
-      }
+      openTextEditor(p);
       return;
     }
 
@@ -276,8 +357,7 @@ export function CroquisPad({
       if (tiny) return null;
 
       if (d.type === "ligne") {
-        const cote = window.prompt(t("fiches.croquis.cotePrompt"))?.trim() ?? "";
-        commit([...shapes, { ...d, cote: cote.slice(0, 24) }]);
+        openCoteEditor(d);
       } else {
         commit([...shapes, d]);
       }
@@ -301,6 +381,12 @@ export function CroquisPad({
     }
   }
 
+  function applyHex(raw: string) {
+    setHexInput(raw);
+    const value = raw.startsWith("#") ? raw : `#${raw}`;
+    if (HEX_RE.test(value)) setCouleur(value);
+  }
+
   const tools: { id: Tool; icon: typeof Pencil; label: string }[] = [
     { id: "trait", icon: Pencil, label: t("fiches.croquis.crayon") },
     { id: "rectangle", icon: Square, label: t("fiches.croquis.rectangle") },
@@ -308,6 +394,8 @@ export function CroquisPad({
     { id: "texte", icon: Type, label: t("fiches.croquis.texte") },
     { id: "gomme", icon: Eraser, label: t("fiches.croquis.gomme") },
   ];
+
+  const isPreset = PRESETS.includes(couleur as (typeof PRESETS)[number]);
 
   return (
     <Card className="no-print">
@@ -340,22 +428,55 @@ export function CroquisPad({
 
           <span aria-hidden className="mx-1 h-6 w-px bg-border" />
 
-          {COULEURS.map((c) => (
+          {PRESETS.map((c) => (
             <button
               key={c}
               type="button"
-              onClick={() => setCouleur(c)}
+              onClick={() => selectColor(c)}
               aria-pressed={couleur === c}
               aria-label={c}
               className={cn(
-                "size-7 rounded-full border-2 transition-transform",
+                "size-7 shrink-0 rounded-full border-2 transition-transform",
                 couleur === c
                   ? "scale-110 border-foreground"
-                  : "border-transparent",
+                  : "border-border",
               )}
               style={{ backgroundColor: c }}
             />
           ))}
+
+          {/* Full spectrum — a native picker gives every color and gradient. */}
+          <label
+            className={cn(
+              "relative grid size-7 shrink-0 cursor-pointer place-items-center rounded-full border-2 transition-transform",
+              !isPreset ? "scale-110 border-foreground" : "border-border",
+            )}
+            style={{
+              background:
+                "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)",
+            }}
+            title={t("fiches.croquis.couleurPerso")}
+          >
+            <span className="sr-only">{t("fiches.croquis.couleurPerso")}</span>
+            <input
+              type="color"
+              value={couleur}
+              onChange={(e) => selectColor(e.target.value)}
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
+              aria-label={t("fiches.croquis.couleurPerso")}
+            />
+          </label>
+
+          <input
+            type="text"
+            value={hexInput}
+            onChange={(e) => applyHex(e.target.value)}
+            spellCheck={false}
+            maxLength={7}
+            aria-label={t("fiches.croquis.codeCouleur")}
+            title={t("fiches.croquis.codeCouleur")}
+            className="h-9 w-20 shrink-0 rounded-lg border border-border bg-card px-2 font-mono text-xs uppercase text-foreground"
+          />
 
           <span aria-hidden className="mx-1 h-6 w-px bg-border" />
 
@@ -390,19 +511,61 @@ export function CroquisPad({
           </div>
         </div>
 
-        <canvas
-          ref={canvasRef}
-          width={CROQUIS_W}
-          height={CROQUIS_H}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerLeave={onPointerUp}
-          className="w-full touch-none rounded-2xl border border-border bg-white"
-          style={{ aspectRatio: `${CROQUIS_W} / ${CROQUIS_H}`, cursor: "crosshair" }}
-          role="img"
-          aria-label={t("fiches.croquis.title")}
-        />
+        <div ref={wrapperRef} className="relative">
+          <canvas
+            ref={canvasRef}
+            width={CROQUIS_W}
+            height={CROQUIS_H}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerLeave={onPointerUp}
+            className="w-full touch-none rounded-2xl border border-border bg-white"
+            style={{ aspectRatio: `${CROQUIS_W} / ${CROQUIS_H}`, cursor: "crosshair" }}
+            role="img"
+            aria-label={t("fiches.croquis.title")}
+          />
+
+          {editor && (
+            <div
+              className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-xl border-2 border-primary bg-white p-1.5 shadow-lg"
+              style={{ left: editor.screenX, top: editor.screenY }}
+            >
+              <input
+                autoFocus
+                value={editorValue}
+                onChange={(e) => setEditorValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") editor.commit(editorValue);
+                  if (e.key === "Escape") editor.cancel();
+                }}
+                placeholder={
+                  editor.mode === "texte"
+                    ? t("fiches.croquis.texteHint")
+                    : t("fiches.croquis.coteHint")
+                }
+                maxLength={editor.mode === "texte" ? 80 : 24}
+                className="h-8 w-40 rounded-lg border border-border bg-card px-2 text-sm text-foreground"
+              />
+              <button
+                type="button"
+                onClick={() => editor.commit(editorValue)}
+                aria-label={t("app.confirm")}
+                className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground"
+              >
+                <Check className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={editor.cancel}
+                aria-label={t("app.cancel")}
+                className="grid size-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-secondary"
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

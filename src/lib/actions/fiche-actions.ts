@@ -13,13 +13,16 @@ import {
   suiviSchema,
 } from "@/lib/schemas/fiche";
 import { CADENCE_PAR_MOTIF, CANAUX, RELANCE_RESULTATS } from "@/lib/domain";
+import { toISODate } from "@/lib/dates";
 import type { FicheRow } from "@/lib/database.types";
 import { type ActionResult, fail, succeed } from "./result";
 
 function addDays(base: Date, days: number): string {
   const d = new Date(base);
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  // Local calendar day — toISOString() would shift east-of-Greenwich dates
+  // back by one when the server clock is just past midnight.
+  return toISODate(d);
 }
 
 const saveFicheSchema = z.object({

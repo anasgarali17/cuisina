@@ -338,7 +338,11 @@
       "effacer": "Tout effacer",
       "textePrompt": "Texte à écrire sur le croquis :",
       "cotePrompt": "Dimension à afficher (ex. 3,20 m) — laisser vide si aucune :",
-      "vide": "Aucun croquis pour cette fiche."
+      "vide": "Aucun croquis pour cette fiche.",
+      "couleurPerso": "Couleur personnalisée",
+      "codeCouleur": "Code couleur (hex)",
+      "texteHint": "Écrivez ici…",
+      "coteHint": "Cote (ex. 3,20 m)"
     }
   },
   "canaux": {
@@ -494,7 +498,10 @@
     "auto": "Auto",
     "relanceTaskTitle": "Relance {client}",
     "done": "Fait",
-    "markDone": "Marquer comme fait"
+    "markDone": "Marquer comme fait",
+    "fait": "Fait",
+    "retardLocked": "Automatique — non déplaçable",
+    "emptyColonne": "Rien ici."
   },
   "clients": {
     "title": "Clients",

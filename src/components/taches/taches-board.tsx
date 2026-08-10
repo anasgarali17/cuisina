@@ -1,8 +1,22 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  closestCorners,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  GripVertical,
   Mail,
   MapPin,
   MessageCircle,
@@ -12,19 +26,17 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { Link, useRouter } from "@/i18n/navigation";
-import { createTache, toggleTache } from "@/lib/actions/tache-actions";
-import { formatDate, startOfToday } from "@/lib/dates";
+import {
+  createTache,
+  toggleTache,
+  updateTacheEcheance,
+} from "@/lib/actions/tache-actions";
+import { formatDate, startOfToday, toISODate } from "@/lib/dates";
 import { PRIORITES, type Canal, type Priorite } from "@/lib/domain";
 import type { ProfileRow, TacheRow } from "@/lib/database.types";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shell/page-header";
 import { RelanceDialog } from "@/components/fiches/relance-dialog";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,13 +70,38 @@ const CANAL_ICONS: Record<Canal, typeof Phone> = {
 
 const NONE = "__none__";
 
-type GroupKey = "retard" | "aujourdhui" | "semaine" | "plusTard";
+type ColumnKey = "retard" | "aujourdhui" | "semaine" | "plusTard" | "fait";
+const COLUMNS: ColumnKey[] = ["retard", "aujourdhui", "semaine", "plusTard", "fait"];
 
 interface FicheRef {
   reference: string;
   client: string;
 }
 
+/** The representative due date a drop into a date column assigns. */
+function dateForColumn(col: "aujourdhui" | "semaine" | "plusTard"): string {
+  const d = startOfToday();
+  if (col === "semaine") d.setDate(d.getDate() + 3);
+  if (col === "plusTard") d.setDate(d.getDate() + 10);
+  return toISODate(d);
+}
+
+function bucketOf(task: TacheRow, today: Date, weekEnd: Date): ColumnKey {
+  if (task.statut === "fait") return "fait";
+  if (!task.echeance) return "plusTard";
+  const due = new Date(task.echeance);
+  if (due < today) return "retard";
+  if (due.getTime() === today.getTime()) return "aujourdhui";
+  if (due < weekEnd) return "semaine";
+  return "plusTard";
+}
+
+/**
+ * Mes Tâches as a kanban board, one column per time bucket — mirrors the
+ * Pipeline: drag a task to reschedule it, or drop it on Fait to complete it.
+ * En retard is read-only as a destination (there is no meaningful "make this
+ * overdue on purpose"), but tasks still leave it by being dragged elsewhere.
+ */
 export function TachesBoard({
   taches: initialTaches,
   ficheMap,
@@ -82,6 +119,8 @@ export function TachesBoard({
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [relanceTask, setRelanceTask] = useState<TacheRow | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const columnRefs = useRef(new Map<string, HTMLDivElement>());
 
   const profileById = useMemo(
     () => new Map(profiles.map((p) => [p.id, p])),
@@ -92,30 +131,25 @@ export function TachesBoard({
   const weekEnd = new Date(today);
   weekEnd.setDate(weekEnd.getDate() + 7);
 
-  const groups = useMemo(() => {
-    const open = taches.filter((task) => task.statut === "a_faire");
-    const map: Record<GroupKey, TacheRow[]> = {
+  const byColumn = useMemo(() => {
+    const map: Record<ColumnKey, TacheRow[]> = {
       retard: [],
       aujourdhui: [],
       semaine: [],
       plusTard: [],
+      fait: [],
     };
-    for (const task of open) {
-      if (!task.echeance) {
-        map.plusTard.push(task);
-        continue;
-      }
-      const due = new Date(task.echeance);
-      if (due < today) map.retard.push(task);
-      else if (due.getTime() === today.getTime()) map.aujourdhui.push(task);
-      else if (due < weekEnd) map.semaine.push(task);
-      else map.plusTard.push(task);
-    }
+    for (const task of taches) map[bucketOf(task, today, weekEnd)].push(task);
     return map;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taches]);
 
-  const doneTasks = taches.filter((task) => task.statut === "fait");
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 8 },
+    }),
+  );
 
   function setStatut(id: string, statut: "a_faire" | "fait") {
     setTaches((list) =>
@@ -142,6 +176,65 @@ export function TachesBoard({
     });
   }
 
+  function moveToDate(task: TacheRow, target: "aujourdhui" | "semaine" | "plusTard") {
+    const previous = task;
+    const newEcheance = dateForColumn(target);
+    const reopening = task.statut === "fait";
+
+    setTaches((list) =>
+      list.map((tk) =>
+        tk.id === task.id
+          ? { ...tk, echeance: newEcheance, statut: reopening ? "a_faire" : tk.statut }
+          : tk,
+      ),
+    );
+    setError(null);
+
+    const calls = [updateTacheEcheance({ id: task.id, echeance: newEcheance })];
+    if (reopening) calls.push(toggleTache({ id: task.id, done: false }));
+
+    void Promise.all(calls).then((results) => {
+      if (results.some((r) => !r.ok)) {
+        setTaches((list) => list.map((tk) => (tk.id === task.id ? previous : tk)));
+        const failed = results.find((r) => !r.ok);
+        setError(
+          failed && !failed.ok && failed.error === "demo_mode"
+            ? t("app.demoReadOnly")
+            : t("app.error"),
+        );
+      }
+    });
+  }
+
+  function onDragStart(event: DragStartEvent) {
+    setActiveId(String(event.active.id));
+  }
+
+  function onDragEnd(event: DragEndEvent) {
+    setActiveId(null);
+    const over = event.over;
+    if (!over) return;
+    const task = taches.find((tk) => tk.id === event.active.id);
+    if (!task) return;
+    const target = over.id as ColumnKey;
+    const current = bucketOf(task, today, weekEnd);
+    if (target === current) return;
+
+    if (target === "fait") {
+      onCheck(task, true);
+      return;
+    }
+    if (target === "retard") return; // not a valid destination
+    moveToDate(task, target);
+  }
+
+  function scrollToColumn(key: string) {
+    columnRefs.current
+      .get(key)
+      ?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }
+
+  const activeTask = activeId ? (taches.find((tk) => tk.id === activeId) ?? null) : null;
   const hasAnything = taches.length > 0;
 
   return (
@@ -173,74 +266,66 @@ export function TachesBoard({
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
-          {(
-            [
-              ["retard", groups.retard],
-              ["aujourdhui", groups.aujourdhui],
-              ["semaine", groups.semaine],
-              ["plusTard", groups.plusTard],
-            ] as const
-          ).map(([key, list]) =>
-            list.length === 0 ? null : (
-              <section key={key}>
-                <h2
-                  className={cn(
-                    "mb-2 flex items-center gap-2 text-sm font-semibold",
-                    key === "retard" && "text-ambre",
-                  )}
-                >
-                  <span className="rounded-full bg-secondary px-2 font-mono text-xs text-muted-foreground">
-                    {list.length}
-                  </span>
-                  {key === "retard" && <TriangleAlert className="size-4" />}
-                  {t(`taches.groups.${key}`)}
-                </h2>
-                <ul className="space-y-2">
-                  {list.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      ficheMap={ficheMap}
-                      profileById={profileById}
-                      currentUserId={currentProfile.id}
-                      overdue={key === "retard"}
-                      onCheck={onCheck}
-                    />
-                  ))}
-                </ul>
-              </section>
-            ),
-          )}
+        <>
+          {/* Mobile column pills */}
+          <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1 md:hidden">
+            {COLUMNS.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => scrollToColumn(key)}
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium"
+              >
+                {key === "fait" ? t("taches.fait") : t(`taches.groups.${key}`)}
+                <span className="rounded-full bg-secondary px-1.5 font-mono text-[10px]">
+                  {byColumn[key].length}
+                </span>
+              </button>
+            ))}
+          </div>
 
-          {doneTasks.length > 0 && (
-            <Accordion type="single" collapsible>
-              <AccordionItem value="done" className="border-b-0">
-                <AccordionTrigger className="text-muted-foreground">
-                  {t("taches.done")}{" "}
-                  <span className="ms-1 font-mono text-xs">
-                    {doneTasks.length}
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <ul className="space-y-2">
-                    {doneTasks.map((task) => (
-                      <TaskRow
-                        key={task.id}
-                        task={task}
-                        ficheMap={ficheMap}
-                        profileById={profileById}
-                        currentUserId={currentProfile.id}
-                        done
-                        onCheck={onCheck}
-                      />
-                    ))}
-                  </ul>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
-        </div>
+          <DndContext
+            id="taches-dnd"
+            sensors={sensors}
+            // Nearest column wins, so a card straddling two columns still
+            // lands where the conseiller aimed instead of snapping back.
+            collisionDetection={closestCorners}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+          >
+            <div className="kanban-scroll -mx-4 flex gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0">
+              {COLUMNS.map((key) => (
+                <TaskColumn
+                  key={key}
+                  colKey={key}
+                  tasks={byColumn[key]}
+                  ficheMap={ficheMap}
+                  profileById={profileById}
+                  currentUserId={currentProfile.id}
+                  onCheck={onCheck}
+                  refCallback={(el) => {
+                    if (el) columnRefs.current.set(key, el);
+                  }}
+                />
+              ))}
+            </div>
+
+            <DragOverlay>
+              {activeTask && (
+                <TaskCard
+                  task={activeTask}
+                  ficheMap={ficheMap}
+                  profileById={profileById}
+                  currentUserId={currentProfile.id}
+                  overdue={bucketOf(activeTask, today, weekEnd) === "retard"}
+                  done={activeTask.statut === "fait"}
+                  onCheck={() => undefined}
+                  overlay
+                />
+              )}
+            </DragOverlay>
+          </DndContext>
+        </>
       )}
 
       <CreateTaskDialog
@@ -272,7 +357,100 @@ export function TachesBoard({
   );
 }
 
-function TaskRow({
+function TaskColumn({
+  colKey,
+  tasks,
+  ficheMap,
+  profileById,
+  currentUserId,
+  onCheck,
+  refCallback,
+}: {
+  colKey: ColumnKey;
+  tasks: TacheRow[];
+  ficheMap: Record<string, FicheRef>;
+  profileById: Map<string, ProfileRow>;
+  currentUserId: string;
+  onCheck: (task: TacheRow, next: boolean) => void;
+  refCallback: (el: HTMLDivElement | null) => void;
+}) {
+  const t = useTranslations();
+  const isRetard = colKey === "retard";
+  const isFait = colKey === "fait";
+  const { setNodeRef, isOver } = useDroppable({ id: colKey, disabled: isRetard });
+
+  return (
+    <div
+      ref={refCallback}
+      className="w-[85vw] shrink-0 snap-center sm:w-80 md:w-72 md:snap-align-none"
+    >
+      <div className="mb-2 flex items-center gap-2 px-1">
+        {isRetard && <TriangleAlert className="size-3.5 text-ambre" />}
+        <h2
+          className={cn(
+            "text-sm font-semibold",
+            isRetard && "text-ambre",
+            isFait && "text-muted-foreground",
+          )}
+        >
+          {isFait ? t("taches.fait") : t(`taches.groups.${colKey}`)}
+        </h2>
+        <span className="rounded-full bg-secondary px-2 font-mono text-xs text-muted-foreground">
+          {tasks.length}
+        </span>
+      </div>
+      <div
+        ref={setNodeRef}
+        title={isRetard ? t("taches.retardLocked") : undefined}
+        className={cn(
+          "min-h-36 space-y-2 rounded-2xl border border-transparent p-2 transition-colors",
+          isRetard ? "bg-ambre/5" : "bg-brume/25",
+          isOver && "border-chene/60 bg-chene/10",
+        )}
+      >
+        {tasks.length === 0 ? (
+          <p className="px-2 py-6 text-center text-xs italic text-muted-foreground">
+            {t("taches.emptyColonne")}
+          </p>
+        ) : (
+          tasks.map((task) => (
+            <DraggableTaskCard
+              key={task.id}
+              task={task}
+              ficheMap={ficheMap}
+              profileById={profileById}
+              currentUserId={currentUserId}
+              overdue={isRetard}
+              done={isFait}
+              onCheck={onCheck}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DraggableTaskCard(props: {
+  task: TacheRow;
+  ficheMap: Record<string, FicheRef>;
+  profileById: Map<string, ProfileRow>;
+  currentUserId: string;
+  overdue?: boolean;
+  done?: boolean;
+  onCheck: (task: TacheRow, next: boolean) => void;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: props.task.id,
+  });
+  return (
+    <div ref={setNodeRef} {...attributes} {...listeners} className={cn(isDragging && "opacity-40")}>
+      <TaskCard {...props} />
+    </div>
+  );
+}
+
+function TaskCard({
   task,
   ficheMap,
   profileById,
@@ -280,6 +458,7 @@ function TaskRow({
   overdue,
   done,
   onCheck,
+  overlay,
 }: {
   task: TacheRow;
   ficheMap: Record<string, FicheRef>;
@@ -288,6 +467,7 @@ function TaskRow({
   overdue?: boolean;
   done?: boolean;
   onCheck: (task: TacheRow, next: boolean) => void;
+  overlay?: boolean;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -297,77 +477,91 @@ function TaskRow({
   const CanalIcon = task.canal ? CANAL_ICONS[task.canal] : null;
 
   return (
-    <li
+    <div
       className={cn(
-        "flex min-h-11 items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3",
+        "card-lift cursor-grab rounded-2xl border border-border bg-card p-3",
         done && "opacity-60",
+        overlay && "rotate-1 shadow-xl",
       )}
     >
-      <Checkbox
-        checked={done ?? false}
-        onCheckedChange={(v) => onCheck(task, v === true)}
-        aria-label={task.titre}
-        className="mt-0.5"
-      />
-      <div className="min-w-0 flex-1">
-        <p className={cn("text-sm font-medium", done && "line-through")}>
-          {task.titre}
-        </p>
-        {task.description && (
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {task.description}
+      <div className="flex items-start gap-2">
+        <GripVertical
+          aria-hidden
+          className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/50"
+        />
+        <Checkbox
+          checked={done ?? false}
+          onCheckedChange={(v) => onCheck(task, v === true)}
+          onPointerDown={(e) => e.stopPropagation()}
+          aria-label={task.titre}
+          className="mt-0.5 shrink-0"
+        />
+        <div className="min-w-0 flex-1">
+          <p className={cn("text-sm font-medium", done && "line-through")}>
+            {task.titre}
           </p>
-        )}
-        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          <Badge
-            variant={
-              task.priorite === "haute"
-                ? "rouge"
-                : task.priorite === "basse"
-                  ? "outline"
-                  : "default"
-            }
-          >
-            {t(`taches.${task.priorite}`)}
-          </Badge>
-          {task.auto_generee && (
-            <Badge variant="chene">
-              {CanalIcon && <CanalIcon className="size-3" />}
-              {t("taches.auto")}
+          {task.description && (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {task.description}
+            </p>
+          )}
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <Badge
+              variant={
+                task.priorite === "haute"
+                  ? "rouge"
+                  : task.priorite === "basse"
+                    ? "outline"
+                    : "default"
+              }
+            >
+              {t(`taches.${task.priorite}`)}
             </Badge>
-          )}
-          {fiche && task.fiche_id && (
-            <Link
-              href={`/fiches/${task.fiche_id}`}
-              className="font-mono text-[10px] text-muted-foreground underline-offset-2 hover:underline"
-            >
-              {fiche.reference}
-            </Link>
-          )}
-          {task.echeance && (
-            <span
-              className={cn(
-                "text-xs text-muted-foreground",
-                overdue && "font-medium text-ambre",
-              )}
-            >
-              {formatDate(task.echeance, "d MMM", locale)}
-            </span>
-          )}
+            {task.auto_generee && (
+              <Badge variant="chene">
+                {CanalIcon && <CanalIcon className="size-3" />}
+                {t("taches.auto")}
+              </Badge>
+            )}
+            {fiche && task.fiche_id && (
+              <Link
+                href={`/fiches/${task.fiche_id}`}
+                prefetch={false}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="font-mono text-[10px] text-muted-foreground underline-offset-2 hover:underline"
+              >
+                {fiche.reference}
+              </Link>
+            )}
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-2">
+            {task.echeance ? (
+              <span
+                className={cn(
+                  "text-xs text-muted-foreground",
+                  overdue && "font-medium text-ambre",
+                )}
+              >
+                {formatDate(task.echeance, "d MMM", locale)}
+              </span>
+            ) : (
+              <span />
+            )}
+            {assignee && (
+              <Avatar
+                className="size-6"
+                title={`${assignee.prenom} ${assignee.nom}`}
+              >
+                <AvatarFallback className="text-[9px]">
+                  {assignee.prenom.charAt(0)}
+                  {assignee.nom.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
         </div>
       </div>
-      {assignee && (
-        <Avatar
-          className="size-7"
-          title={`${assignee.prenom} ${assignee.nom}`}
-        >
-          <AvatarFallback className="text-[10px]">
-            {assignee.prenom.charAt(0)}
-            {assignee.nom.charAt(0)}
-          </AvatarFallback>
-        </Avatar>
-      )}
-    </li>
+    </div>
   );
 }
 
