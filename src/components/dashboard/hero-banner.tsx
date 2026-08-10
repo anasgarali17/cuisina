@@ -1,6 +1,7 @@
 "use client";
 
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { ShaderBackground } from "@/components/ui/shader-background";
 
 export interface SparkPoint {
   d: string;
@@ -43,7 +44,14 @@ export function HeroBanner({
 }: HeroBannerProps) {
   return (
     <div className="hero-gradient relative overflow-hidden rounded-3xl p-6 text-white md:p-7">
-      <div className="grid gap-6 lg:grid-cols-[1fr_auto]">
+      {/* Animated flow shader; the gradient class stays as the fallback. */}
+      <ShaderBackground />
+      {/* Keeps the white type readable over the shader's light bands. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-noir-atelier/35"
+      />
+      <div className="relative grid gap-6 lg:grid-cols-[1fr_auto]">
         <div>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest">
             <span aria-hidden className="size-1.5 rounded-full bg-white" />
