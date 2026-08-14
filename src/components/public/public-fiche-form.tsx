@@ -16,7 +16,10 @@ import type { ShowroomPublic } from "@/lib/data/queries";
 import { REGION_CODES, type RegionCode } from "@/lib/geo/tunisia-regions";
 import { cn } from "@/lib/utils";
 import { EtapeSouhaits, SOUHAITS_VIDES, type Souhaits } from "./etape-souhaits";
-import { ChoixContact } from "@/components/catalogue/choix-contact";
+import {
+  ChoixContact,
+  type CanalPrefere,
+} from "@/components/catalogue/choix-contact";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -99,6 +102,8 @@ export function PublicFicheForm({
   const [zone, setZone] = useState<RegionCode | null>(null);
   const [showroomId, setShowroomId] = useState<string | null>(null);
   const [souhaits, setSouhaits] = useState<Souhaits>(SOUHAITS_VIDES);
+  /** Etat a part entiere — voir le commentaire dans la fiche interne. */
+  const [canalContact, setCanalContact] = useState<CanalPrefere>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -312,19 +317,14 @@ export function PublicFicheForm({
               <div className="sm:col-span-2">
                 <ChoixContact
                   idPrefixe="p"
-                  canal={
-                    identite.whatsapp
-                      ? "whatsapp"
-                      : identite.email
-                        ? "email"
-                        : null
-                  }
+                  canal={canalContact}
                   email={identite.email}
                   telephone={identite.tel_mobile}
                   erreurEmail={fieldError("email")}
-                  onChange={({ canal, email }) =>
-                    setId({ whatsapp: canal === "whatsapp", email })
-                  }
+                  onChange={({ canal, email }) => {
+                    setCanalContact(canal);
+                    setId({ whatsapp: canal === "whatsapp", email });
+                  }}
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">

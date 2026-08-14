@@ -31,7 +31,10 @@ import {
 } from "@/components/fiches/pieces-jointes";
 import { SignaturePad } from "@/components/fiches/signature-pad";
 import { ChoixModele } from "@/components/catalogue/choix-modele";
-import { ChoixContact } from "@/components/catalogue/choix-contact";
+import {
+  ChoixContact,
+  type CanalPrefere,
+} from "@/components/catalogue/choix-contact";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -64,7 +67,12 @@ interface Projet {
   date_livraison: string;
 }
 
-const STEPS = ["step1", "step2", "step3", "step4"] as const;
+/**
+ * Deux etapes, pas quatre. La FO-COM-02 papier en comptait quatre parce
+ * qu elle tenait sur deux feuilles ; un ecran n a pas cette contrainte, et
+ * chaque « Continuer » est une occasion d abandonner la saisie.
+ */
+const STEPS = ["step1", "step2"] as const;
 
 function toDraft(
   identite: Identite,
@@ -95,9 +103,12 @@ export function FicheWizard({
   conseillerName,
   pdvName,
   visuels,
+  pdvs = [],
 }: {
   conseillerName: string;
   pdvName: string;
+  /** Showrooms proposes quand le profil n en a aucun (direction). */
+  pdvs?: { id: string; nom: string; ville: string }[];
   /** Photos du catalogue presentes sur le disque — voir catalogue-server.ts. */
   visuels: string[];
 }) {
@@ -129,6 +140,14 @@ export function FicheWizard({
   const [pieces, setPieces] = useState<PieceJointeLocale[]>([]);
   const [modele, setModele] = useState<string | null>(null);
   const [couleurs, setCouleurs] = useState<string[]>([]);
+  /**
+   * Le canal choisi est un etat a part entiere, pas une deduction.
+   * Le deduire de l e-mail rendait « E-mail » inselectionnable : le champ
+   * part vide, donc la deduction retombait aussitot sur « rien de choisi »
+   * et la zone de saisie ne s ouvrait jamais.
+   */
+  const [canalContact, setCanalContact] = useState<CanalPrefere>(null);
+  const [pdvChoisi, setPdvChoisi] = useState<string | null>(null);
   /** Un Set ne traverse pas la frontiere serveur/client : on le reconstruit. */
   const visuelsSet = useMemo(() => new Set(visuels), [visuels]);
   /**
@@ -157,6 +176,7 @@ export function FicheWizard({
     signature,
     modele,
     couleurs,
+    pdvChoisi,
   });
   useEffect(() => {
     stateRef.current = {
@@ -168,8 +188,9 @@ export function FicheWizard({
       signature,
       modele,
       couleurs,
+      pdvChoisi,
     };
-  }, [identite, origine, origineDetail, projet, exigences, signature, modele, couleurs]);
+  }, [identite, origine, origineDetail, projet, exigences, signature, modele, couleurs, pdvChoisi]);
 
   const draft = toDraft(identite, origine, origineDetail, projet, exigences, signature, modele, couleurs);
   const score = computeScoreCompletude(draft);
@@ -185,6 +206,7 @@ export function FicheWizard({
       if (!dirtyRef.current || s.identite.client_nom.trim().length < 2) return;
       dirtyRef.current = false;
       void saveFiche({
+        point_de_vente_id: s.pdvChoisi,
         id: savedIdRef.current,
         draft: toDraft(s.identite, s.origine, s.origineDetail, s.projet, s.exigences, s.signature, s.modele, s.couleurs),
       }).then((result) => {
@@ -248,7 +270,7 @@ export function FicheWizard({
     if (!validateStep(step)) return;
     setSubmitting(true);
     setSubmitError(null);
-    const result = await saveFiche({ id: savedIdRef.current, draft });
+    const result = await saveFiche({ id: savedIdRef.current, draft, point_de_vente_id: pdvChoisi });
     if (!result.ok) {
       setSubmitting(false);
       setSubmitError(messageErreur(t, result.error));
@@ -361,6 +383,7 @@ export function FicheWizard({
 
       <Card className="mt-4 p-5 md:p-8">
         {step === 0 && (
+          <>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="w-nom">{t("fiches.wizard.clientNom")}</Label>
@@ -428,17 +451,12 @@ export function FicheWizard({
             <div className="sm:col-span-2">
               <ChoixContact
                 idPrefixe="w"
-                canal={
-                  identite.whatsapp
-                    ? "whatsapp"
-                    : identite.email
-                      ? "email"
-                      : null
-                }
+                canal={canalContact}
                 email={identite.email}
                 telephone={identite.tel_mobile}
                 erreurEmail={fieldError("email")}
                 onChange={({ canal, email }) => {
+                  setCanalContact(canal);
                   setIdentite({
                     ...identite,
                     whatsapp: canal === "whatsapp",
@@ -474,6 +492,34 @@ export function FicheWizard({
                 }}
               />
             </div>
+            {/* La direction n'a pas de showroom : elle les a tous. Elle
+                choisit donc à quel point de vente rattacher la fiche —
+                sans quoi l'enregistrement échoue, la colonne étant NOT NULL. */}
+            {pdvs.length > 0 && (
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="w-pdv">
+                  {t("fiches.wizard.pointDeVente")}
+                  <span className="ms-1 text-rouge">*</span>
+                </Label>
+                <select
+                  id="w-pdv"
+                  value={pdvChoisi ?? ""}
+                  onChange={(e) => {
+                    setPdvChoisi(e.target.value || null);
+                    markDirty();
+                  }}
+                  className="h-11 w-full rounded-xl border border-border bg-card px-3 text-sm"
+                >
+                  <option value="">{t("fiches.wizard.pdvChoisir")}</option>
+                  {pdvs.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nom} · {p.ville}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <dl className="sm:col-span-2 mt-2 grid grid-cols-1 gap-2 rounded-2xl bg-secondary/60 p-4 text-sm sm:grid-cols-3">
               <div>
                 <dt className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -497,10 +543,8 @@ export function FicheWizard({
               </div>
             </dl>
           </div>
-        )}
 
-        {step === 1 && (
-          <fieldset>
+          <fieldset className="mt-8">
             <legend className="mb-4 font-display text-lg font-semibold">
               {t("origines.question")}
             </legend>
@@ -526,10 +570,8 @@ export function FicheWizard({
               </p>
             )}
           </fieldset>
-        )}
 
-        {step === 2 && (
-          <div className="space-y-6">
+          <div className="mt-8 space-y-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {(
                 [
@@ -597,9 +639,10 @@ export function FicheWizard({
               />
             </div>
           </div>
+          </>
         )}
 
-        {step === 3 && (
+        {step === 1 && (
           <div className="space-y-6">
             {/* Le modèle d'abord : c'est la première chose qu'on regarde
                 ensemble en showroom, et il commande les coloris. */}

@@ -33,6 +33,15 @@ function addDays(base: Date, days: number): string {
 const saveFicheSchema = z.object({
   id: z.string().uuid().nullable(),
   draft: ficheDraftSchema,
+  /**
+   * Le showroom auquel rattacher la fiche.
+   *
+   * La direction n'appartient à aucun point de vente — c'est le sens même du
+   * rôle — mais `fiches_contact.point_de_vente_id` est NOT NULL. Sans ce
+   * champ, un directeur ne pouvait tout simplement pas créer de fiche. Il
+   * choisit donc le showroom ; un conseiller garde le sien.
+   */
+  point_de_vente_id: z.string().uuid().nullable().default(null),
 });
 
 export interface SavedFiche {
@@ -51,12 +60,15 @@ export async function saveFiche(
 
   const profile = await getCurrentProfile();
   if (!profile) return fail("unauthenticated");
-  // `fiches_contact.point_de_vente_id` est NOT NULL : sans point de vente
-  // rattaché au profil, l'insertion est impossible quel que soit le rôle.
-  // Le dire ici plutôt que laisser Postgres refuser une chaîne vide.
-  if (!profile.point_de_vente_id) return fail("no_point_de_vente");
 
   const { id, draft } = parsed.data;
+  // Le showroom du profil d'abord ; à défaut celui que la direction a choisi
+  // dans le formulaire. `point_de_vente_id` est NOT NULL en base — sans l'un
+  // ni l'autre, autant le dire tout de suite et en clair.
+  const pointDeVente =
+    profile.point_de_vente_id ?? parsed.data.point_de_vente_id;
+  if (!pointDeVente) return fail("point_de_vente_requis");
+
   const score = computeScoreCompletude(draft);
   const row = {
     client_nom: draft.identite.client_nom,
@@ -100,7 +112,7 @@ export async function saveFiche(
     .insert({
       ...row,
       conseiller_id: profile.id,
-      point_de_vente_id: profile.point_de_vente_id,
+      point_de_vente_id: pointDeVente,
     })
     .select("id, reference")
     .single();

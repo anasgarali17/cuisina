@@ -15,6 +15,11 @@ export default async function NouvelleFichePage() {
       conseillerName={`${profile.prenom} ${profile.nom}`}
       pdvName={pdv?.nom ?? "—"}
       visuels={visuelsDisponibles()}
+      pdvs={
+        profile.point_de_vente_id
+          ? []
+          : pdvs.map((p) => ({ id: p.id, nom: p.nom, ville: p.ville }))
+      }
     />
   );
 }

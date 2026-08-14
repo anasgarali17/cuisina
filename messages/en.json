@@ -193,7 +193,8 @@
         "origine_detail_requise": "Specify the origin."
       },
       "telBureau": "Office phone",
-      "whatsapp": "Reachable on WhatsApp"
+      "whatsapp": "Reachable on WhatsApp",
+      "pdvChoisir": "Choose a showroom…"
     },
     "exigences": {
       "finitionFacade": "Front Finish",
@@ -1100,7 +1101,8 @@
     "no_point_de_vente": "Your profile is not linked to any point of sale, so a record cannot be created. Ask an administrator to attach you to a showroom.",
     "unauthenticated": "Your session has expired. Please sign in again.",
     "validation": "Some fields are invalid. Correct them and try again.",
-    "not_found": "Record not found."
+    "not_found": "Record not found.",
+    "point_de_vente_requis": "Choose the showroom this record belongs to."
   },
   "production": {
     "title": "Active client",

@@ -193,7 +193,8 @@
         "origine_detail_requise": "Précisez l'origine."
       },
       "telBureau": "Téléphone bureau",
-      "whatsapp": "Joignable sur WhatsApp"
+      "whatsapp": "Joignable sur WhatsApp",
+      "pdvChoisir": "Choisir un showroom…"
     },
     "exigences": {
       "finitionFacade": "Finition Façade",
@@ -1100,7 +1101,8 @@
     "no_point_de_vente": "Votre profil n'est rattaché à aucun point de vente : impossible de créer une fiche. Demandez à un administrateur de vous rattacher à un showroom.",
     "unauthenticated": "Votre session a expiré. Reconnectez-vous.",
     "validation": "Certains champs sont invalides. Corrigez-les puis réessayez.",
-    "not_found": "Fiche introuvable."
+    "not_found": "Fiche introuvable.",
+    "point_de_vente_requis": "Choisissez le showroom auquel rattacher cette fiche."
   },
   "production": {
     "title": "Client actif",
