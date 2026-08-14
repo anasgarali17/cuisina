@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Check, ImagePlus, PenLine, X } from "lucide-react";
 import { FACADES } from "@/lib/catalogue";
 import { ChoixModele } from "@/components/catalogue/choix-modele";
+import { TextureFacade } from "@/components/catalogue/texture-facade";
 import type { TypeProjet } from "@/lib/domain";
 import { cn } from "@/lib/utils";
 import { CroquisClient } from "./croquis-client";
@@ -107,7 +108,9 @@ export function EtapeSouhaits({
             <Vignette
               key={f.id}
               image={visuels.has(f.image) ? f.image : null}
+              matiere={f.id}
               libelle={t(`public.souhaits.facades.${f.id}`)}
+              aide={t(`public.souhaits.facadesAide.${f.id}`)}
               choisi={souhaits.facade === f.id}
               onClick={() =>
                 set({ facade: souhaits.facade === f.id ? null : f.id })
@@ -244,24 +247,34 @@ function Grille({ children }: { children: React.ReactNode }) {
 /**
  * Une option en image.
  *
- * Le visuel n'est pas encore livré pour toutes les entrées du catalogue. Une
- * balise `<img>` laissée en place afficherait l'icône de fichier cassé du
- * navigateur, ce qui donne l'impression que le site est en panne. On la
- * retire donc de l'arbre dès l'échec, et la vignette se replie sur une
- * surface neutre : le nom, lui, suffit à choisir.
+ * Trois niveaux, du meilleur au moins bon : la photo si elle a été déposée
+ * sur le disque, sinon le schéma de matière, sinon une surface neutre. Une
+ * balise `<img>` laissée en place quand le fichier manque afficherait l'icône
+ * de fichier cassé du navigateur, ce qui donne l'impression que le site est
+ * en panne — on la retire donc de l'arbre au lieu de la laisser échouer.
+ *
+ * Le schéma n'est pas une photo et n'essaie pas de s'en faire passer pour
+ * une : voir `TextureFacade`. Déposer les vrais visuels dans
+ * `public/catalogue/facades/` le remplace, sans toucher au code.
  *
  * Pas de `loading="lazy"` : ces vignettes sont peu nombreuses, et le chargement
  * différé retarde aussi l'erreur — donc le repli.
  */
 function Vignette({
   image,
+  matiere,
   libelle,
+  aide,
   choisi,
   onClick,
 }: {
-  /** Null = visuel pas encore livré : la vignette se replie sur son nom. */
+  /** Null = visuel pas encore livré : la vignette se replie sur le schéma. */
   image: string | null;
+  /** Type de façade, pour le schéma de matière. */
+  matiere?: string;
   libelle: string;
+  /** Ce qui distingue la matière, en une ligne. */
+  aide?: string;
   choisi: boolean;
   onClick: () => void;
 }) {
@@ -278,9 +291,11 @@ function Vignette({
       )}
     >
       <span className="relative block h-24 w-full bg-secondary sm:h-28">
-        {image && (
+        {image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt="" className="size-full object-cover" />
+        ) : (
+          matiere && <TextureFacade type={matiere} />
         )}
         {choisi && (
           <span className="absolute end-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-primary text-primary-foreground">
@@ -288,7 +303,16 @@ function Vignette({
           </span>
         )}
       </span>
-      <span className="block px-3 py-2 text-sm font-medium">{libelle}</span>
+      <span className="block px-3 py-2">
+        <span className="block text-sm font-medium">{libelle}</span>
+        {/* Le nom seul ne suffit pas : « Stratifié » et « PVC » ne veulent
+            rien dire à qui n'a jamais posé de cuisine. */}
+        {aide && (
+          <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+            {aide}
+          </span>
+        )}
+      </span>
     </button>
   );
 }

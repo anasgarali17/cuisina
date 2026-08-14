@@ -928,7 +928,7 @@
     "souhaits": {
       "intro": "Nothing here is required. Every answer helps your adviser prepare the appointment.",
       "facade": "Front type",
-      "facadeAide": "Kitchens we have built — point at the one closest to your idea.",
+      "facadeAide": "Five possible door materials. These tiles are a guide — the real samples are waiting for you in the showroom.",
       "facades": {
         "laque_mat": "Matt lacquer",
         "laque_brillant": "Gloss lacquer",
@@ -948,7 +948,14 @@
       "modeleAide_cuisine": "Seven ranges — pick the one you like, then its colours.",
       "modeleAide_dressing": "Three configurations — open, sliding or hinged.",
       "croquisOuvrir": "Draw my idea",
-      "croquisFermer": "Close and clear the drawing"
+      "croquisFermer": "Close and clear the drawing",
+      "facadesAide": {
+        "laque_mat": "Smooth, reflection-free surface with a velvet feel. Quiet and elegant.",
+        "laque_brillant": "Mirror-like surface that bounces light. Makes a small kitchen feel bigger.",
+        "bois_massif": "Real timber, with natural grain and knots. Every door is one of a kind.",
+        "stratifie": "Printed decor on panel, perfectly even. Hard-wearing and affordable.",
+        "pvc": "Rounded mouldings formed in one piece, no joints. Easy to wipe clean."
+      }
     }
   },
   "sequences": {

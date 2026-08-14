@@ -928,7 +928,7 @@
     "souhaits": {
       "intro": "Rien n’est obligatoire ici. Chaque réponse permet au conseiller de préparer votre rendez-vous.",
       "facade": "Le type de façade",
-      "facadeAide": "Des cuisines que nous avons réalisées — désignez celle qui s’approche de votre idée.",
+      "facadeAide": "Cinq matières possibles pour les portes. Ces vignettes sont des repères — les vrais échantillons vous attendent en showroom.",
       "facades": {
         "laque_mat": "Laque mate",
         "laque_brillant": "Laque brillante",
@@ -948,7 +948,14 @@
       "modeleAide_cuisine": "Sept gammes au catalogue — désignez celle qui vous plaît, puis ses coloris.",
       "modeleAide_dressing": "Trois configurations — sans façades, coulissant ou ouvrant.",
       "croquisOuvrir": "Dessiner mon idée",
-      "croquisFermer": "Fermer et effacer le dessin"
+      "croquisFermer": "Fermer et effacer le dessin",
+      "facadesAide": {
+        "laque_mat": "Surface lisse et sans reflet, toucher velours. Élégante et discrète.",
+        "laque_brillant": "Surface miroir qui renvoie la lumière. Agrandit une petite cuisine.",
+        "bois_massif": "Vrai bois, veines et nœuds naturels. Chaque porte est unique.",
+        "stratifie": "Décor imprimé très régulier sur panneau. Résistant et économique.",
+        "pvc": "Moulures arrondies d'un seul tenant, sans joint. Facile à nettoyer."
+      }
     }
   },
   "sequences": {
