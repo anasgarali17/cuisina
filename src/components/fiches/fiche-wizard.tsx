@@ -1,10 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Camera, Minus, Plus } from "lucide-react";
 import { useRouter } from "@/i18n/navigation";
-import { saveFiche, setFichePhoto } from "@/lib/actions/fiche-actions";
+import {
+  enregistrerPieceJointe,
+  saveFiche,
+  setFichePhoto,
+} from "@/lib/actions/fiche-actions";
 import { createClient } from "@/lib/supabase/client";
 import {
   computeScoreCompletude,
@@ -14,9 +18,20 @@ import {
   type Exigences,
   type FicheDraft,
 } from "@/lib/schemas/fiche";
-import { ORIGINES, ORIGINE_DETAILS, type Origine } from "@/lib/domain";
+import {
+  ORIGINES,
+  type Origine,
+  type TypeProjet,
+} from "@/lib/domain";
 import { formatDate } from "@/lib/dates";
-import { cn } from "@/lib/utils";
+import { cn, messageErreur } from "@/lib/utils";
+import {
+  PiecesJointes,
+  type PieceJointeLocale,
+} from "@/components/fiches/pieces-jointes";
+import { SignaturePad } from "@/components/fiches/signature-pad";
+import { ChoixModele } from "@/components/catalogue/choix-modele";
+import { ChoixContact } from "@/components/catalogue/choix-contact";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -37,20 +52,16 @@ interface Identite {
   tel_domicile: string;
   tel_bureau: string;
   tel_mobile: string;
+  whatsapp: boolean;
   email: string;
   adresse_complete: string;
-  code_postal: string;
   ville: string;
 }
 
 interface Projet {
   nb_cuisines: number;
   nb_dressings: number;
-  nb_sdb: number;
-  etat_chantier: "en_cours" | "fini" | null;
-  budget: string;
   date_livraison: string;
-  observations: string;
 }
 
 const STEPS = ["step1", "step2", "step3", "step4"] as const;
@@ -61,30 +72,34 @@ function toDraft(
   origineDetail: string | null,
   projet: Projet,
   exigences: Exigences,
+  signature: string | null,
+  modele: string | null,
+  couleurs: string[],
 ): FicheDraft {
-  const budget = parseFloat(projet.budget.replace(/\s/g, ""));
   return {
     identite,
     origine: { origine, origine_detail: origineDetail },
     projet: {
       nb_cuisines: projet.nb_cuisines,
       nb_dressings: projet.nb_dressings,
-      nb_sdb: projet.nb_sdb,
-      etat_chantier: projet.etat_chantier,
-      budget_estimatif: Number.isFinite(budget) && budget > 0 ? budget : null,
       date_livraison_souhaitee: projet.date_livraison || null,
-      observations: projet.observations,
     },
     exigences,
+    signature,
+    modele,
+    couleurs,
   };
 }
 
 export function FicheWizard({
   conseillerName,
   pdvName,
+  visuels,
 }: {
   conseillerName: string;
   pdvName: string;
+  /** Photos du catalogue presentes sur le disque — voir catalogue-server.ts. */
+  visuels: string[];
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -96,23 +111,33 @@ export function FicheWizard({
     tel_domicile: "",
     tel_bureau: "",
     tel_mobile: "",
+    whatsapp: false,
     email: "",
     adresse_complete: "",
-    code_postal: "",
     ville: "",
   });
   const [origine, setOrigine] = useState<Origine | null>(null);
-  const [origineDetail, setOrigineDetail] = useState<string | null>(null);
+  /** Plus de sous-question : le detail reste vide, la colonne l accepte. */
+  const origineDetail = null;
   const [projet, setProjet] = useState<Projet>({
     nb_cuisines: 0,
     nb_dressings: 0,
-    nb_sdb: 0,
-    etat_chantier: null,
-    budget: "",
     date_livraison: "",
-    observations: "",
   });
   const [exigences, setExigences] = useState<Exigences>(EXIGENCES_VIDES);
+  const [signature, setSignature] = useState<string | null>(null);
+  const [pieces, setPieces] = useState<PieceJointeLocale[]>([]);
+  const [modele, setModele] = useState<string | null>(null);
+  const [couleurs, setCouleurs] = useState<string[]>([]);
+  /** Un Set ne traverse pas la frontiere serveur/client : on le reconstruit. */
+  const visuelsSet = useMemo(() => new Set(visuels), [visuels]);
+  /**
+   * Cuisine ou dressing : deduit des compteurs de l etape 3. Une fiche qui
+   * ne porte que des dressings montre le catalogue dressing, pas sept
+   * cuisines dont aucune ne la concerne.
+   */
+  const typeProjetFiche: TypeProjet =
+    projet.nb_dressings > 0 && projet.nb_cuisines === 0 ? "dressing" : "cuisine";
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -123,12 +148,30 @@ export function FicheWizard({
 
   const savedIdRef = useRef<string | null>(null);
   const dirtyRef = useRef(false);
-  const stateRef = useRef({ identite, origine, origineDetail, projet, exigences });
+  const stateRef = useRef({
+    identite,
+    origine,
+    origineDetail,
+    projet,
+    exigences,
+    signature,
+    modele,
+    couleurs,
+  });
   useEffect(() => {
-    stateRef.current = { identite, origine, origineDetail, projet, exigences };
-  }, [identite, origine, origineDetail, projet, exigences]);
+    stateRef.current = {
+      identite,
+      origine,
+      origineDetail,
+      projet,
+      exigences,
+      signature,
+      modele,
+      couleurs,
+    };
+  }, [identite, origine, origineDetail, projet, exigences, signature, modele, couleurs]);
 
-  const draft = toDraft(identite, origine, origineDetail, projet, exigences);
+  const draft = toDraft(identite, origine, origineDetail, projet, exigences, signature, modele, couleurs);
   const score = computeScoreCompletude(draft);
 
   const markDirty = useCallback(() => {
@@ -143,7 +186,7 @@ export function FicheWizard({
       dirtyRef.current = false;
       void saveFiche({
         id: savedIdRef.current,
-        draft: toDraft(s.identite, s.origine, s.origineDetail, s.projet, s.exigences),
+        draft: toDraft(s.identite, s.origine, s.origineDetail, s.projet, s.exigences, s.signature, s.modele, s.couleurs),
       }).then((result) => {
         if (result.ok) {
           savedIdRef.current = result.data.id;
@@ -182,7 +225,9 @@ export function FicheWizard({
         return false;
       }
     }
-    if (current === 1) {
+    // L'origine n'est plus obligatoire : rien à valider ici tant qu'elle est
+    // laissée vide, et son détail ne se vérifie que si une origine est choisie.
+    if (current === 1 && origine) {
       const parsed = ficheOrigineSchema.safeParse({
         origine,
         origine_detail: origineDetail,
@@ -192,7 +237,6 @@ export function FicheWizard({
         for (const issue of parsed.error.issues) {
           map[String(issue.path[0] ?? "origine")] = issue.message;
         }
-        if (!origine) map.origine = "origine_requise";
         setErrors(map);
         return false;
       }
@@ -207,9 +251,7 @@ export function FicheWizard({
     const result = await saveFiche({ id: savedIdRef.current, draft });
     if (!result.ok) {
       setSubmitting(false);
-      setSubmitError(
-        result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
-      );
+      setSubmitError(messageErreur(t, result.error));
       return;
     }
     const ficheId = result.data.id;
@@ -230,6 +272,35 @@ export function FicheWizard({
         }
       } catch {
         // Photo is best-effort — the fiche itself is already saved.
+      }
+    }
+    // Les pièces jointes n'ont pas d'endroit où aller avant que la fiche
+    // existe : elles montent maintenant, une par une, et un échec sur l'une
+    // n'emporte pas les autres — la fiche, elle, est déjà enregistrée.
+    if (pieces.length > 0 && process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          for (const p of pieces) {
+            const chemin = `${user.id}/${ficheId}/${Date.now()}-${p.fichier.name}`;
+            const { error } = await supabase.storage
+              .from("fiches-pieces")
+              .upload(chemin, p.fichier, { upsert: false });
+            if (error) continue;
+            await enregistrerPieceJointe({
+              fiche_id: ficheId,
+              chemin,
+              nom_fichier: p.fichier.name,
+              type_mime: p.fichier.type || null,
+              taille_octets: p.fichier.size,
+            });
+          }
+        }
+      } catch {
+        // Best-effort, comme la photo.
       }
     }
     router.push(`/fiches/${ficheId}`);
@@ -353,24 +424,29 @@ export function FicheWizard({
                 }}
               />
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label htmlFor="w-email">{t("fiches.wizard.email")}</Label>
-              <Input
-                id="w-email"
-                type="email"
-                inputMode="email"
-                value={identite.email}
-                onChange={(e) => {
-                  setIdentite({ ...identite, email: e.target.value });
+            {/* WhatsApp ou e-mail — un choix, pas deux champs à remplir. */}
+            <div className="sm:col-span-2">
+              <ChoixContact
+                idPrefixe="w"
+                canal={
+                  identite.whatsapp
+                    ? "whatsapp"
+                    : identite.email
+                      ? "email"
+                      : null
+                }
+                email={identite.email}
+                telephone={identite.tel_mobile}
+                erreurEmail={fieldError("email")}
+                onChange={({ canal, email }) => {
+                  setIdentite({
+                    ...identite,
+                    whatsapp: canal === "whatsapp",
+                    email,
+                  });
                   markDirty();
                 }}
-                aria-invalid={Boolean(errors.email)}
               />
-              {fieldError("email") && (
-                <p className="text-xs font-medium text-rouge">
-                  {fieldError("email")}
-                </p>
-              )}
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="w-adresse">{t("fiches.wizard.adresse")}</Label>
@@ -383,18 +459,6 @@ export function FicheWizard({
                     ...identite,
                     adresse_complete: e.target.value,
                   });
-                  markDirty();
-                }}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="w-cp">{t("fiches.wizard.codePostal")}</Label>
-              <Input
-                id="w-cp"
-                inputMode="numeric"
-                value={identite.code_postal}
-                onChange={(e) => {
-                  setIdentite({ ...identite, code_postal: e.target.value });
                   markDirty();
                 }}
               />
@@ -440,47 +504,25 @@ export function FicheWizard({
             <legend className="mb-4 font-display text-lg font-semibold">
               {t("origines.question")}
             </legend>
+            {/* Quatre réponses, sans sous-questions — le formulaire client
+                pose exactement la même, pour que les deux se comparent. */}
             <RadioGroup
               value={origine ?? ""}
               onValueChange={(v) => {
                 setOrigine(v as Origine);
-                setOrigineDetail(null);
                 markDirty();
               }}
               className="gap-2.5"
             >
               {ORIGINES.map((o) => (
-                <div key={o}>
-                  <RadioCard value={o} className="w-full">
-                    {t(`origines.${o}`)}
-                  </RadioCard>
-                  {origine === o && ORIGINE_DETAILS[o] && (
-                    <RadioGroup
-                      value={origineDetail ?? ""}
-                      onValueChange={(v) => {
-                        setOrigineDetail(v);
-                        markDirty();
-                      }}
-                      className="ms-6 mt-2 gap-2"
-                    >
-                      {ORIGINE_DETAILS[o].map((d) => (
-                        <RadioCard key={d} value={d} className="w-full py-2">
-                          {t(`origines.details.${d}`)}
-                        </RadioCard>
-                      ))}
-                    </RadioGroup>
-                  )}
-                </div>
+                <RadioCard key={o} value={o} className="w-full">
+                  {t(`origines.${o}`)}
+                </RadioCard>
               ))}
             </RadioGroup>
             {errors.origine && (
               <p className="mt-3 text-xs font-medium text-rouge">
                 {t("fiches.wizard.errors.origine_requise")}
-              </p>
-            )}
-            {errors.origine_detail && (
-              <p className="mt-3 text-xs font-medium text-rouge">
-                {t("fiches.wizard.errors.origine_detail_requise")}
               </p>
             )}
           </fieldset>
@@ -493,7 +535,6 @@ export function FicheWizard({
                 [
                   ["nb_cuisines", "nbCuisines"],
                   ["nb_dressings", "nbDressings"],
-                  ["nb_sdb", "nbSdb"],
                 ] as const
               ).map(([key, labelKey]) => (
                 <div
@@ -542,63 +583,15 @@ export function FicheWizard({
               ))}
             </div>
 
-            <fieldset>
-              <legend className="mb-2 text-sm font-medium">
-                {t("fiches.wizard.etatChantier")}
-              </legend>
-              <RadioGroup
-                value={projet.etat_chantier ?? ""}
-                onValueChange={(v) => {
-                  setProjet({
-                    ...projet,
-                    etat_chantier: v as "en_cours" | "fini",
-                  });
-                  markDirty();
-                }}
-                className="grid-cols-2"
-              >
-                <RadioCard value="en_cours">
-                  {t("fiches.wizard.en_cours")}
-                </RadioCard>
-                <RadioCard value="fini">{t("fiches.wizard.fini")}</RadioCard>
-              </RadioGroup>
-            </fieldset>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="w-budget">{t("fiches.wizard.budget")}</Label>
-                <Input
-                  id="w-budget"
-                  inputMode="numeric"
-                  value={projet.budget}
-                  onChange={(e) => {
-                    setProjet({ ...projet, budget: e.target.value });
-                    markDirty();
-                  }}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="w-livraison">
-                  {t("fiches.wizard.dateLivraison")}
-                </Label>
-                <DatePicker
-                  id="w-livraison"
-                  value={projet.date_livraison}
-                  onChange={(v) => {
-                    setProjet({ ...projet, date_livraison: v });
-                    markDirty();
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="w-obs">{t("fiches.wizard.observations")}</Label>
-              <Textarea
-                id="w-obs"
-                value={projet.observations}
-                onChange={(e) => {
-                  setProjet({ ...projet, observations: e.target.value });
+            <div className="space-y-1.5 sm:max-w-xs">
+              <Label htmlFor="w-livraison">
+                {t("fiches.wizard.dateLivraison")}
+              </Label>
+              <DatePicker
+                id="w-livraison"
+                value={projet.date_livraison}
+                onChange={(v) => {
+                  setProjet({ ...projet, date_livraison: v });
                   markDirty();
                 }}
               />
@@ -607,20 +600,61 @@ export function FicheWizard({
         )}
 
         {step === 3 && (
-          <ExigencesStep
-            exigences={exigences}
-            onChange={(e) => {
-              setExigences(e);
-              markDirty();
-            }}
-            photoPreview={photoPreview}
-            photoName={photo?.name ?? null}
-            onPhoto={(file) => {
-              setPhoto(file);
-              if (photoPreview) URL.revokeObjectURL(photoPreview);
-              setPhotoPreview(file ? URL.createObjectURL(file) : null);
-            }}
-          />
+          <div className="space-y-6">
+            {/* Le modèle d'abord : c'est la première chose qu'on regarde
+                ensemble en showroom, et il commande les coloris. */}
+            <section>
+              <h2 className="font-display text-lg font-semibold">
+                {t(`catalogue.titre_${typeProjetFiche}`)}
+              </h2>
+              <p className="mb-3 mt-0.5 text-sm text-muted-foreground">
+                {t(`catalogue.aide_${typeProjetFiche}`)}
+              </p>
+              <ChoixModele
+                compact
+                typeProjet={typeProjetFiche}
+                modele={modele}
+                couleurs={couleurs}
+                visuels={visuelsSet}
+                onChange={(patch) => {
+                  setModele(patch.modele);
+                  setCouleurs(patch.couleurs);
+                  markDirty();
+                }}
+              />
+            </section>
+
+            <ExigencesStep
+              exigences={exigences}
+              onChange={(e) => {
+                setExigences(e);
+                markDirty();
+              }}
+              photoPreview={photoPreview}
+              photoName={photo?.name ?? null}
+              onPhoto={(file) => {
+                setPhoto(file);
+                if (photoPreview) URL.revokeObjectURL(photoPreview);
+                setPhotoPreview(file ? URL.createObjectURL(file) : null);
+              }}
+            />
+
+            <PiecesJointes
+              pieces={pieces}
+              onChange={(next) => {
+                setPieces(next);
+                markDirty();
+              }}
+            />
+
+            <SignaturePad
+              value={signature}
+              onChange={(v) => {
+                setSignature(v);
+                markDirty();
+              }}
+            />
+          </div>
         )}
       </Card>
 

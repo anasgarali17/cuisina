@@ -15,6 +15,26 @@ export function formatDT(amount: number | null | undefined): string {
   return `${DT_FORMAT.format(amount)} DT`;
 }
 
+/** Le montant sans l'unité — pour un intervalle, où « DT » ne se répète pas. */
+export function formatMontant(amount: number): string {
+  return DT_FORMAT.format(amount);
+}
+
+/**
+ * Le code d'erreur d'une Server Action, transformé en phrase lisible.
+ *
+ * Le mode démo garde sa formulation propre — ce n'est pas une panne, c'est un
+ * état attendu. Tout le reste vient de `errors.*`, et un code inconnu retombe
+ * sur le message générique plutôt que d'afficher la clé brute à l'écran.
+ */
+export function messageErreur(
+  t: { (key: string): string; has(key: string): boolean },
+  code: string,
+): string {
+  if (code === "demo_mode") return t("app.demoReadOnly");
+  return t.has(`errors.${code}`) ? t(`errors.${code}`) : t("errors.db");
+}
+
 export function initials(nom: string, prenom?: string | null): string {
   const a = (prenom ?? "").trim().charAt(0);
   const b = nom.trim().charAt(0);

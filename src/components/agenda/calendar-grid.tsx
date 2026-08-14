@@ -1,10 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { CheckCircle2, Clock, MapPin } from "lucide-react";
+import { CheckCircle2, MapPin, Plus } from "lucide-react";
 import { formatDate, toISODate } from "@/lib/dates";
+import { tzDay, tzHhmm, tzMinutes } from "@/lib/tz";
 import { cn } from "@/lib/utils";
 import {
   CATEGORY_STYLES,
@@ -49,12 +56,10 @@ export function weekDays(anchor: Date): Date[] {
 }
 
 function minutesFromDayStart(d: Date): number {
-  return (d.getHours() - DAY_START_HOUR) * 60 + d.getMinutes();
+  return tzMinutes(d) - DAY_START_HOUR * 60;
 }
 
-function hhmm(d: Date): string {
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
+const hhmm = tzHhmm;
 
 /* ------------------------------------------------------------------ chips */
 
@@ -62,10 +67,13 @@ function EventChip({
   event,
   onOpen,
   compact,
+  wrap,
 }: {
   event: AgendaEvent;
   onOpen: (event: AgendaEvent) => void;
   compact?: boolean;
+  /** Laisse le libellé passer sur deux lignes, là où la colonne le permet. */
+  wrap?: boolean;
 }) {
   const style = CATEGORY_STYLES[event.category as EventCategory];
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -82,14 +90,21 @@ function EventChip({
       onClick={() => onOpen(event)}
       title={event.title}
       className={cn(
-        "group/chip flex w-full items-center gap-1.5 overflow-hidden rounded-md px-1.5 py-1 text-start text-[11px] font-medium leading-tight transition",
+        "group/chip drag-item flex w-full touch-manipulation select-none gap-1.5 overflow-hidden rounded-md px-1.5 py-1 text-start text-[11px] font-medium leading-tight transition",
         "hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        wrap ? "items-start" : "items-center",
         style.chip,
         isDragging && "opacity-40",
         compact && "py-0.5",
       )}
     >
-      <span className={cn("h-3 w-[3px] shrink-0 rounded-full", style.dot)} />
+      <span
+        className={cn(
+          "w-[3px] shrink-0 rounded-full",
+          wrap ? "self-stretch" : "h-3",
+          style.dot,
+        )}
+      />
       {event.start && (
         /* On a phone a month cell is ~50px wide, where the time is unreadable
            and its min-content width pushes the grid past the viewport. */
@@ -97,7 +112,15 @@ function EventChip({
           {hhmm(event.start)}
         </span>
       )}
-      <span className={cn("truncate", event.done && "line-through opacity-60")}>
+      <span
+        className={cn(
+          // Deux lignes valent mieux qu'un « … » : « Appeler le client pour le
+          // choix des façades » et « Appeler le client » sont deux tâches
+          // différentes, et tronqué au même endroit on ne les distingue plus.
+          wrap ? "line-clamp-2 min-w-0 whitespace-normal" : "truncate",
+          event.done && "line-through opacity-60",
+        )}
+      >
         {event.title}
       </span>
     </button>
@@ -196,7 +219,7 @@ export function MonthGrid({
   onOpen: (event: AgendaEvent) => void;
 }) {
   const locale = useLocale();
-  const today = toISODate(new Date());
+  const today = tzDay(new Date());
   const cells = useMemo(() => monthMatrix(month), [month]);
   const headers = useMemo(() => weekDays(new Date()), []);
 
@@ -253,6 +276,24 @@ function TimedBlock({
   const top = Math.max(0, (minutesFromDayStart(event.start) / 60) * HOUR_PX);
   const rawHeight =
     ((event.end.getTime() - event.start.getTime()) / 3_600_000) * HOUR_PX;
+  const height = Math.max(24, rawHeight);
+
+  /**
+   * Un rendez-vous d'une demi-heure ne fait que 28 px de haut : empilé, le
+   * titre mange la place et l'heure se retrouve coupée en deux. Sous ce
+   * seuil on met tout sur une ligne, et l'heure de fin se lit de toute façon
+   * dans la hauteur du bloc. Le lieu attend d'avoir vraiment de la place.
+   */
+  const tight = height < 42;
+  const roomy = height >= 74;
+
+  const fullLabel = [
+    event.title,
+    `${hhmm(event.start)} – ${hhmm(event.end)}`,
+    event.lieu,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
     <button
@@ -261,28 +302,41 @@ function TimedBlock({
       {...listeners}
       {...attributes}
       onClick={() => onOpen(event)}
+      title={fullLabel}
       style={{
         top,
-        height: Math.max(24, rawHeight),
+        height,
         insetInlineStart: `${(lane / lanes) * 100}%`,
         width: `${100 / lanes}%`,
       }}
       className={cn(
-        "absolute overflow-hidden rounded-lg border p-1.5 text-start text-[11px] leading-tight transition",
+        "drag-item absolute touch-manipulation select-none overflow-hidden rounded-lg border text-start text-[11px] leading-tight transition",
         "hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        tight ? "px-1.5 py-0.5" : "p-1.5",
         style.block,
         isDragging && "opacity-40",
       )}
     >
-      <span className="block truncate font-semibold">{event.title}</span>
-      <span className="block truncate tabular-nums opacity-75">
-        {hhmm(event.start)} – {hhmm(event.end)}
-      </span>
-      {event.lieu && (
-        <span className="mt-0.5 flex items-center gap-1 truncate opacity-70">
-          <MapPin className="size-3 shrink-0" />
-          {event.lieu}
+      {tight ? (
+        <span className="flex items-baseline gap-1.5">
+          <span className="truncate font-semibold">{event.title}</span>
+          <span className="shrink-0 tabular-nums opacity-75">
+            {hhmm(event.start)}
+          </span>
         </span>
+      ) : (
+        <>
+          <span className="block truncate font-semibold">{event.title}</span>
+          <span className="block truncate tabular-nums opacity-75">
+            {hhmm(event.start)} – {hhmm(event.end)}
+          </span>
+          {roomy && event.lieu && (
+            <span className="mt-0.5 flex items-center gap-1 truncate opacity-70">
+              <MapPin className="size-3 shrink-0" />
+              {event.lieu}
+            </span>
+          )}
+        </>
       )}
     </button>
   );
@@ -370,7 +424,7 @@ export function TimeGrid({
 }) {
   const locale = useLocale();
   const t = useTranslations("agenda");
-  const today = toISODate(new Date());
+  const today = tzDay(new Date());
   const hours = Array.from(
     { length: DAY_END_HOUR - DAY_START_HOUR },
     (_, i) => DAY_START_HOUR + i,
@@ -428,9 +482,14 @@ export function TimeGrid({
             {t("allDay")}
           </div>
           {allDayRow.map(({ iso, events }) => (
-            <div key={iso} className="flex flex-col gap-0.5 border-s border-border/70 p-1">
+            /* Plafonné puis défilant : une journée à dix tâches ne doit pas
+               repousser la grille horaire hors de l'écran. */
+            <div
+              key={iso}
+              className="flex max-h-32 flex-col gap-0.5 overflow-y-auto border-s border-border/70 p-1"
+            >
               {events.map((e) => (
-                <EventChip key={e.id} event={e} onOpen={onOpen} compact />
+                <EventChip key={e.id} event={e} onOpen={onOpen} compact wrap />
               ))}
             </div>
           ))}
@@ -472,79 +531,276 @@ export function TimeGrid({
 
 /* ------------------------------------------------------------- day panel */
 
+/** Slot de saisie : une demi-heure, la maille sur laquelle on prend un RDV. */
+const SLOT_MIN = 30;
+
+/**
+ * L'heure courante, `null` côté serveur : entre le rendu serveur et
+ * l'hydratation l'horloge a tourné, et React refuse l'écart. Le trait de
+ * l'heure n'apparaît donc qu'une fois chez le client, puis suit la minute.
+ */
+function useNow(): Date | null {
+  const cached = useRef<{ key: string; date: Date } | null>(null);
+  const subscribe = useCallback((onChange: () => void) => {
+    const id = setInterval(onChange, 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const snapshot = useCallback(() => {
+    const d = new Date();
+    // Même référence tant que la minute ne change pas, sinon le store boucle.
+    const key = `${d.toDateString()} ${d.getHours()}:${d.getMinutes()}`;
+    if (cached.current?.key !== key) cached.current = { key, date: d };
+    return cached.current.date;
+  }, []);
+  return useSyncExternalStore(subscribe, snapshot, () => null);
+}
+
+/**
+ * La journée sélectionnée, à l'heure près : une règle horaire, les rendez-vous
+ * posés à leur place et à leur durée, et chaque demi-heure libre cliquable
+ * pour en créer un qui commence là. Une liste ne dit pas si le créneau de
+ * 14 h est pris — une timeline, si.
+ */
 export function DayPanel({
   iso,
   events,
   onOpen,
+  onCreateAt,
   ownerName,
   emptyLabel,
 }: {
   iso: string;
   events: AgendaEvent[];
   onOpen: (event: AgendaEvent) => void;
+  /** Créer un événement qui démarre à `HH:mm` ce jour-là. */
+  onCreateAt: (iso: string, heure: string) => void;
   ownerName: (id: string) => string;
   emptyLabel: string;
 }) {
   const locale = useLocale();
   const t = useTranslations("agenda");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const hours = DAY_END_HOUR - DAY_START_HOUR;
+  const allDay = events.filter((e) => e.allDay);
+  const timed = events.filter((e) => !e.allDay && e.start && e.end);
+  const laned = useMemo(() => assignLanes(timed), [timed]);
+
+  /** Créneaux libres : ceux qu'aucun rendez-vous ne recouvre. */
+  const slots = useMemo(() => {
+    const busy = timed.map((e) => [
+      minutesFromDayStart(e.start!),
+      minutesFromDayStart(e.end!),
+    ]);
+    return Array.from({ length: (hours * 60) / SLOT_MIN }, (_, i) => {
+      const from = i * SLOT_MIN;
+      const h = DAY_START_HOUR + Math.floor(from / 60);
+      const m = from % 60;
+      return {
+        top: (from / 60) * HOUR_PX,
+        heure: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+        free: !busy.some(([s, e]) => from < e && from + SLOT_MIN > s),
+      };
+    });
+  }, [timed, hours]);
+
+  const now = useNow();
+  const isToday = now !== null && tzDay(now) === iso;
+  const nowTop = isToday ? (minutesFromDayStart(now!) / 60) * HOUR_PX : -1;
+  const nowVisible = nowTop >= 0 && nowTop <= hours * HOUR_PX;
+
+  // On ouvre sur le premier rendez-vous — ou sur l'heure qu'il est aujourd'hui.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const anchor = timed.length
+      ? Math.min(...timed.map((e) => minutesFromDayStart(e.start!)))
+      : isToday
+        ? minutesFromDayStart(new Date())
+        : 2 * 60;
+    el.scrollTop = Math.max(0, (anchor / 60) * HOUR_PX - HOUR_PX);
+    // Se recale quand on change de jour, pas à chaque rendu.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iso]);
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4">
-      <p className="font-display text-lg font-semibold capitalize">
-        {formatDate(iso, "EEEE d MMMM", locale)}
-      </p>
-      <p className="mt-0.5 text-xs text-muted-foreground">
-        {t("eventCount", { count: events.length })}
-      </p>
-      <div className="mt-4 flex flex-col gap-2">
-        {events.length === 0 && (
-          <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-            {emptyLabel}
+    <div className="flex max-h-[78vh] flex-col overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex items-start gap-2 border-b border-border p-4 pb-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-lg font-semibold capitalize">
+            {formatDate(iso, "EEEE d MMMM", locale)}
           </p>
-        )}
-        {events.map((e) => {
-          const style = CATEGORY_STYLES[e.category as EventCategory];
-          return (
-            <button
-              key={e.id}
-              type="button"
-              onClick={() => onOpen(e)}
-              className="flex items-start gap-3 rounded-xl border border-border p-3 text-start transition-colors hover:bg-muted/60"
-            >
-              <span className={cn("mt-0.5 h-9 w-1 shrink-0 rounded-full", style.dot)} />
-              <span className="min-w-0 flex-1">
-                <span
-                  className={cn(
-                    "block truncate text-sm font-semibold",
-                    e.done && "line-through text-muted-foreground",
-                  )}
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {t("eventCount", { count: events.length })}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onCreateAt(iso, "09:00")}
+          aria-label={t("newEvent")}
+          title={t("newEvent")}
+          className="grid size-8 shrink-0 place-items-center rounded-xl border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        >
+          <Plus className="size-4" />
+        </button>
+      </div>
+
+      {/* Tâches et tout ce qui n'a pas d'heure */}
+      {allDay.length > 0 && (
+        <div className="flex flex-col gap-1 border-b border-border bg-muted/20 p-2">
+          <span className="px-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t("allDay")}
+          </span>
+          {allDay.map((e) => (
+            <EventChip key={e.id} event={e} onOpen={onOpen} wrap />
+          ))}
+        </div>
+      )}
+
+      {events.length === 0 && (
+        <p className="border-b border-border px-4 py-3 text-center text-xs text-muted-foreground">
+          {emptyLabel}
+        </p>
+      )}
+
+      <div ref={scrollRef} className="grow overflow-y-auto">
+        <div className="grid" style={{ gridTemplateColumns: "46px minmax(0,1fr)" }}>
+          {/* Règle horaire */}
+          <div>
+            {Array.from({ length: hours }, (_, i) => (
+              <div
+                key={i}
+                className="relative border-b border-border/50 text-end text-[10px] tabular-nums text-muted-foreground"
+                style={{ height: HOUR_PX }}
+              >
+                <span className="absolute end-1.5 top-0 -translate-y-1/2 bg-card px-1">
+                  {String(DAY_START_HOUR + i).padStart(2, "0")}:00
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="relative border-s border-border/70"
+            style={{ height: hours * HOUR_PX }}
+          >
+            {Array.from({ length: hours }, (_, i) => (
+              <div
+                key={i}
+                className="border-b border-border/50"
+                style={{ height: HOUR_PX }}
+              />
+            ))}
+
+            {/* Chaque demi-heure libre ouvre la création à cette heure-là */}
+            {slots
+              .filter((s) => s.free)
+              .map((s) => (
+                <button
+                  key={s.heure}
+                  type="button"
+                  onClick={() => onCreateAt(iso, s.heure)}
+                  title={t("addAt", { time: s.heure })}
+                  aria-label={t("addAt", { time: s.heure })}
+                  className="group absolute inset-x-0 flex items-center justify-center rounded-md transition-colors hover:bg-chene/10"
+                  style={{ top: s.top, height: (SLOT_MIN / 60) * HOUR_PX }}
                 >
-                  {e.title}
-                </span>
-                <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                  {e.start && e.end ? (
-                    <span className="flex items-center gap-1 tabular-nums">
-                      <Clock className="size-3" />
-                      {hhmm(e.start)} – {hhmm(e.end)}
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <CheckCircle2 className="size-3" />
-                      {ownerName(e.ownerId)}
-                    </span>
-                  )}
-                  {e.lieu && (
-                    <span className="flex items-center gap-1 truncate">
-                      <MapPin className="size-3" />
-                      {e.lieu}
-                    </span>
-                  )}
-                </span>
-              </span>
-            </button>
-          );
-        })}
+                  <span className="flex items-center gap-1 text-[10px] font-medium text-chene opacity-0 transition-opacity group-hover:opacity-100">
+                    <Plus className="size-3" />
+                    {s.heure}
+                  </span>
+                </button>
+              ))}
+
+            {laned.map(({ event, lane, lanes }) => (
+              <PanelBlock
+                key={event.id}
+                event={event}
+                onOpen={onOpen}
+                ownerName={ownerName}
+                lane={lane}
+                lanes={lanes}
+              />
+            ))}
+
+            {/* L'heure qu'il est, en rouge */}
+            {nowVisible && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-rouge"
+                style={{ top: nowTop }}
+              >
+                <span className="absolute -top-1 start-0 size-2 rounded-full bg-rouge" />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+/** Un rendez-vous posé sur la timeline du panneau, détaillé si la place le permet. */
+function PanelBlock({
+  event,
+  onOpen,
+  ownerName,
+  lane,
+  lanes,
+}: {
+  event: AgendaEvent;
+  onOpen: (event: AgendaEvent) => void;
+  ownerName: (id: string) => string;
+  lane: number;
+  lanes: number;
+}) {
+  const style = CATEGORY_STYLES[event.category as EventCategory];
+  const start = event.start!;
+  const end = event.end!;
+  const top = (minutesFromDayStart(start) / 60) * HOUR_PX;
+  const height = Math.max(
+    22,
+    ((end.getTime() - start.getTime()) / 3_600_000) * HOUR_PX,
+  );
+  const tight = height < 44;
+  const roomy = height >= 76;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(event)}
+      style={{
+        top,
+        height,
+        insetInlineStart: `calc(${(lane / lanes) * 100}% + 4px)`,
+        width: `calc(${100 / lanes}% - 8px)`,
+      }}
+      className={cn(
+        "absolute overflow-hidden rounded-lg border p-1.5 text-start text-[11px] leading-tight shadow-sm transition",
+        "hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        style.block,
+      )}
+    >
+      <span className="block truncate font-semibold">{event.title}</span>
+      {!tight && (
+        <span className="block truncate tabular-nums opacity-80">
+          {hhmm(start)} – {hhmm(end)}
+        </span>
+      )}
+      {roomy && (
+        <>
+          {event.lieu && (
+            <span className="mt-0.5 flex items-center gap-1 truncate opacity-75">
+              <MapPin className="size-3 shrink-0" />
+              {event.lieu}
+            </span>
+          )}
+          <span className="mt-0.5 flex items-center gap-1 truncate opacity-75">
+            <CheckCircle2 className="size-3 shrink-0" />
+            {ownerName(event.ownerId)}
+          </span>
+        </>
+      )}
+    </button>
   );
 }

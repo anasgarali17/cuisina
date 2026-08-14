@@ -1,5 +1,6 @@
 import { getCurrentProfile } from "@/lib/auth";
 import { listPdvs } from "@/lib/data/queries";
+import { visuelsDisponibles } from "@/lib/catalogue-server";
 import { FicheWizard } from "@/components/fiches/fiche-wizard";
 
 export default async function NouvelleFichePage() {
@@ -13,6 +14,7 @@ export default async function NouvelleFichePage() {
     <FicheWizard
       conseillerName={`${profile.prenom} ${profile.nom}`}
       pdvName={pdv?.nom ?? "—"}
+      visuels={visuelsDisponibles()}
     />
   );
 }

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/rappel-rdv",
+      "schedule": "0 14 * * *"
+    }
+  ]
+}

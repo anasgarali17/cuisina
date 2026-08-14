@@ -10,7 +10,7 @@ export const CHART_CATEGORICAL_LIGHT = [
   "#C1121F", // rouge — bouche_a_oreille
   "#3B5FC0", // bleu — site_web
   "#B87217", // chêne — foire
-  "#0E8C66", // vert — publicite
+  "#0E8C66", // vert — reseaux sociaux
 ] as const;
 
 export const CHART_CATEGORICAL_DARK = [

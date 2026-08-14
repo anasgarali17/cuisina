@@ -125,14 +125,14 @@ function tunisianMobile(): string {
 /* ================= domain types (mirror DB enums / exigencesSchema) ================= */
 
 type Stage =
-  | "nouveau_contact"
-  | "contacte"
-  | "rdv_showroom"
-  | "metre_releve"
+  | "nouveau_lead"
+  | "releve_preliminaire"
   | "conception_devis"
-  | "devis_envoye"
-  | "negociation"
-  | "signe";
+  | "rdv_showroom"
+  | "cloture"
+  | "signe"
+  | "releve_definitif"
+  | "dossier_envoye";
 type StageOrPerdu = Stage | "perdu";
 type MotifPerte = "prix" | "delai" | "concurrent" | "projet_annule" | "injoignable" | "autre";
 type Origine = "bouche_a_oreille" | "site_web" | "foire" | "publicite";
@@ -146,14 +146,14 @@ type Encastrable = "encastrable" | "non_encastrable";
 type RelanceResultat = "joint" | "message_laisse" | "injoignable" | "rdv_pris" | "a_rappeler";
 
 const STAGE_ORDER: readonly Stage[] = [
-  "nouveau_contact",
-  "contacte",
-  "rdv_showroom",
-  "metre_releve",
+  "nouveau_lead",
+  "releve_preliminaire",
   "conception_devis",
-  "devis_envoye",
-  "negociation",
+  "rdv_showroom",
+  "cloture",
   "signe",
+  "releve_definitif",
+  "dossier_envoye",
 ];
 
 /** Must match `exigencesSchema` in src/lib/schemas/fiche.ts exactly. */
@@ -304,21 +304,25 @@ const CLIENT_NAMES: readonly string[] = [
   "Manel Aouadi", "Fedi Turki", "Rihab Selmi", "Kais Ellouze", "Ibtissem Bahri",
 ];
 
-/** 40 stages: 5 nouveau, 5 contacte, 5 rdv, 5 metre, 5 conception, 4 devis, 3 nego, 5 signe, 3 perdu. */
+/**
+ * 40 dossiers répartis sur les huit étapes : un entonnoir qui se resserre,
+ * plus trois perdus et deux déjà partis en production — de quoi remplir aussi
+ * l'écran Client actif.
+ */
 const STAGE_PLAN: readonly StageOrPerdu[] = [
-  "nouveau_contact", "contacte", "rdv_showroom", "metre_releve", "conception_devis",
-  "devis_envoye", "negociation", "signe", "perdu", "nouveau_contact",
-  "contacte", "rdv_showroom", "metre_releve", "conception_devis", "devis_envoye",
-  "negociation", "signe", "perdu", "nouveau_contact", "contacte",
-  "rdv_showroom", "metre_releve", "conception_devis", "devis_envoye", "negociation",
-  "signe", "perdu", "nouveau_contact", "contacte", "rdv_showroom",
-  "metre_releve", "conception_devis", "devis_envoye", "signe", "nouveau_contact",
-  "contacte", "rdv_showroom", "metre_releve", "conception_devis", "signe",
+  "nouveau_lead", "releve_preliminaire", "conception_devis", "rdv_showroom", "cloture",
+  "signe", "releve_definitif", "dossier_envoye", "perdu", "nouveau_lead",
+  "releve_preliminaire", "conception_devis", "rdv_showroom", "cloture", "signe",
+  "releve_definitif", "dossier_envoye", "perdu", "nouveau_lead", "releve_preliminaire",
+  "conception_devis", "rdv_showroom", "cloture", "signe", "nouveau_lead",
+  "releve_preliminaire", "perdu", "nouveau_lead", "releve_preliminaire", "rdv_showroom",
+  "conception_devis", "conception_devis", "cloture", "signe", "nouveau_lead",
+  "releve_preliminaire", "rdv_showroom", "conception_devis", "cloture", "signe",
 ];
 
 const ORIGINE_DETAILS: Record<string, readonly string[]> = {
   bouche_a_oreille: ["prospection", "architecte_decorateur", "promoteur_entrepreneur", "ami"],
-  publicite: ["spot_publicitaire", "magasine", "affiche_enseigne", "catalogue"],
+  publicite: ["facebook", "instagram", "tiktok", "autre_reseau"],
 };
 
 const OBSERVATIONS: readonly string[] = [
@@ -375,7 +379,7 @@ interface FicheRow {
 
 async function wipe(): Promise<void> {
   console.log("— Suppression des données existantes…");
-  const tables = ["rendez_vous", "taches", "fiche_relances", "fiche_historique", "fiches_contact", "clients"] as const;
+  const tables = ["rendez_vous", "taches", "fiche_relances", "fiche_historique", "fiches_contact", "clients", "fournisseurs"] as const;
   for (const table of tables) {
     const { error } = await supabase.from(table).delete().neq("id", NIL_UUID);
     check(error, `delete ${table}`);
@@ -462,7 +466,7 @@ function buildFicheSpecs(profiles: ProfileSeeded[]): FicheSpec[] {
     const ageDays = Math.min(90, stageIdx * 9 + randInt(2, 18));
     const reachedStage: Stage =
       stage === "perdu"
-        ? pick(["contacte", "rdv_showroom", "conception_devis", "devis_envoye", "negociation"] as const)
+        ? pick(["releve_preliminaire", "rdv_showroom", "conception_devis", "cloture"] as const)
         : stage;
 
     specs.push({
@@ -490,7 +494,7 @@ async function seedFiches(specs: FicheSpec[]): Promise<Map<string, string>> {
     const filled = rand() < 0.63; // ~25 of 40 with detailed exigences
     const stageIdx = spec.stage === "perdu" ? STAGE_ORDER.indexOf(spec.reachedStage) : STAGE_ORDER.indexOf(spec.stage);
     const hasPrevue = stageIdx >= STAGE_ORDER.indexOf("conception_devis");
-    const hasEffective = stageIdx >= STAGE_ORDER.indexOf("devis_envoye");
+    const hasEffective = stageIdx >= STAGE_ORDER.indexOf("conception_devis");
     const nb_cuisines = rand() < 0.9 ? 1 : 2;
 
     return {
@@ -505,7 +509,6 @@ async function seedFiches(specs: FicheSpec[]): Promise<Map<string, string>> {
       origine_detail,
       nb_cuisines,
       nb_dressings: pick([0, 0, 1, 1, 2]),
-      nb_sdb: pick([0, 0, 0, 1, 1]),
       etat_chantier: pick(["en_cours", "fini", null, "en_cours"] as const) as EtatChantier | null,
       budget_estimatif: spec.budget,
       date_livraison_souhaitee: rand() < 0.4 ? dateOnly(randInt(30, 120)) : null,
@@ -617,7 +620,7 @@ async function seedHistorique(specs: FicheSpec[], ficheIds: Map<string, string>)
 
 async function seedRelances(specs: FicheSpec[], ficheIds: Map<string, string>): Promise<number> {
   console.log("— Relances…");
-  const MID_STAGES: readonly StageOrPerdu[] = ["contacte", "rdv_showroom", "metre_releve", "conception_devis", "devis_envoye", "negociation"];
+  const MID_STAGES: readonly StageOrPerdu[] = ["releve_preliminaire", "conception_devis", "rdv_showroom", "cloture"];
   const targets = specs.filter((s) => MID_STAGES.includes(s.stage)).slice(0, 15);
 
   interface RelanceRow {
@@ -673,7 +676,7 @@ async function seedTaches(specs: FicheSpec[], ficheIds: Map<string, string>, pro
     canal: Canal | null;
   }
   const rows: TacheRow[] = [];
-  const midSpecs = specs.filter((s) => s.stage !== "signe" && s.stage !== "perdu" && s.stage !== "nouveau_contact");
+  const midSpecs = specs.filter((s) => s.stage !== "signe" && s.stage !== "perdu" && s.stage !== "nouveau_lead");
 
   // 7 overdue auto-generated relance tasks.
   for (const spec of midSpecs.slice(0, 7)) {
@@ -782,7 +785,7 @@ async function seedTaches(specs: FicheSpec[], ficheIds: Map<string, string>, pro
 
 async function seedRendezVous(specs: FicheSpec[], ficheIds: Map<string, string>): Promise<number> {
   console.log("— Rendez-vous…");
-  const ACTIVE_STAGES: readonly StageOrPerdu[] = ["rdv_showroom", "metre_releve", "conception_devis", "devis_envoye", "negociation", "signe"];
+  const ACTIVE_STAGES: readonly StageOrPerdu[] = ["rdv_showroom", "releve_preliminaire", "conception_devis", "cloture", "signe", "releve_definitif"];
   const targets = specs.filter((s) => ACTIVE_STAGES.includes(s.stage)).slice(0, 10);
 
   interface RdvRow {
@@ -807,7 +810,7 @@ async function seedRendezVous(specs: FicheSpec[], ficheIds: Map<string, string>)
     const slot = slots[i] ?? ([randInt(1, 7), 10] as const);
     const [offset, hour] = slot;
     const type: RdvType =
-      spec.stage === "metre_releve" ? "metre" : spec.stage === "signe" ? "livraison" : "showroom";
+      spec.stage === "releve_definitif" ? "metre" : spec.stage === "signe" ? "livraison" : "showroom";
     const titre =
       type === "metre"
         ? `Métré chez ${spec.client_nom}`
@@ -833,6 +836,48 @@ async function seedRendezVous(specs: FicheSpec[], ficheIds: Map<string, string>)
   return rows.length;
 }
 
+/**
+ * Les fournisseurs — la couche « fournisseurs » de la carte du réseau. Noms
+ * fictifs, villes réelles : c'est la ville qui porte l'information, puisque
+ * c'est elle que la carte géocode.
+ */
+const FOURNISSEUR_SEED: ReadonlyArray<{
+  nom: string;
+  categorie: string;
+  ville: string;
+  delai_jours: number;
+}> = [
+  { nom: "Atelier Bois du Nord", categorie: "caisson", ville: "Menzel Bourguiba", delai_jours: 21 },
+  { nom: "Menuiserie El Amine", categorie: "caisson", ville: "Sfax", delai_jours: 18 },
+  { nom: "Cuisines Concept Sousse", categorie: "caisson", ville: "Msaken", delai_jours: 15 },
+  { nom: "Marbrerie Thala Stone", categorie: "plan_travail", ville: "Kasserine", delai_jours: 25 },
+  { nom: "Quartz & Granit Tunisie", categorie: "plan_travail", ville: "Ben Arous", delai_jours: 12 },
+  { nom: "Plans de Travail Sahel", categorie: "plan_travail", ville: "Monastir", delai_jours: 14 },
+  { nom: "Électro Distribution", categorie: "electromenager", ville: "Tunis", delai_jours: 7 },
+  { nom: "Sud Électroménager", categorie: "electromenager", ville: "Gabès", delai_jours: 10 },
+  { nom: "Ferrures & Charnières SA", categorie: "quincaillerie", ville: "La Soukra", delai_jours: 5 },
+  { nom: "Accessoires Cuisine Import", categorie: "quincaillerie", ville: "Radès", delai_jours: 6 },
+  { nom: "Équipe Pose Grand Tunis", categorie: "pose", ville: "Ariana", delai_jours: 3 },
+  { nom: "Poseurs du Cap Bon", categorie: "pose", ville: "Nabeul", delai_jours: 4 },
+  { nom: "Pose Sfax Sud", categorie: "pose", ville: "Sfax", delai_jours: 4 },
+  { nom: "Transport Djerba Express", categorie: "transport", ville: "Houmt Souk", delai_jours: 2 },
+  { nom: "Logistique Centre", categorie: "transport", ville: "Kairouan", delai_jours: 3 },
+];
+
+async function seedFournisseurs(): Promise<number> {
+  console.log("— Fournisseurs…");
+  const rows = FOURNISSEUR_SEED.map((f) => ({
+    ...f,
+    adresse: `Zone industrielle, ${f.ville}`,
+    telephone: tunisianMobile(),
+    actif: true,
+  }));
+  const { error } = await supabase.from("fournisseurs").insert(rows);
+  check(error, "insert fournisseurs");
+  console.log(`  ${rows.length} fournisseurs créés.`);
+  return rows.length;
+}
+
 async function main(): Promise<void> {
   console.log(`CUISINA CRM — seed (${SUPABASE_URL})`);
 
@@ -846,6 +891,7 @@ async function main(): Promise<void> {
   const relanceCount = await seedRelances(specs, ficheIds);
   const tacheCount = await seedTaches(specs, ficheIds, profiles);
   const rdvCount = await seedRendezVous(specs, ficheIds);
+  const fournisseurCount = await seedFournisseurs();
 
   console.log("\n=== Résumé du seed ===");
   console.log(`  Points de vente : ${pdvs.length}`);
@@ -856,6 +902,7 @@ async function main(): Promise<void> {
   console.log(`  Relances        : ${relanceCount}`);
   console.log(`  Tâches          : ${tacheCount}`);
   console.log(`  Rendez-vous     : ${rdvCount}`);
+  console.log(`  Fournisseurs    : ${fournisseurCount}`);
   console.log("Seed terminé avec succès.");
 }
 

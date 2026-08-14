@@ -128,7 +128,7 @@ export function LatestFiches({
           <span className="ms-1.5 font-mono text-muted-foreground">{total}</span>
         </Link>
         <Link
-          href="/pipeline"
+          href="/etat-dossier"
           className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium hover:bg-secondary"
         >
           {t("pipeline.title")}

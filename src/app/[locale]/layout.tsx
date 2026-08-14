@@ -80,7 +80,7 @@ export default async function LocaleLayout({
       <body className="min-h-full">
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem("cuisina-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("cuisina-theme");if(t&&t!=="light")document.documentElement.classList.add(t)}catch(e){}`,
           }}
         />
         <NextIntlClientProvider>

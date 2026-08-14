@@ -1,6 +1,5 @@
 import { z } from "zod";
 import {
-  ETATS_CHANTIER,
   MOTIFS_PAUSE,
   MOTIFS_PERTE,
   ORIGINES,
@@ -55,27 +54,38 @@ const telephone = z
   .max(20)
   .regex(/^[0-9+ ]*$/, "telephone_invalide");
 
+/**
+ * Deux champs obligatoires, pas un de plus : un nom et un téléphone.
+ *
+ * Tout le reste attend. Exiger l'adresse ou l'origine au premier contact
+ * bloquait la saisie au moment précis où le conseiller a le client au
+ * téléphone et trois secondes devant lui — la fiche ne se créait pas, et
+ * l'information qu'on avait se perdait avec celle qu'on n'avait pas.
+ */
 export const ficheIdentiteSchema = z.object({
   client_nom: z.string().min(2, "nom_requis").max(120),
   tel_domicile: telephone.default(""),
   tel_bureau: telephone.default(""),
   tel_mobile: telephone.min(8, "mobile_requis"),
+  /** Le mobile est joignable sur WhatsApp — aucune ressaisie du numéro. */
+  whatsapp: z.boolean().default(false),
   email: z.union([z.literal(""), z.string().email("email_invalide")]).default(""),
   adresse_complete: z.string().max(300).default(""),
-  code_postal: z.string().max(10).default(""),
   ville: z.string().max(80).default(""),
 });
 
 export const ficheOrigineSchema = z
   .object({
-    origine: z.enum(ORIGINES, { message: "origine_requise" }),
+    origine: z.enum(ORIGINES).nullable().default(null),
     origine_detail: z.string().nullable().default(null),
   })
   .refine(
     (v) => {
+      // Le détail n'est vérifié que s'il a été saisi : l'origine elle-même
+      // n'est plus obligatoire, son détail ne peut pas l'être davantage.
+      if (!v.origine || v.origine_detail == null) return true;
       const details = ORIGINE_DETAILS[v.origine];
-      if (!details) return true;
-      return v.origine_detail != null && details.includes(v.origine_detail);
+      return !details || details.includes(v.origine_detail);
     },
     { message: "origine_detail_requise", path: ["origine_detail"] },
   );
@@ -83,11 +93,7 @@ export const ficheOrigineSchema = z
 export const ficheProjetSchema = z.object({
   nb_cuisines: z.coerce.number().int().min(0).max(20).default(0),
   nb_dressings: z.coerce.number().int().min(0).max(20).default(0),
-  nb_sdb: z.coerce.number().int().min(0).max(20).default(0),
-  etat_chantier: z.enum(ETATS_CHANTIER).nullable().default(null),
-  budget_estimatif: z.coerce.number().positive().max(10_000_000).nullable().default(null),
   date_livraison_souhaitee: z.string().date().nullable().default(null),
-  observations: z.string().max(2000).default(""),
 });
 
 /** Full wizard payload — used by the create/update Server Actions. */
@@ -112,6 +118,11 @@ export const ficheDraftSchema = z.object({
     .default({ origine: null, origine_detail: null }),
   projet: ficheProjetSchema.partial().default({}),
   exigences: exigencesSchema.default(EXIGENCES_VIDES),
+  /** Signature du client, en data URL PNG. Null tant qu'elle n'est pas posée. */
+  signature: z.string().max(400_000).nullable().default(null),
+  /** Modèle du catalogue et ses coloris — voir src/lib/catalogue.ts. */
+  modele: z.string().max(40).nullable().default(null),
+  couleurs: z.array(z.string().max(60)).max(20).default([]),
 });
 export type FicheDraft = z.infer<typeof ficheDraftSchema>;
 
@@ -183,6 +194,35 @@ export const croquisShapeSchema = z.discriminatedUnion("type", [
     contenu: z.string().min(1).max(80),
     couleur: z.string().max(20),
   }),
+  /**
+   * Porte et fenêtre — les deux ouvertures qu'un relevé doit porter.
+   *
+   * Toutes deux se posent en tirant le long du mur : le segment donne à la
+   * fois la position, la largeur et l'orientation, sans poignée à régler
+   * ensuite. `sens` fait basculer le battant d'un côté ou de l'autre, parce
+   * qu'une porte qui ouvre du mauvais côté change l'implantation des meubles.
+   */
+  z.object({
+    type: z.literal("porte"),
+    x1: z.number(),
+    y1: z.number(),
+    x2: z.number(),
+    y2: z.number(),
+    sens: z.union([z.literal(1), z.literal(-1)]).default(1),
+    couleur: z.string().max(20),
+    epaisseur: z.number().min(1).max(20),
+    cote: z.string().max(24).default(""),
+  }),
+  z.object({
+    type: z.literal("fenetre"),
+    x1: z.number(),
+    y1: z.number(),
+    x2: z.number(),
+    y2: z.number(),
+    couleur: z.string().max(20),
+    epaisseur: z.number().min(1).max(20),
+    cote: z.string().max(24).default(""),
+  }),
 ]);
 export type CroquisShape = z.infer<typeof croquisShapeSchema>;
 
@@ -222,18 +262,17 @@ export function computeScoreCompletude(payload: FicheDraft): number {
     Boolean(id.tel_domicile?.trim()),
     Boolean(id.email?.trim()),
     Boolean(id.adresse_complete?.trim()),
-    Boolean(id.code_postal?.trim()),
     Boolean(id.ville?.trim()),
   );
   flags.push(Boolean(payload.origine.origine));
   const p = payload.projet;
   flags.push(
-    (p.nb_cuisines ?? 0) + (p.nb_dressings ?? 0) + (p.nb_sdb ?? 0) > 0,
-    p.etat_chantier != null,
-    p.budget_estimatif != null,
+    (p.nb_cuisines ?? 0) + (p.nb_dressings ?? 0) > 0,
     p.date_livraison_souhaitee != null,
-    Boolean(p.observations?.trim()),
   );
+  flags.push(payload.signature != null);
+  // Le modèle et au moins un coloris : c'est ce qu'un dossier complet porte.
+  flags.push(payload.modele != null, (payload.couleurs?.length ?? 0) > 0);
   const ex = payload.exigences;
   flags.push(
     ex.finition_facade.type != null,

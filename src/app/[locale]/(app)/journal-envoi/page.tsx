@@ -1,5 +1,11 @@
-import { ComingSoon } from "@/components/shell/coming-soon";
+import { redirect } from "next/navigation";
 
-export default function Page() {
-  return <ComingSoon moduleKey="journalEnvoi" />;
+/** Le journal vit désormais dans le fil WhatsApp — voir /messages. */
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  redirect(`/${locale}/messages`);
 }

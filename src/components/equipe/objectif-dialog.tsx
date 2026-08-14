@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { messageErreur } from "@/lib/utils";
 
 /** Admin-only: edit a conseiller's monthly objective. */
 export function ObjectifDialog({
@@ -44,7 +45,7 @@ export function ObjectifDialog({
       });
       if (!result.ok) {
         setError(
-          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+          messageErreur(t, result.error),
         );
         return;
       }

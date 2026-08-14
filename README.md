@@ -44,8 +44,35 @@ dataset (read-only) so the UI can be reviewed without a database.
 | `src/components/fiches/` | Fiche Contact wizard, paper sheet, PDF export |
 | `src/lib/data/queries.ts` | read layer (RLS-scoped; demo fallback) |
 | `src/lib/actions/` | Server Actions (zod-validated writes) |
+| `src/lib/geo/` | Tunisia map: governorate shapes, city gazetteer, marker builder |
 | `supabase/migrations/` | schema, RLS policies, storage bucket |
 | `messages/` | fr (reference) / ar / en |
+
+## Carte du réseau
+
+`/equipe` plots showrooms, clients, leads and suppliers on the 24 Tunisian
+governorates and their 264 delegations (معتمدية), filterable by layer and by
+area, with free wheel-zoom and drag-pan.
+
+`src/lib/geo/tunisia-shapes.ts`, `tunisia-delegations.ts` and
+`tunisia-place-delegations.ts` are **generated** — outlines come from
+[geoBoundaries](https://www.geoboundaries.org/) gbOpen TUN ADM1/ADM2 and
+delegation names (ar + fr) from OpenStreetMap `admin_level=5` relations,
+matched by geometry (both ODbL 1.0). Everything is projected to SVG
+coordinates and simplified at build time so the browser ships path strings
+and no geo library; the delegation module is `import()`ed only below the
+country view:
+
+```bash
+node scripts/build-tunisia-map.mjs       # governorates + delegations (downloads + caches)
+npx tsx scripts/build-tunisia-places.ts  # validates the gazetteer, assigns delegations
+```
+
+Rows carry a free-text `ville`, never coordinates: `resolveVille` in
+`src/lib/geo/tunisia.ts` maps it to one of ~106 localities (accents, articles
+and spelling variants absorbed). Anything it cannot resolve is **counted and
+reported on screen**, not dropped and not placed at a guess. Add a missing
+locality to `PLACES`, then re-run `build-tunisia-places.ts`.
 
 ## Roles
 

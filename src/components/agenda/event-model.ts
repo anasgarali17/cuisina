@@ -1,6 +1,6 @@
 import type { RdvType } from "@/lib/domain";
 import type { RendezVousRow, TacheRow } from "@/lib/database.types";
-import { toISODate } from "@/lib/dates";
+import { tzDay } from "@/lib/tz";
 
 /**
  * One shape for everything the calendar draws. Appointments carry a real time
@@ -97,7 +97,7 @@ export function toEvent(rdv: RendezVousRow): AgendaEvent {
     kind: "rdv",
     category: rdv.type,
     title: rdv.titre,
-    day: toISODate(start),
+    day: tzDay(start),
     start,
     end: new Date(rdv.fin),
     allDay: false,

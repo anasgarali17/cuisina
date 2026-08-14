@@ -1,5 +1,6 @@
 import {
   Document,
+  Font,
   Page,
   StyleSheet,
   Text,
@@ -9,6 +10,17 @@ import { exigencesSchema, EXIGENCES_VIDES } from "@/lib/schemas/fiche";
 import type { FicheRelanceRow, FicheRow } from "@/lib/database.types";
 
 export type PdfStrings = Record<string, string>;
+
+// The built-in Helvetica has no Arabic glyphs: an Arabic client name or
+// address would silently render as nothing. Amiri covers Arabic + Latin;
+// it is only fetched when a rendered text actually uses it.
+Font.register({ family: "Amiri", src: "/fonts/Amiri-Regular.ttf" });
+
+const ARABIC_RE = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+const arStyle = (v?: string | null) =>
+  v && ARABIC_RE.test(v)
+    ? ({ fontFamily: "Amiri", direction: "rtl", textAlign: "right" } as const)
+    : null;
 
 const INK = "#1f1c18";
 
@@ -43,8 +55,13 @@ const s = StyleSheet.create({
     fontSize: 9,
   },
   row: { flexDirection: "row", alignItems: "flex-end", marginTop: 4 },
+  // flex 1 (grow + shrink + basis 0) sizes the value box to exactly the
+  // space left in the row, so long values wrap there instead of running
+  // past the page edge, where they would be cut off.
   dotted: {
     flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
     borderBottomWidth: 0.8,
     borderBottomColor: INK,
     borderBottomStyle: "dotted",
@@ -72,7 +89,15 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   sqIn: { width: 3.4, height: 3.4, backgroundColor: INK },
-  opt: { flexDirection: "row", alignItems: "center", marginRight: 8 },
+  opt: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 8,
+    flexShrink: 1,
+    maxWidth: "100%",
+  },
+  optText: { flexShrink: 1 },
+  wrapRow: { flexDirection: "row", flexWrap: "wrap", rowGap: 2 },
   exGrid: { flexDirection: "row" },
   exCol: { padding: 5, borderRightWidth: 0.8, borderRightColor: INK },
   slogan: {
@@ -89,10 +114,11 @@ function Sq({ on }: { on?: boolean }) {
 }
 
 function Opt({ on, label }: { on?: boolean; label: string }) {
+  const ar = arStyle(label);
   return (
     <View style={s.opt}>
       <Sq on={on} />
-      <Text>{label}</Text>
+      <Text style={ar ? [s.optText, ar] : s.optText}>{label}</Text>
     </View>
   );
 }
@@ -106,10 +132,17 @@ function Line({
   value?: string | null;
   mono?: boolean;
 }) {
+  const ar = arStyle(value);
   return (
     <View style={s.row}>
       <Text style={s.label}>{label} :</Text>
-      <Text style={mono ? [s.dotted, { fontFamily: "Courier" }] : s.dotted}>
+      <Text
+        style={[
+          s.dotted,
+          mono && !ar ? { fontFamily: "Courier" } : {},
+          ar ?? {},
+        ]}
+      >
         {value ?? ""}
       </Text>
     </View>
@@ -189,12 +222,10 @@ export function buildFichePdfDoc({
             <Line label={g("bureau")} value={fiche.tel_bureau} mono />
             <Line label={g("email")} value={fiche.email} />
             <View style={s.row}>
-              <Text style={s.label}>{g("cp")} :</Text>
-              <Text style={[s.dotted, { flexGrow: 0, width: 50, fontFamily: "Courier" }]}>
-                {fiche.code_postal ?? ""}
+              <Text style={s.label}>{g("ville")}:</Text>
+              <Text style={[s.dotted, arStyle(fiche.ville) ?? {}]}>
+                {fiche.ville ?? ""}
               </Text>
-              <Text style={[s.label, { marginLeft: 8 }]}>{g("ville")}:</Text>
-              <Text style={s.dotted}>{fiche.ville ?? ""}</Text>
             </View>
           </View>
         </View>
@@ -221,17 +252,17 @@ export function buildFichePdfDoc({
             <View style={{ width: "34%" }}>
               <Opt on={fiche.origine === "publicite"} label={`${g("publicite")} :`} />
               <View style={{ marginLeft: 12, marginTop: 3, gap: 3 }}>
-                <Opt on={fiche.origine_detail === "spot_publicitaire"} label={g("spot_publicitaire")} />
-                <Opt on={fiche.origine_detail === "magasine"} label={g("magasine")} />
-                <Opt on={fiche.origine_detail === "affiche_enseigne"} label={g("affiche_enseigne")} />
-                <Opt on={fiche.origine_detail === "catalogue"} label={g("catalogue")} />
+                <Opt on={fiche.origine_detail === "facebook"} label={g("facebook")} />
+                <Opt on={fiche.origine_detail === "instagram"} label={g("instagram")} />
+                <Opt on={fiche.origine_detail === "tiktok"} label={g("tiktok")} />
+                <Opt on={fiche.origine_detail === "autre_reseau"} label={g("autre_reseau")} />
               </View>
             </View>
           </View>
         </View>
 
         {/* Projet */}
-        <View style={[s.row, { gap: 14 }]}>
+        <View style={[s.row, { gap: 14, flexWrap: "wrap" }]}>
           <Text style={s.label}>{g("typeProjet")} :</Text>
           <View style={s.opt}>
             <Text>
@@ -245,29 +276,8 @@ export function buildFichePdfDoc({
             </Text>
             <Sq on={fiche.nb_dressings > 0} />
           </View>
-          <View style={s.opt}>
-            <Text>
-              {g("nombre")} : {fiche.nb_sdb || "…"} {g("sdb")}{" "}
-            </Text>
-            <Sq on={fiche.nb_sdb > 0} />
-          </View>
         </View>
-        <View style={[s.row, { gap: 30 }]}>
-          <Text style={s.label}>{g("etatChantier")} :</Text>
-          <Opt on={fiche.etat_chantier === "en_cours"} label={g("enCours")} />
-          <Opt on={fiche.etat_chantier === "fini"} label={g("fini")} />
-        </View>
-        <Line
-          label={g("budget")}
-          value={
-            fiche.budget_estimatif != null
-              ? `${Math.round(fiche.budget_estimatif).toLocaleString("fr-TN")} DT`
-              : ""
-          }
-          mono
-        />
         <Line label={g("dateLivraison")} value={fmt(fiche.date_livraison_souhaitee)} mono />
-        <Line label={g("observations")} value={fiche.observations} />
 
         {/* Exigences */}
         <View style={[s.box, { padding: 0 }]}>
@@ -288,43 +298,43 @@ export function buildFichePdfDoc({
             <View style={[s.exCol, { width: "44%" }]}>
               <Text style={[s.label, { marginBottom: 3 }]}>{g("electro")} :</Text>
               <View style={{ gap: 3 }}>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text style={s.label}>{g("evier")} : </Text>
                   <Opt on={e.evier === "1_bac"} label="1 bac" />
                   <Opt on={e.evier === "2_bac"} label="2 bac" />
                 </View>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text style={s.label}>{g("plaque")} : </Text>
                   <Opt on={e.plaque === "4F"} label="4 F" />
                   <Opt on={e.plaque === "5F"} label="5 F" />
                   <Opt on={e.plaque === "coin"} label={g("coin")} />
                 </View>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text style={s.label}>{g("hotte")} : </Text>
                   <Opt on={e.hotte === "60"} label="60" />
                   <Opt on={e.hotte === "90"} label="90" />
                   <Opt on={e.hotte === "coin"} label={g("coin")} />
                   <Opt on={e.hotte === "centrale"} label={g("centrale")} />
                 </View>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text style={s.label}>{g("four")} : </Text>
                   <Opt on={e.four === "encastrable"} label={g("enc")} />
                   <Opt on={e.four === "non_encastrable"} label={g("nonEnc")} />
                   <Opt on={e.four_taille === "60"} label="60" />
                   <Opt on={e.four_taille === "90"} label="90" />
                 </View>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text style={s.label}>{g("monde")} : </Text>
                   <Opt on={e.micro_onde === "encastrable"} label={g("enc")} />
                   <Opt on={e.micro_onde === "non_encastrable"} label={g("nonEnc")} />
                 </View>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text style={s.label}>{g("frigo")} : </Text>
                   <Opt on={e.frigo === "encastrable"} label={g("enc")} />
                   <Opt on={e.frigo === "non_encastrable"} label={g("nonEnc")} />
                   <Opt on={Boolean(e.frigo_autres)} label={`${g("autres")} : ${e.frigo_autres}`} />
                 </View>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text style={s.label}>{g("lv")} : </Text>
                   <Opt on={e.lave_vaisselle === "encastrable"} label={g("enc")} />
                   <Opt on={e.lave_vaisselle === "non_encastrable"} label={g("nonEnc")} />
@@ -335,12 +345,12 @@ export function buildFichePdfDoc({
             <View style={[s.exCol, { width: "29%", borderRightWidth: 0 }]}>
               <Text style={[s.label, { marginBottom: 3 }]}>{g("autresDetails")}:</Text>
               <View style={{ gap: 4 }}>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text>{g("avecRetour")} </Text>
                   <Opt on={d.avec_retour === true} label={g("oui")} />
                   <Opt on={d.avec_retour === false} label={g("non")} />
                 </View>
-                <View style={{ flexDirection: "row" }}>
+                <View style={s.wrapRow}>
                   <Text>{g("ilotCentral")} </Text>
                   <Opt on={d.ilot_central === true} label={g("oui")} />
                   <Opt on={d.ilot_central === false} label={g("non")} />

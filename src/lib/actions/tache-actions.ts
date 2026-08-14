@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/env";
 import { getCurrentProfile } from "@/lib/auth";
 import { PRIORITES } from "@/lib/domain";
-import { type ActionResult, fail, succeed } from "./result";
+import { type ActionResult, dbError, fail, succeed } from "./result";
 
 const toggleSchema = z.object({
   id: z.string().uuid(),
@@ -25,7 +25,7 @@ export async function toggleTache(
     .from("taches")
     .update({ statut: parsed.data.done ? "fait" : "a_faire" })
     .eq("id", parsed.data.id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   // The caller already flipped the checkbox optimistically; only the views
   // that count tasks need to re-render.
   revalidatePath("/taches");
@@ -62,7 +62,7 @@ export async function createTache(
     assigne_a: parsed.data.assigne_a ?? profile.id,
     cree_par: profile.id,
   });
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidatePath("/taches");
   revalidatePath("/ma-journee");
   return succeed(undefined);
@@ -86,7 +86,7 @@ export async function updateTacheEcheance(
     .from("taches")
     .update({ echeance: parsed.data.echeance })
     .eq("id", parsed.data.id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidatePath("/taches");
   revalidatePath("/ma-journee");
   return succeed(undefined);
@@ -112,7 +112,7 @@ export async function updateObjectif(
     .from("profiles")
     .update({ objectif_mensuel: parsed.data.objectif_mensuel })
     .eq("id", parsed.data.profile_id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidatePath("/equipe");
   revalidatePath("/ma-journee");
   return succeed(undefined);

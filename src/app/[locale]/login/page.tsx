@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { BorderBeam } from "@/components/ui/border-beam";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import MeshyBackground from "@/components/ui/meshy-background";
 
 export default function LoginPage() {
   const t = useTranslations("login");
@@ -28,7 +29,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4">
+    <MeshyBackground className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       {/* quiet grid backdrop */}
       <div
         aria-hidden
@@ -95,6 +96,6 @@ export default function LoginPage() {
           PROMOCUISINE · ISO 9001 · 9 showrooms
         </p>
       </div>
-    </div>
+    </MeshyBackground>
   );
 }

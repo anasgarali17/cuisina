@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/env";
 import { getCurrentProfile } from "@/lib/auth";
 import { RDV_TYPES } from "@/lib/domain";
-import { type ActionResult, fail, succeed } from "./result";
+import { tzHhmm, tzInstant } from "@/lib/tz";
+import { type ActionResult, dbError, fail, succeed } from "./result";
 
 /** Both agendas read the same table, so both have to be refreshed. */
 function revalidateAgendas() {
@@ -58,7 +59,7 @@ export async function createRdv(input: unknown): Promise<ActionResult<undefined>
     lieu: parsed.data.lieu || null,
     notes: parsed.data.notes || null,
   });
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidateAgendas();
   return succeed(undefined);
 }
@@ -84,15 +85,15 @@ export async function moveRdv(input: unknown): Promise<ActionResult<undefined>> 
     .select("debut, fin")
     .eq("id", parsed.data.id)
     .single();
-  if (readError || !existing) return fail("db");
+  if (readError || !existing) return fail(dbError(readError));
 
   const debut = new Date(existing.debut);
   const fin = new Date(existing.fin);
   const duration = fin.getTime() - debut.getTime();
 
-  const [y, m, d] = parsed.data.day.split("-").map(Number);
-  const nextDebut = new Date(debut);
-  nextDebut.setFullYear(y, m - 1, d);
+  // Le jour visé et l'heure conservée se lisent au showroom : le serveur, lui,
+  // tourne en UTC, où un rendez-vous de fin de soirée tombe la veille.
+  const nextDebut = tzInstant(parsed.data.day, tzHhmm(debut));
 
   const { error } = await supabase
     .from("rendez_vous")
@@ -101,7 +102,7 @@ export async function moveRdv(input: unknown): Promise<ActionResult<undefined>> 
       fin: new Date(nextDebut.getTime() + duration).toISOString(),
     })
     .eq("id", parsed.data.id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidateAgendas();
   return succeed(undefined);
 }
@@ -121,7 +122,7 @@ export async function deleteRdv(input: unknown): Promise<ActionResult<undefined>
     .from("rendez_vous")
     .delete()
     .eq("id", parsed.data.id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidateAgendas();
   return succeed(undefined);
 }

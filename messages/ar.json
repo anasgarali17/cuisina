@@ -35,25 +35,27 @@
       "automatisation": "الأتمتة",
       "administration": "الإدارة"
     },
-    "maJournee": "يومي",
+    "maJournee": "لوحة التحكم",
     "fiches": "Fiches Contact",
-    "pipeline": "مسار المبيعات",
     "clients": "العملاء",
     "commandes": "الطلبيات المؤكدة",
     "devis": "Devis والفواتير",
     "agendaEquipe": "أجندة الفريق",
     "agendaClient": "أجندة العميل",
     "taches": "مهامي",
-    "sequences": "تسلسلات WhatsApp",
-    "modeles": "نماذج الرسائل",
-    "journalEnvoi": "سجل الإرسال",
+    "sequences": "تفعيل الأتمتة",
+    "modeles": "نصوص الرسائل",
     "flux": "التدفقات والهوامش",
     "reglements": "المدفوعات والمقبوضات",
     "rayonnement": "الانتشار",
     "commissions": "العمولات والأجور",
     "equipe": "Conseillers ونقاط البيع",
     "configuration": "إعدادات الورشة",
-    "plus": "المزيد"
+    "plus": "المزيد",
+    "messages": "رسائل واتساب",
+    "parametres": "الإعدادات",
+    "etatDossier": "حالة الملف",
+    "clientsActifs": "عميل نشط"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -71,18 +73,6 @@
     "devis": {
       "title": "Devis والفواتير",
       "description": "إنشاء وترقيم Devis (عروض الأسعار) والفواتير مباشرة من Fiche Contact، مع تتبّع النسخ."
-    },
-    "sequences": {
-      "title": "تسلسلات WhatsApp",
-      "description": "متابعات WhatsApp تلقائية تنطلق حسب مراحل مسار المبيعات. تبقى القيادة بيدك، والأداة لا تنسى أبدًا."
-    },
-    "modeles": {
-      "title": "نماذج الرسائل",
-      "description": "رسائلك الجاهزة، المعتمدة من الإدارة، جاهزة للإرسال بلمسة واحدة."
-    },
-    "journalEnvoi": {
-      "title": "سجل الإرسال",
-      "description": "كل رسالة أُرسلت: إلى من، ومتى، وما الذي نتج عنها."
     },
     "flux": {
       "title": "التدفقات والهوامش",
@@ -106,16 +96,16 @@
     }
   },
   "stages": {
-    "nouveau_contact": "اتصال جديد",
-    "contacte": "تم التواصل",
-    "rdv_showroom": "موعد Showroom",
-    "metre_releve": "Métré منجز",
-    "conception_devis": "إعداد Devis",
-    "devis_envoye": "Devis مُرسل",
-    "negociation": "تفاوض",
+    "nouveau_lead": "عميل محتمل جديد",
+    "releve_preliminaire": "رفع أولي",
+    "conception_devis": "تصميم العرض",
+    "rdv_showroom": "موعد بصالة العرض",
+    "cloture": "مغلق",
     "signe": "موقّع",
-    "perdu": "خسارة",
-    "en_pause": "في الانتظار"
+    "releve_definitif": "رفع نهائي",
+    "dossier_envoye": "أُرسل الملف",
+    "perdu": "ضائع",
+    "en_pause": "معلّق"
   },
   "motifsPerte": {
     "title": "سبب الخسارة",
@@ -132,17 +122,17 @@
     "bouche_a_oreille": "توصية شفهية",
     "site_web": "الموقع الإلكتروني",
     "foire": "معرض",
-    "publicite": "إشهار",
     "details": {
       "prospection": "تنقيب تجاري",
       "architecte_decorateur": "مهندس معماري / مصمم ديكور",
       "promoteur_entrepreneur": "باعث عقاري / مقاول",
       "ami": "صديق",
-      "spot_publicitaire": "ومضة إشهارية",
-      "magasine": "مجلة",
-      "affiche_enseigne": "معلّقة / لافتة",
-      "catalogue": "كتالوج"
-    }
+      "facebook": "فيسبوك",
+      "instagram": "إنستغرام",
+      "tiktok": "تيك توك",
+      "autre_reseau": "شبكة أخرى"
+    },
+    "publicite": "الشبكات الاجتماعية"
   },
   "fiches": {
     "title": "Fiches Contact",
@@ -184,7 +174,6 @@
       "dateContact": "تاريخ الاتصال",
       "nbCuisines": "مطابخ",
       "nbDressings": "غرف ملابس",
-      "nbSdb": "حمّامات",
       "etatChantier": "حالة الأشغال",
       "en_cours": "جارية",
       "fini": "منتهية",
@@ -203,7 +192,8 @@
         "origine_requise": "اختر مصدر الاتصال.",
         "origine_detail_requise": "حدّد المصدر بدقة."
       },
-      "telBureau": "هاتف المكتب"
+      "telBureau": "هاتف المكتب",
+      "whatsapp": "متاح على واتساب"
     },
     "exigences": {
       "finitionFacade": "تشطيب الواجهة",
@@ -277,7 +267,6 @@
       "nombre": "Nombre",
       "cuisines": "Cuisine(s)",
       "dressings": "Dressing(s)",
-      "sdb": "SDB",
       "etatChantier": "Etat de chantier",
       "enCours": "En cours",
       "fini": "Fini",
@@ -337,7 +326,34 @@
       "couleurPerso": "لون مخصص",
       "codeCouleur": "رمز اللون (hex)",
       "texteHint": "اكتب هنا…",
-      "coteHint": "البعد (مثل 3.20 م)"
+      "coteHint": "البعد (مثل 3.20 م)",
+      "main": "تحريك الرسم",
+      "zoomIn": "تكبير",
+      "zoomOut": "تصغير",
+      "zoomFit": "ملاءمة الشاشة",
+      "pleinEcran": "ملء الشاشة",
+      "quitterPleinEcran": "الخروج من ملء الشاشة",
+      "zoomHint": "اقرص للتكبير، وحرّك بإصبعين. أداة اليد تحرّك الرسم بإصبع واحد.",
+      "porte": "باب",
+      "fenetre": "نافذة",
+      "sensPorte": "جهة الفتح"
+    },
+    "tabs": {
+      "fiches": "البطاقات",
+      "demandes": "الطلبات الواردة",
+      "liens": "الرابط ورمز QR"
+    },
+    "signature": {
+      "titre": "توقيع العميل",
+      "invite": "وقّع هنا",
+      "effacer": "مسح",
+      "le": "وُقّع في {date}"
+    },
+    "pieces": {
+      "titre": "المرفقات",
+      "ajouter": "إضافة",
+      "vide": "لا توجد مستندات. مخططات، صور الورشة، عروض مستلمة…",
+      "tropGros": "«{nom}» يتجاوز 10 ميغابايت."
     }
   },
   "canaux": {
@@ -355,7 +371,8 @@
     "a_rappeler": "يُعاد الاتصال به"
   },
   "pipeline": {
-    "title": "مسار المبيعات",
+    "title": "حالة الملف",
+    "openFiche": "فتح بطاقة الاتصال",
     "emptyColumn": "لا شيء في هذه المرحلة. ستنساب الـ fiches إليها من تلقاء نفسها.",
     "perduLane": "Fiches خاسرة",
     "relanceOverdue": "متابعة متأخرة",
@@ -368,13 +385,11 @@
       "all": "الكل",
       "reset": "إعادة التعيين",
       "cuisine": "مطبخ",
-      "dressing": "غرفة ملابس",
-      "sdb": "حمّام"
+      "dressing": "غرفة ملابس"
     },
     "projectChips": {
       "cuisine": "مطبخ ×{n}",
-      "dressing": "غرفة ملابس ×{n}",
-      "sdb": "حمّام ×{n}"
+      "dressing": "غرفة ملابس ×{n}"
     },
     "pause": {
       "title": "تعليق العميل المحتمل",
@@ -415,7 +430,8 @@
       "tauxConversion": "نسبة التحويل",
       "conversionWindow": "آخر 90 يومًا",
       "projetDuMois": "مشروع الشهر",
-      "origineContacts": "مصادر الاتصالات"
+      "origineContacts": "مصادر الاتصالات",
+      "relances48h": "عميل محتمل بدون بطاقة منذ 48 ساعة"
     },
     "insights": {
       "title": "إشارات",
@@ -449,10 +465,7 @@
       "dernieresFiches": "أحدث الـ Fiches",
       "produits": "المنتجات المطلوبة",
       "produitsHint": "في الـ Fiches النشطة",
-      "heroLabel": "الإيرادات الموقّعة",
       "vsM1": "مقارنة بالشهر الماضي",
-      "enAttente": "قيد الانتظار",
-      "derniersMois": "آخر 12 شهرًا",
       "valeurPipeline": "قيمة المسار",
       "activite": "نشاط الـ Showroom",
       "activiteSub": "الـ Fiches الجديدة يومًا بيوم.",
@@ -469,6 +482,40 @@
       "jours30": "30 يومًا",
       "fichesJour": "Fiches / يوم",
       "tendance": "الاتجاه"
+    },
+    "views": {
+      "groupLabel": "أقسام لوحة القيادة",
+      "tout": "الكل",
+      "chiffres": "الأرقام",
+      "courbe": "المنحنى",
+      "pipeline": "المسار",
+      "aVenir": "القادم",
+      "taches": "المهام",
+      "signaux": "الإشارات",
+      "classement": "الترتيب",
+      "fiches": "Fiches"
+    },
+    "hebdo": {
+      "titre": "الجدول الأسبوعي",
+      "vide": "لا توجد بيانات كافية بعد.",
+      "semaine": "الأسبوع",
+      "familles": {
+        "cuisine": "مطبخ",
+        "dressing": "غرفة ملابس",
+        "electro": "أجهزة",
+        "pt": "أسطح العمل"
+      },
+      "colonnes": {
+        "nbDevis": "عدد العروض",
+        "valeurDevis": "قيمة العروض",
+        "nbBc": "عدد الطلبات",
+        "valeurBc": "قيمة الطلبات"
+      },
+      "note": "تُحتسب العروض عند الوصول إلى «تصميم العرض»، والطلبات عند «موقّع». الأجهزة وأسطح العمل غير متابَعة بعد لكل بطاقة، لذا تبقى أعمدتها فارغة."
+    },
+    "rdvDemain": {
+      "titre": "مواعيد الغد",
+      "vide": "لا مواعيد غدًا."
     }
   },
   "taches": {
@@ -508,12 +555,64 @@
     "identity": "الهوية",
     "linkedFiches": "الـ fiches المرتبطة",
     "projectHistory": "سجل المشاريع",
-    "tierComing": "مستوى العميل — Essentiel · Signature · Prestige — متاح في المرحلة الثانية، مع نظام التنقيط.",
     "nom": "الاسم",
     "tel": "الهاتف",
     "email": "البريد الإلكتروني",
     "adresse": "العنوان",
-    "ville": "المدينة"
+    "ville": "المدينة",
+    "count": "{count, plural, zero {لا عملاء} one {عميل واحد} two {عميلان} few {# عملاء} many {# عميلًا} other {# عميل}}",
+    "emptyFiltered": "لا يوجد عميل يطابق هذه الفلاتر.",
+    "columns": {
+      "statut": "الحالة",
+      "projets": "المشاريع",
+      "derniereActivite": "آخر نشاط"
+    },
+    "statuts": {
+      "actif": "نشط",
+      "signe": "موقّع",
+      "dormant": "خامل"
+    },
+    "tranches": {
+      "haut": "{montant} فأكثر",
+      "moyen": "{min} – {max}",
+      "bas": "أقل من {montant}"
+    },
+    "achete": "اشترى منّا",
+    "detail": {
+      "signes": "موقّعة",
+      "enCours": "قيد التنفيذ",
+      "ficheContact": "بطاقة الاتصال"
+    },
+    "score": {
+      "label": "تقييم العميل",
+      "achats": "قيمة مشترياته",
+      "projets": "مشاريع موقّعة",
+      "activite": "النشاط الأخير",
+      "contact": "بيانات الاتصال كاملة"
+    },
+    "vip": "VIP",
+    "vipAdd": "تثبيت كـ VIP",
+    "vipRemove": "إزالة VIP",
+    "filters": {
+      "tous": "الكل",
+      "tranche": "إجمالي المشتريات"
+    },
+    "view": {
+      "cards": "عرض القائمة",
+      "board": "عرض الأعمدة",
+      "emptyColumn": "لا عميل في هذه الشريحة."
+    },
+    "sort": {
+      "label": "ترتيب",
+      "ca": "رقم المعاملات التراكمي",
+      "score": "تقييم العميل",
+      "nom": "الاسم (أ–ي)",
+      "activite": "النشاط الأخير"
+    },
+    "clientDepuis": "عميل منذ {date}",
+    "aucunProjet": "لا مشروع مرتبط.",
+    "openFull": "فتح بطاقة العميل",
+    "versTranche": "يتبقّى {montant} من المشتريات لتجاوز {seuil}."
   },
   "equipe": {
     "title": "Conseillers ونقاط البيع",
@@ -538,6 +637,52 @@
     "aucuneFiche": "لا توجد Fiches لهذا الـ Showroom بعد.",
     "depuis": "مفتوح منذ",
     "activite": "نشاط الـ Showroom"
+  },
+  "carte": {
+    "aria": "خريطة تونس: صالات العرض والعملاء والفرص والموردون حسب الولاية",
+    "couches": "الطبقات المعروضة",
+    "zone": "المنطقة",
+    "toutLePays": "كامل تونس",
+    "reinitialiser": "كامل تونس",
+    "astuce": "استعمل العجلة للتكبير · اسحب للتحريك · اضغط على ولاية ثم على معتمدية",
+    "rien": "لا شيء لعرضه في هذه المنطقة.",
+    "horsCarte": "{count, plural, one {# سطر بمدينة غير معروفة، لم يُعرض على الخريطة} other {# أسطر بمدن غير معروفة، لم تُعرض على الخريطة}}",
+    "fichesShowroom": "صالات العرض في المنطقة",
+    "layers": {
+      "showrooms": "صالات العرض",
+      "clients": "العملاء",
+      "prospects": "الفرص",
+      "fournisseurs": "الموردون"
+    },
+    "regions": {
+      "grand_tunis": "تونس الكبرى",
+      "nord_est": "الشمال الشرقي",
+      "nord_ouest": "الشمال الغربي",
+      "centre_est": "الوسط الشرقي (الساحل)",
+      "centre_ouest": "الوسط الغربي",
+      "sud_est": "الجنوب الشرقي",
+      "sud_ouest": "الجنوب الغربي"
+    },
+    "delegation": "المعتمدية",
+    "toutesDelegations": "كل المعتمديات",
+    "nPunaises": "{count, plural, one {عنصر واحد} other {# عناصر}}",
+    "chargement": "جارٍ التحميل…",
+    "zoomPlus": "تكبير",
+    "zoomMoins": "تصغير",
+    "recadrer": "إعادة التأطير على التحديد"
+  },
+  "fournisseurs": {
+    "title": "الموردون",
+    "delai": "{count, plural, one {# يوم} other {# أيام}}",
+    "categories": {
+      "caisson": "الهياكل والواجهات",
+      "plan_travail": "أسطح العمل",
+      "electromenager": "الأجهزة الكهرومنزلية",
+      "quincaillerie": "الخردوات",
+      "pose": "التركيب",
+      "transport": "النقل",
+      "autre": "أخرى"
+    }
   },
   "rdv": {
     "types": {
@@ -580,6 +725,10 @@
     "fStart": "ساعة البداية",
     "fDuration": "المدة",
     "minutes": "{count, plural, one {دقيقة واحدة} two {دقيقتان} few {# دقائق} other {# دقيقة}}",
+    "hours": "{m, plural, =0 {{h} س} other {{h} س {m}}}",
+    "endsAt": "ينتهي {time}",
+    "addAt": "إضافة في {time}",
+    "addAfter": "إضافة بعده مباشرة",
     "fDueDate": "الأجل",
     "fPriority": "الأولوية",
     "fOwner": "مسند إلى",
@@ -588,5 +737,408 @@
     "fPdv": "نقطة البيع",
     "fPlace": "المكان",
     "fNotes": "ملاحظات"
+  },
+  "demandes": {
+    "title": "الطلبات الواردة",
+    "empty": "لا توجد طلبات بعد. اعرض رمز QR في صالة العرض وستصلك البطاقات معبّأة.",
+    "emptyFiltered": "لا يوجد طلب بهذه الحالة.",
+    "score": "نسبة الاكتمال {score}%",
+    "origineDetail": "تفاصيل المصدر",
+    "assigne": "المستشار",
+    "filters": {
+      "all": "الكل"
+    },
+    "statuts": {
+      "en_attente": "في الانتظار",
+      "accepte": "مقبولة",
+      "refuse": "مرفوضة"
+    },
+    "actions": {
+      "accept": "قبول",
+      "hold": "إرجاع إلى الانتظار",
+      "note": "إضافة ملاحظة",
+      "refuse": "رفض",
+      "openFiche": "فتح البطاقة"
+    },
+    "dialog": {
+      "assignTo": "إسناد إلى",
+      "note": "ملاحظة داخلية",
+      "accepte": {
+        "title": "قبول الطلب",
+        "prompt": "يتحوّل طلب {client} إلى بطاقة في المسار، بمرحلة اتصال جديد، مع تذكير مبرمج للغد.",
+        "placeholder": "ما احتفظت به من الحديث…"
+      },
+      "en_attente": {
+        "title": "الإبقاء في الانتظار",
+        "prompt": "لم يحسم {client} أمره بعد — يبقى الطلب في أعلى القائمة.",
+        "placeholder": "«سيتصل بعد الأشغال»، «في انتظار عرض السعر»…"
+      },
+      "refuse": {
+        "title": "رفض الطلب",
+        "prompt": "لن يدخل طلب {client} إلى المسار. يبقى قابلاً للاطّلاع هنا.",
+        "placeholder": "خارج المنطقة، مكرّر، طلب غير جدّي…"
+      }
+    }
+  },
+  "liens": {
+    "intro": "رابط لكل مكان: معلّقة صالة العرض ليست معلّقة جناح المعرض.",
+    "new": "رابط جديد",
+    "empty": "لا يوجد رابط بعد. أنشئ واحداً واطبع معلّقته، وستُعبّأ البطاقات من تلقاء نفسها.",
+    "inactive": "معطّل",
+    "count": "{count, plural, =0 {لا طلبات} one {طلب واحد} other {# طلبات}}",
+    "copy": "نسخ",
+    "copied": "تم النسخ",
+    "share": "مشاركة",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
+    "audiences": {
+      "client": "يعبّئه العميل",
+      "equipe": "يعبّئه الفريق"
+    },
+    "audienceHints": {
+      "client": "«كيف تعرّفتم على CUISINA؟» — للعرض أو للإرسال عبر واتساب.",
+      "equipe": "«كيف تعرّف العميل على CUISINA؟» — للتعبئة نيابة عن العميل."
+    },
+    "poster": {
+      "client": {
+        "titre": "مشروعك يبدأ هنا",
+        "sousTitre": "امسح الرمز، عبّئ البيانات، ونحن نتصل بك."
+      },
+      "equipe": {
+        "titre": "Fiche Contact",
+        "sousTitre": "امسح الرمز لتعبئة بطاقة العميل."
+      },
+      "lienLabel": "أو أدخل هذا الرابط",
+      "alt": "معلّقة رمز QR — {libelle}",
+      "png": "PNG",
+      "svg": "SVG",
+      "print": "طباعة المعلّقة"
+    },
+    "dialog": {
+      "title": "رابط جمع جديد",
+      "prompt": "سمِّه باسم المكان الذي سيعيش فيه: هذا الاسم هو ما سيدلّك على مصدر الطلبات.",
+      "libelle": "اسم الرابط",
+      "libellePlaceholder": "صالة عرض سوسة، معرض صفاقس 2026…",
+      "audience": "من يعبّئ الاستمارة؟",
+      "pdv": "نقطة البيع",
+      "conseiller": "المستشار الافتراضي",
+      "create": "إنشاء الرابط",
+      "creating": "جارٍ الإنشاء…"
+    }
+  },
+  "public": {
+    "shared": {
+      "tagline": "مطبخك بطريقة أخرى",
+      "footer": "CUISINA · مطبخك بطريقة أخرى",
+      "expiredTitle": "هذا الرابط لم يعد صالحاً",
+      "expiredBody": "انتهت صلاحيته أو تمّ تعطيله. اتصل بصالة عرض CUISINA وسيرسلون لك رابطاً جديداً.",
+      "stepOf": "الخطوة {current} من {total}",
+      "steps": {
+        "step1": "بياناتك ومشروعك",
+        "step2": "ما ترغب فيه"
+      },
+      "next": "متابعة",
+      "previous": "السابق",
+      "submit": "إرسال",
+      "sending": "جارٍ الإرسال…",
+      "merciTitle": "شكراً لك!",
+      "merciReference": "المرجع {reference}",
+      "errorLien": "هذا الرابط لم يعد صالحاً.",
+      "errorRate": "عدد كبير من الطلبات المتتالية. أعد المحاولة بعد بضع دقائق.",
+      "errorGeneric": "فشل الإرسال. أعد المحاولة.",
+      "nbCuisines": "مطابخ",
+      "nbDressings": "غرف ملابس",
+      "etatChantier": "حالة الأشغال",
+      "en_cours": "جارية",
+      "fini": "منتهية",
+      "dateLivraison": "تاريخ التسليم المرغوب",
+      "errors": {
+        "nom_requis": "الاسم مطلوب.",
+        "mobile_requis": "الهاتف الجوال مطلوب.",
+        "telephone_invalide": "رقم غير صالح — أرقام فقط.",
+        "email_invalide": "البريد الإلكتروني غير صالح.",
+        "origine_requise": "اختر إجابة.",
+        "origine_detail_requise": "حدّد إجابتك."
+      },
+      "whatsapp": "متاح على واتساب",
+      "sectionShowroom": "صالة العرض",
+      "showroomAide": "اختر المنطقة التي تودّ زيارتها — تظهر صالة العرض ورقم هاتفها فورًا.",
+      "zone": "المنطقة",
+      "zoneVide": "اختر منطقة…",
+      "sectionProjet": "مشروعك",
+      "types": {
+        "cuisine": "مطبخ",
+        "dressing": "غرفة ملابس"
+      },
+      "cuisines": "مطابخ",
+      "dressings": "غرف ملابس"
+    },
+    "client": {
+      "title": "حدّثنا عن مشروعك",
+      "subtitle": "ثلاث دقائق، ويتصل بك مستشار CUISINA.",
+      "sectionCoordonnees": "بيانات الاتصال",
+      "sectionProjet": "مشروعك",
+      "nom": "اسمك الكامل",
+      "mobile": "هاتفك الجوال",
+      "telAutre": "هاتف آخر",
+      "email": "بريدك الإلكتروني",
+      "adresse": "عنوانك",
+      "codePostal": "الترقيم البريدي",
+      "ville": "المدينة",
+      "origineQuestion": "كيف تعرّفت على CUISINA؟",
+      "budget": "ميزانيتك التقديرية (DT)",
+      "observations": "هل من شيء آخر تودّ إخبارنا به؟",
+      "merciBody": "وصل طلبك. سيتصل بك مستشار CUISINA في أقرب وقت."
+    },
+    "equipe": {
+      "title": "Fiche Contact",
+      "subtitle": "تعبئة بطاقة العميل، من صالة العرض أو من المعرض.",
+      "sectionCoordonnees": "بيانات العميل",
+      "sectionProjet": "مشروع العميل",
+      "nom": "اسم العميل",
+      "mobile": "الهاتف الجوال",
+      "telAutre": "هاتف المنزل",
+      "email": "البريد الإلكتروني",
+      "adresse": "العنوان الكامل",
+      "codePostal": "الترقيم البريدي",
+      "ville": "المدينة",
+      "origineQuestion": "كيف تعرّف العميل على CUISINA؟",
+      "budget": "الميزانية التقديرية (DT)",
+      "observations": "ملاحظات",
+      "merciBody": "أُرسلت البطاقة. تنتظر المصادقة قبل دخولها إلى المسار."
+    },
+    "souhaits": {
+      "intro": "لا شيء إجباري هنا. كل إجابة تساعد المستشار على تحضير موعدك.",
+      "facade": "نوع الواجهة",
+      "facadeAide": "مطابخ أنجزناها — أشر إلى الأقرب لفكرتك.",
+      "facades": {
+        "laque_mat": "لاكيه مطفي",
+        "laque_brillant": "لاكيه لامع",
+        "bois_massif": "خشب صلب",
+        "stratifie": "ستراتيفيي",
+        "pvc": "PVC"
+      },
+      "croquis": "رسمك",
+      "croquisAide": "ارسم التوزيع الذي تتخيله، ولو تقريبيًا.",
+      "croquisInvite": "ارسم هنا بإصبعك أو بالفأرة",
+      "croquisEffacer": "مسح الرسم",
+      "photos": "صورك",
+      "photosAide": "مطبخك الحالي، مخطط، أو صور تلهمك.",
+      "photoTropGrosse": "«{nom}» يتجاوز 8 ميغابايت.",
+      "modele_cuisine": "الطراز الذي يعجبك",
+      "modele_dressing": "نوع غرفة الملابس",
+      "modeleAide_cuisine": "سبع مجموعات — اختر ما يعجبك ثم ألوانه.",
+      "modeleAide_dressing": "ثلاث تكوينات — مفتوحة أو منزلقة أو مفصلية.",
+      "croquisOuvrir": "ارسم فكرتي",
+      "croquisFermer": "إغلاق ومسح الرسم"
+    }
+  },
+  "sequences": {
+    "title": "تسلسلات واتساب",
+    "sousTitreSimulation": "وضع المحاكاة: الأداة تحسب كل شيء، وأنت تضغط إرسال.",
+    "sousTitreActif": "البوابة متصلة — التسلسلات ترسل من تلقاء نفسها.",
+    "tabs": {
+      "messages": "الرسائل",
+      "activation": "تفعيل الرسائل الآلية",
+      "textes": "نصوص الرسائل"
+    },
+    "intro": "كلّ سطر أتمتة تُشعلها أو تُطفئها. وما دامت البوابة غير موصولة، فإشعالها يملأ محادثات واتساب — ولا يرسل شيئًا وحده.",
+    "nouvelle": "تسلسل جديد",
+    "vide": "لا توجد تسلسلات بعد. أنشئ واحدًا — لن يفعل شيئًا قبل أن تراجعه في قائمة الانتظار.",
+    "desactivee": "متوقّف",
+    "desactiver": "إيقاف",
+    "activer": "تفعيل",
+    "fenetre": "بين {debut} و{fin}",
+    "enFile": "{count, plural, =0 {لا شيء في الانتظار} one {رسالة واحدة في الانتظار} two {رسالتان في الانتظار} few {# رسائل في الانتظار} other {# رسالة في الانتظار}}",
+    "modeleIntrouvable": "النموذج غير موجود",
+    "supprimerTitre": "حذف هذا التسلسل؟",
+    "supprimerTexte": "سيُحذف «{nom}» وخطواته. أمّا الرسائل المُرسَلة فتبقى في السجل.",
+    "modes": {
+      "simulation": "محاكاة",
+      "actif": "مُفعَّل"
+    },
+    "declencheurs": {
+      "fiche_creee": "عند إنشاء البطاقة",
+      "stage_atteint": "عند بلوغ مرحلة",
+      "rdv_planifie": "حول موعد",
+      "devis_sans_reponse": "عرض سعر بلا ردّ",
+      "pause_reprise": "عند انتهاء التوقّف",
+      "apres_signature": "بعد التوقيع",
+      "client_inactif": "عميل انقطع خبره"
+    },
+    "declencheursAide": {
+      "fiche_creee": "بمجرّد دخول العميل إلى «اتصال جديد». يتوقّف إن تقدّمت البطاقة.",
+      "stage_atteint": "عند بلوغ البطاقة المرحلة المختارة، أيًّا كان الطريق.",
+      "rdv_planifie": "مرتبط بتوقيت الموعد. المهلة السالبة ترسل قبله: −1 يوم تعني عشية الموعد.",
+      "devis_sans_reponse": "عرض السعر سُلِّم، والعميل لم يتحرّك منذ عتبة الصمت.",
+      "pause_reprise": "يوم حلول موعد استئناف عميل متوقّف.",
+      "apres_signature": "بعد توقيع الصفقة: شكر، ثم اطمئنان بعد التركيب.",
+      "client_inactif": "لم يتحرّك شيء في البطاقة منذ عتبة الصمت، وهي ليست موقَّعة ولا خاسرة."
+    },
+    "categories": {
+      "relance": "المتابعات",
+      "rdv": "المواعيد",
+      "devis": "عروض الأسعار",
+      "apres_vente": "ما بعد البيع",
+      "courtoisie": "المجاملة"
+    },
+    "statuts": {
+      "simule": "محاكاة",
+      "planifie": "مُبرمَج",
+      "envoye": "أُرسِل",
+      "repondu": "تمّ الردّ",
+      "echec": "فشل",
+      "annule": "أُلغي"
+    },
+    "editeur": {
+      "titreCreation": "تسلسل جديد",
+      "titreEdition": "تعديل التسلسل",
+      "intro": "ثلاثة أسئلة: ما الذي يُطلقه، وماذا يقول، ومتى يصمت.",
+      "nom": "اسم التسلسل",
+      "nomPlaceholder": "عميل جديد — الساعات الـ72 الأولى",
+      "nomExiste": "يوجد تسلسل بهذا الاسم.",
+      "description": "الوصف",
+      "quand": "متى ينطلق",
+      "declencheur": "المُطلِق",
+      "stageCible": "مرحلة المسار",
+      "stageCiblePlaceholder": "اختر مرحلة",
+      "seuil": "عتبة الصمت (أيام)",
+      "seuilAide": "لا ينطلق التسلسل إلّا إذا لم يتحرّك شيء في البطاقة طوال هذه المدّة.",
+      "etapes": "ما الذي يرسله",
+      "ajouterEtape": "إضافة خطوة",
+      "retirerEtape": "حذف هذه الخطوة",
+      "modele": "نموذج الرسالة",
+      "jours": "أيام",
+      "heures": "ساعات",
+      "etapesAide": "تُحسب المهلة من لحظة الإطلاق. السالب يعني قبله: −1 يوم يذكّر بالموعد عشيّته.",
+      "gardeFous": "الضوابط",
+      "pasAvant": "ليس قبل",
+      "pasApres": "ليس بعد",
+      "maxMessages": "الحدّ الأقصى",
+      "stopSiReponse": "التوقّف إذا ردّ العميل",
+      "stopSiStage": "التوقّف إذا تغيّرت مرحلة البطاقة",
+      "exclureVendredi": "ليس يوم الجمعة",
+      "exclureDimanche": "ليس يوم الأحد",
+      "portee": "النطاق",
+      "tousLesPdv": "كلّ نقاط البيع"
+    },
+    "modeles": {
+      "intro": "نصوص الرسائل، تُكتب مرّة وتراجعها الإدارة. صحّح نصًّا هنا فتتبعه كلّ المحادثات التي تستعمله.",
+      "nouveau": "نموذج جديد",
+      "vide": "لا توجد نماذج. رسالة واحدة متّفق عليها خير من تسع رسائل مرتجلة.",
+      "usage": "{count, plural, one {مستعمَل في خطوة واحدة} two {مستعمَل في خطوتين} few {مستعمَل في # خطوات} other {مستعمَل في # خطوة}}",
+      "inutilise": "غير مستعمَل",
+      "titreCreation": "نموذج جديد",
+      "titreEdition": "تعديل النموذج",
+      "editeurIntro": "اكتبها كما تقولها للعميل. المعاينة تُظهر الرسالة كما ستصله.",
+      "libelle": "اسم النموذج",
+      "categorie": "الفئة",
+      "code": "الرمز",
+      "codeAide": "المعرّف الذي يُذكر في الاجتماعات. حروف صغيرة وشرطات، ولا يُغيَّر بعد ذلك.",
+      "codeExiste": "هذا الرمز مستعمَل.",
+      "corps": "الرسالة",
+      "variableInconnue": "متغيّر مجهول: {variables}. سيصل العميل كما هو مكتوب.",
+      "apercu": "معاينة",
+      "apercuVide": "اكتب الرسالة لتظهر هنا."
+    },
+    "chat": {
+      "discussions": "المحادثات",
+      "rechercher": "ابحث عن عميل",
+      "aucunResultat": "لا توجد محادثة مطابقة.",
+      "choisirDiscussion": "اختر محادثة لعرض سلسلتها.",
+      "aucuneConversation": "لا توجد محادثات",
+      "aucuneConversationAide": "لم يُرسَل شيء ولا شيء مُبرمَج. فعّل تسلسلًا، أو انتظر وصول عميل جديد.",
+      "bandeauTitre": "إرسال يدوي.",
+      "bandeauTexte": "البوابة غير موصولة: الأداة تكتب الرسالة وتختار التوقيت، وأنت تضغط إرسال. تمتلئ السلسلة تمامًا كما ستمتلئ آليًا.",
+      "envoyer": "إرسال",
+      "copier": "نسخ النصّ",
+      "enRetard": "متأخّرة",
+      "prevuPour": "مُبرمَجة لـ{quand}",
+      "rienEnAttente": "لا شيء مُبرمَج لهذا العميل.",
+      "sansNumero": "لا رقم جوّال",
+      "sansNumeroAide": "هذا العميل بلا رقم جوّال — لا يمكن إرسال شيء.",
+      "clientARepondu": "ردّ العميل — يتوقّف التسلسل هنا.",
+      "blocages": {
+        "sans_telephone": "لا رقم جوّال",
+        "variables_manquantes": "حقول ناقصة"
+      },
+      "accueilTitre": "رسائل واتساب CUISINA",
+      "accueilPied": "لا شيء يُرسَل دون موافقتك."
+    }
+  },
+  "parametres": {
+    "title": "الإعدادات",
+    "subtitle": "ملفك الشخصي، مظهر التطبيق ولغته.",
+    "profil": {
+      "title": "الملف الشخصي",
+      "description": "الاسم الذي يظهر لفريقك وعلى بطاقاتك.",
+      "prenom": "الاسم",
+      "nom": "اللقب"
+    },
+    "apparence": {
+      "title": "المظهر",
+      "description": "اختر مظهر التطبيق — مظاهر أخرى قادمة.",
+      "themes": {
+        "light": "فاتح",
+        "dark": "داكن"
+      }
+    },
+    "langue": {
+      "title": "اللغة",
+      "description": "لغة الواجهة — تُحفظ في ملفك الشخصي."
+    }
+  },
+  "errors": {
+    "db": "تعذّر الحفظ. أعد المحاولة، ثم أبلغ المسؤول إذا استمرّ الخطأ.",
+    "db_droits": "ليست لديك صلاحية على هذه البطاقة. اطلب من مسؤولك إعادة إسنادها إليك.",
+    "db_doublon": "هذا العنصر موجود بالفعل. تحقّق من القائمة قبل إنشائه من جديد.",
+    "db_champ_manquant": "حقل إجباري فارغ. أكمله ثم أعد المحاولة.",
+    "db_reference_absente": "عنصر مرتبط غير موجود (الملف الشخصي أو نقطة البيع). أبلغ المسؤول.",
+    "db_valeur_refusee": "تم رفض هذه القيمة. تحقّق من إدخالك.",
+    "db_valeur_invalide": "إحدى القيم غير صحيحة. تحقّق من التواريخ والأرقام.",
+    "db_introuvable": "غير موجود — ربما تم حذفه في هذه الأثناء.",
+    "no_point_de_vente": "ملفك الشخصي غير مرتبط بأي نقطة بيع، لذا لا يمكن إنشاء بطاقة. اطلب من المسؤول ربطك بصالة عرض.",
+    "unauthenticated": "انتهت جلستك. يرجى تسجيل الدخول من جديد.",
+    "validation": "بعض الحقول غير صحيحة. صحّحها ثم أعد المحاولة.",
+    "not_found": "البطاقة غير موجودة."
+  },
+  "production": {
+    "title": "عميل نشط",
+    "subtitle": "متابعة الإنتاج بعد إرسال الملف.",
+    "empty": "لا يوجد ملف في هذه المرحلة.",
+    "entreLe": "دخل في {date}",
+    "voirDossier": "عرض الملف التجاري",
+    "remarques": "ملاحظات",
+    "etapes": {
+      "bureau_ordre": "مكتب الضبط",
+      "bureau_etude": "مكتب الدراسات",
+      "approvisionnement": "التموين",
+      "achat": "الشراء",
+      "production": "الإنتاج",
+      "planification": "التخطيط"
+    },
+    "deplacer": "نقل"
+  },
+  "acces": {
+    "refuseTitre": "قسم محجوز",
+    "refuseTexte": "دورك لا يمنحك الوصول إلى هذا القسم. إذا كنت تعتقد أن هذا خطأ، اطلب من مسؤولك التحقق من صلاحياتك.",
+    "retour": "العودة إلى لوحة القيادة"
+  },
+  "catalogue": {
+    "nbCouleurs": "{count} لون",
+    "couleursDe": "ألوان {modele}",
+    "couleursAide": "يمكن اختيار عدة ألوان.",
+    "titre_cuisine": "طراز المطبخ",
+    "titre_dressing": "طراز غرفة الملابس",
+    "aide_cuisine": "الطراز المختار مع العميل وألوان واجهته، من كتالوج CUISINA.",
+    "aide_dressing": "نوع غرفة الملابس المختار مع العميل. النوع المفصلي وحده يتوفر بألوان."
+  },
+  "contact": {
+    "question": "كيف تفضّل أن نتواصل معك؟",
+    "whatsapp": "واتساب",
+    "email": "البريد الإلكتروني",
+    "emailLabel": "بريدك الإلكتروني",
+    "whatsappRepris": "سنستعمل الرقم {numero}.",
+    "mobileDabord": "أدخل رقم الهاتف الجوال أولاً."
   }
 }

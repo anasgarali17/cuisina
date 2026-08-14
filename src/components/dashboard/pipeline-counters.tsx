@@ -18,9 +18,9 @@ export async function PipelineCounters({
 }) {
   const t = await getTranslations();
   const buckets = [
-    { key: "aFaire", count: counts.aFaire, label: t("stages.nouveau_contact") },
+    { key: "aFaire", count: counts.aFaire, label: t("stages.nouveau_lead") },
     { key: "enCours", count: counts.enCours, label: t("dashboard.hub.enCours") },
-    { key: "devis", count: counts.devis, label: t("stages.devis_envoye") },
+    { key: "devis", count: counts.devis, label: t("stages.conception_devis") },
     { key: "signe", count: counts.signe, label: t("stages.signe") },
   ];
 

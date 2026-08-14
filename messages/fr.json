@@ -35,25 +35,27 @@
       "automatisation": "Automatisation",
       "administration": "Administration"
     },
-    "maJournee": "Ma Journée",
+    "maJournee": "Dashboard",
     "fiches": "Fiches Contact",
-    "pipeline": "Pipeline",
     "clients": "Clients",
     "commandes": "Commandes Confirmées",
     "devis": "Devis & Factures",
     "agendaEquipe": "Agenda Équipe",
     "agendaClient": "Agenda Client",
     "taches": "Mes Tâches",
-    "sequences": "Séquences WhatsApp",
-    "modeles": "Modèles de messages",
-    "journalEnvoi": "Journal d'envoi",
+    "sequences": "Activation automatique",
+    "modeles": "Textes des messages",
     "flux": "Flux & Marges",
     "reglements": "Règlements & Encaissements",
     "rayonnement": "Rayonnement",
     "commissions": "Commissions & Rémunérations",
     "equipe": "Conseillers & Points de Vente",
     "configuration": "Configuration Atelier",
-    "plus": "Plus"
+    "plus": "Plus",
+    "messages": "Messages WhatsApp",
+    "parametres": "Paramètres",
+    "etatDossier": "État du dossier",
+    "clientsActifs": "Client actif"
   },
   "login": {
     "title": "Connexion",
@@ -71,18 +73,6 @@
     "devis": {
       "title": "Devis & Factures",
       "description": "Génération et numérotation des devis et factures, directement depuis la fiche contact, avec suivi des versions."
-    },
-    "sequences": {
-      "title": "Séquences WhatsApp",
-      "description": "Des relances WhatsApp automatiques déclenchées par les étapes du pipeline. Vous gardez la main, l'outil n'oublie jamais."
-    },
-    "modeles": {
-      "title": "Modèles de messages",
-      "description": "Vos messages types, validés par la direction, prêts à envoyer en un geste."
-    },
-    "journalEnvoi": {
-      "title": "Journal d'envoi",
-      "description": "Chaque message envoyé, à qui, quand, et ce qu'il en est ressorti."
     },
     "flux": {
       "title": "Flux & Marges",
@@ -106,14 +96,14 @@
     }
   },
   "stages": {
-    "nouveau_contact": "Nouveau contact",
-    "contacte": "Contacté",
-    "rdv_showroom": "RDV showroom",
-    "metre_releve": "Métré relevé",
+    "nouveau_lead": "Nouveau lead",
+    "releve_preliminaire": "Relevé préliminaire",
     "conception_devis": "Conception devis",
-    "devis_envoye": "Devis envoyé",
-    "negociation": "Négociation",
+    "rdv_showroom": "RDV showroom",
+    "cloture": "Clôturé",
     "signe": "Signé",
+    "releve_definitif": "Relevé définitif",
+    "dossier_envoye": "Dossier envoyé",
     "perdu": "Perdu",
     "en_pause": "En pause"
   },
@@ -132,17 +122,17 @@
     "bouche_a_oreille": "Bouche à oreille",
     "site_web": "Site web",
     "foire": "Foire",
-    "publicite": "Publicité",
     "details": {
       "prospection": "Prospection",
       "architecte_decorateur": "Architecte ou Décorateur",
       "promoteur_entrepreneur": "Promoteur ou Entrepreneur",
       "ami": "Ami",
-      "spot_publicitaire": "Spot publicitaire",
-      "magasine": "Magasine",
-      "affiche_enseigne": "Affiche ou Enseigne",
-      "catalogue": "Catalogue"
-    }
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "tiktok": "TikTok",
+      "autre_reseau": "Autre réseau"
+    },
+    "publicite": "Réseaux sociaux"
   },
   "fiches": {
     "title": "Fiches Contact",
@@ -184,7 +174,6 @@
       "dateContact": "Date du contact",
       "nbCuisines": "Cuisines",
       "nbDressings": "Dressings",
-      "nbSdb": "Salles de bains",
       "etatChantier": "État du chantier",
       "en_cours": "En cours",
       "fini": "Fini",
@@ -203,7 +192,8 @@
         "origine_requise": "Choisissez une origine.",
         "origine_detail_requise": "Précisez l'origine."
       },
-      "telBureau": "Téléphone bureau"
+      "telBureau": "Téléphone bureau",
+      "whatsapp": "Joignable sur WhatsApp"
     },
     "exigences": {
       "finitionFacade": "Finition Façade",
@@ -277,7 +267,6 @@
       "nombre": "Nombre",
       "cuisines": "Cuisine(s)",
       "dressings": "Dressing(s)",
-      "sdb": "SDB",
       "etatChantier": "Etat de chantier",
       "enCours": "En cours",
       "fini": "Fini",
@@ -337,7 +326,34 @@
       "couleurPerso": "Couleur personnalisée",
       "codeCouleur": "Code couleur (hex)",
       "texteHint": "Écrivez ici…",
-      "coteHint": "Cote (ex. 3,20 m)"
+      "coteHint": "Cote (ex. 3,20 m)",
+      "main": "Déplacer le croquis",
+      "zoomIn": "Zoom avant",
+      "zoomOut": "Zoom arrière",
+      "zoomFit": "Ajuster à l'écran",
+      "pleinEcran": "Plein écran",
+      "quitterPleinEcran": "Quitter le plein écran",
+      "zoomHint": "Pincez pour zoomer, deux doigts pour déplacer. L'outil main déplace le croquis à un doigt.",
+      "porte": "Porte",
+      "fenetre": "Fenêtre",
+      "sensPorte": "Sens d'ouverture"
+    },
+    "tabs": {
+      "fiches": "Fiches",
+      "demandes": "Demandes reçues",
+      "liens": "Lien & QR code"
+    },
+    "signature": {
+      "titre": "Signature du client",
+      "invite": "Signez ici",
+      "effacer": "Effacer",
+      "le": "Signé le {date}"
+    },
+    "pieces": {
+      "titre": "Pièces jointes",
+      "ajouter": "Ajouter",
+      "vide": "Aucun document. Plans, photos de chantier, devis reçus…",
+      "tropGros": "« {nom} » dépasse 10 Mo."
     }
   },
   "canaux": {
@@ -355,7 +371,8 @@
     "a_rappeler": "À rappeler"
   },
   "pipeline": {
-    "title": "Pipeline",
+    "title": "État du dossier",
+    "openFiche": "Ouvrir la fiche contact",
     "emptyColumn": "Rien à cette étape. Les fiches y glisseront d'elles-mêmes.",
     "perduLane": "Fiches perdues",
     "relanceOverdue": "Relance en retard",
@@ -368,13 +385,11 @@
       "all": "Tous",
       "reset": "Réinitialiser",
       "cuisine": "Cuisine",
-      "dressing": "Dressing",
-      "sdb": "SDB"
+      "dressing": "Dressing"
     },
     "projectChips": {
       "cuisine": "Cuisine ×{n}",
-      "dressing": "Dressing ×{n}",
-      "sdb": "SDB ×{n}"
+      "dressing": "Dressing ×{n}"
     },
     "pause": {
       "title": "Mettre le lead en pause",
@@ -415,7 +430,8 @@
       "tauxConversion": "Taux de conversion",
       "conversionWindow": "90 derniers jours",
       "projetDuMois": "Projet du mois",
-      "origineContacts": "Origine des contacts"
+      "origineContacts": "Origine des contacts",
+      "relances48h": "Nouveau lead sans fiche depuis 48 h"
     },
     "insights": {
       "title": "Signaux",
@@ -449,10 +465,7 @@
       "dernieresFiches": "Dernières fiches",
       "produits": "Produits demandés",
       "produitsHint": "Sur les fiches actives",
-      "heroLabel": "CA signé",
       "vsM1": "vs M-1",
-      "enAttente": "En attente",
-      "derniersMois": "12 derniers mois",
       "valeurPipeline": "Valeur pipeline",
       "activite": "Activité du showroom",
       "activiteSub": "Nouvelles fiches créées, jour par jour.",
@@ -469,6 +482,40 @@
       "jours30": "30 j",
       "fichesJour": "Fiches / jour",
       "tendance": "Tendance"
+    },
+    "views": {
+      "groupLabel": "Sections du tableau de bord",
+      "tout": "Tout",
+      "chiffres": "Chiffres",
+      "courbe": "Courbe",
+      "pipeline": "Pipeline",
+      "aVenir": "À venir",
+      "taches": "Tâches",
+      "signaux": "Signaux",
+      "classement": "Classement",
+      "fiches": "Fiches"
+    },
+    "hebdo": {
+      "titre": "Tableau hebdomadaire",
+      "vide": "Pas encore assez de données.",
+      "semaine": "Semaine",
+      "familles": {
+        "cuisine": "Cuisine",
+        "dressing": "Dressing",
+        "electro": "Électro",
+        "pt": "PT"
+      },
+      "colonnes": {
+        "nbDevis": "Nombre devis",
+        "valeurDevis": "Valeur devis",
+        "nbBc": "Nombre BC",
+        "valeurBc": "Valeur BC"
+      },
+      "note": "Devis comptés au passage en « Conception devis », BC au passage en « Signé ». Électro et PT ne sont pas encore suivis par fiche : leurs colonnes restent vides."
+    },
+    "rdvDemain": {
+      "titre": "RDV de demain",
+      "vide": "Aucun rendez-vous demain."
     }
   },
   "taches": {
@@ -508,12 +555,64 @@
     "identity": "Identité",
     "linkedFiches": "Fiches liées",
     "projectHistory": "Historique projets",
-    "tierComing": "Niveau client — Essentiel · Signature · Prestige — disponible en Phase 2, avec le scoring.",
     "nom": "Nom",
     "tel": "Téléphone",
     "email": "E-mail",
     "adresse": "Adresse",
-    "ville": "Ville"
+    "ville": "Ville",
+    "count": "{count, plural, one {# client} other {# clients}}",
+    "emptyFiltered": "Aucun client ne correspond à ces filtres.",
+    "columns": {
+      "statut": "Statut",
+      "projets": "Projets",
+      "derniereActivite": "Dernière activité"
+    },
+    "statuts": {
+      "actif": "Actif",
+      "signe": "Signé",
+      "dormant": "Dormant"
+    },
+    "tranches": {
+      "haut": "{montant} et +",
+      "moyen": "{min} – {max}",
+      "bas": "Moins de {montant}"
+    },
+    "achete": "acheté chez nous",
+    "detail": {
+      "signes": "Signés",
+      "enCours": "En cours",
+      "ficheContact": "Fiche contact"
+    },
+    "score": {
+      "label": "Score client",
+      "achats": "Ce qu'il a acheté",
+      "projets": "Projets signés",
+      "activite": "Activité récente",
+      "contact": "Coordonnées complètes"
+    },
+    "vip": "VIP",
+    "vipAdd": "Épingler VIP",
+    "vipRemove": "Retirer le VIP",
+    "filters": {
+      "tous": "Tous",
+      "tranche": "Achats cumulés"
+    },
+    "view": {
+      "cards": "Vue liste",
+      "board": "Vue colonnes",
+      "emptyColumn": "Aucun client dans cette tranche."
+    },
+    "sort": {
+      "label": "Trier",
+      "ca": "CA cumulé",
+      "score": "Score client",
+      "nom": "Nom (A–Z)",
+      "activite": "Activité récente"
+    },
+    "clientDepuis": "Client depuis {date}",
+    "aucunProjet": "Aucun projet lié.",
+    "openFull": "Ouvrir la fiche client",
+    "versTranche": "Encore {montant} d'achats pour dépasser {seuil}."
   },
   "equipe": {
     "title": "Conseillers & Points de Vente",
@@ -538,6 +637,52 @@
     "aucuneFiche": "Aucune fiche pour ce showroom pour l'instant.",
     "depuis": "Ouvert depuis",
     "activite": "Activité du showroom"
+  },
+  "carte": {
+    "aria": "Carte de la Tunisie : showrooms, clients, prospects et fournisseurs par gouvernorat",
+    "couches": "Couches affichées",
+    "zone": "Zone",
+    "toutLePays": "Toute la Tunisie",
+    "reinitialiser": "Toute la Tunisie",
+    "astuce": "Molette pour zoomer · glisser pour déplacer · clic sur un gouvernorat puis sur une délégation",
+    "rien": "Rien à afficher dans cette zone.",
+    "horsCarte": "{count, plural, one {# ligne sans ville reconnue, non placée} other {# lignes sans ville reconnue, non placées}}",
+    "fichesShowroom": "Showrooms de la zone",
+    "layers": {
+      "showrooms": "Showrooms",
+      "clients": "Clients",
+      "prospects": "Prospects",
+      "fournisseurs": "Fournisseurs"
+    },
+    "regions": {
+      "grand_tunis": "Grand Tunis",
+      "nord_est": "Nord-Est",
+      "nord_ouest": "Nord-Ouest",
+      "centre_est": "Centre-Est (Sahel)",
+      "centre_ouest": "Centre-Ouest",
+      "sud_est": "Sud-Est",
+      "sud_ouest": "Sud-Ouest"
+    },
+    "delegation": "Délégation",
+    "toutesDelegations": "Toutes les délégations",
+    "nPunaises": "{count, plural, one {# élément} other {# éléments}}",
+    "chargement": "Chargement…",
+    "zoomPlus": "Zoomer",
+    "zoomMoins": "Dézoomer",
+    "recadrer": "Recadrer sur la sélection"
+  },
+  "fournisseurs": {
+    "title": "Fournisseurs",
+    "delai": "{count, plural, one {# jour} other {# jours}}",
+    "categories": {
+      "caisson": "Caissons & façades",
+      "plan_travail": "Plans de travail",
+      "electromenager": "Électroménager",
+      "quincaillerie": "Quincaillerie",
+      "pose": "Pose",
+      "transport": "Transport",
+      "autre": "Autre"
+    }
   },
   "rdv": {
     "types": {
@@ -580,6 +725,10 @@
     "fStart": "Heure de début",
     "fDuration": "Durée",
     "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "hours": "{m, plural, =0 {{h} h} other {{h} h {m}}}",
+    "endsAt": "Fin {time}",
+    "addAt": "Ajouter à {time}",
+    "addAfter": "Enchaîner après",
     "fDueDate": "Échéance",
     "fPriority": "Priorité",
     "fOwner": "Assigné à",
@@ -588,5 +737,408 @@
     "fPdv": "Point de vente",
     "fPlace": "Lieu",
     "fNotes": "Notes"
+  },
+  "demandes": {
+    "title": "Demandes reçues",
+    "empty": "Aucune demande pour l’instant. Affichez le QR code en showroom et les fiches arriveront déjà remplies.",
+    "emptyFiltered": "Aucune demande dans cet état.",
+    "score": "Complétude {score}%",
+    "origineDetail": "Précision origine",
+    "assigne": "Conseiller",
+    "filters": {
+      "all": "Toutes"
+    },
+    "statuts": {
+      "en_attente": "En attente",
+      "accepte": "Acceptée",
+      "refuse": "Refusée"
+    },
+    "actions": {
+      "accept": "Accepter",
+      "hold": "Remettre en attente",
+      "note": "Annoter",
+      "refuse": "Refuser",
+      "openFiche": "Ouvrir la fiche"
+    },
+    "dialog": {
+      "assignTo": "Confier à",
+      "note": "Note interne",
+      "accepte": {
+        "title": "Accepter la demande",
+        "prompt": "La demande de {client} devient une fiche au pipeline, en nouveau contact, avec un rappel programmé pour demain.",
+        "placeholder": "Ce que vous avez retenu de l’échange…"
+      },
+      "en_attente": {
+        "title": "Laisser en attente",
+        "prompt": "{client} n’a pas encore tranché — la demande reste sur le dessus de la pile.",
+        "placeholder": "« Il rappellera après les travaux », « attend son devis »…"
+      },
+      "refuse": {
+        "title": "Refuser la demande",
+        "prompt": "La demande de {client} n’entrera pas au pipeline. Elle reste consultable ici.",
+        "placeholder": "Hors zone, doublon, demande non sérieuse…"
+      }
+    }
+  },
+  "liens": {
+    "intro": "Un lien par endroit : l’affiche du showroom n’est pas celle du stand de la foire.",
+    "new": "Nouveau lien",
+    "empty": "Aucun lien pour l’instant. Créez-en un, imprimez son affiche, et les fiches se rempliront toutes seules.",
+    "inactive": "Désactivé",
+    "count": "{count, plural, =0 {Aucune demande} one {# demande} other {# demandes}}",
+    "copy": "Copier",
+    "copied": "Copié",
+    "share": "Partager",
+    "activate": "Activer",
+    "deactivate": "Désactiver",
+    "audiences": {
+      "client": "Rempli par le client",
+      "equipe": "Rempli par l’équipe"
+    },
+    "audienceHints": {
+      "client": "« Comment avez-vous connu CUISINA ? » — à afficher ou à envoyer par WhatsApp.",
+      "equipe": "« Où le client a-t-il connu CUISINA ? » — pour saisir à la place du client."
+    },
+    "poster": {
+      "client": {
+        "titre": "Votre projet commence ici",
+        "sousTitre": "Scannez, remplissez, nous vous rappelons."
+      },
+      "equipe": {
+        "titre": "Fiche Contact",
+        "sousTitre": "Scannez pour saisir la fiche du client."
+      },
+      "lienLabel": "Ou saisissez ce lien",
+      "alt": "Affiche QR code — {libelle}",
+      "png": "PNG",
+      "svg": "SVG",
+      "print": "Imprimer l’affiche"
+    },
+    "dialog": {
+      "title": "Nouveau lien de collecte",
+      "prompt": "Nommez-le comme l’endroit où il vivra : c’est ce nom qui dira d’où viennent les demandes.",
+      "libelle": "Nom du lien",
+      "libellePlaceholder": "Showroom Sousse, Foire de Sfax 2026…",
+      "audience": "Qui remplit le formulaire ?",
+      "pdv": "Point de vente",
+      "conseiller": "Conseiller par défaut",
+      "create": "Créer le lien",
+      "creating": "Création…"
+    }
+  },
+  "public": {
+    "shared": {
+      "tagline": "Votre cuisine autrement",
+      "footer": "CUISINA · Votre cuisine autrement",
+      "expiredTitle": "Ce lien n’est plus actif",
+      "expiredBody": "Il a expiré ou a été désactivé. Contactez votre showroom CUISINA, il vous en enverra un nouveau.",
+      "stepOf": "Étape {current} sur {total}",
+      "steps": {
+        "step1": "Vos coordonnées et votre projet",
+        "step2": "Ce que vous souhaitez"
+      },
+      "next": "Continuer",
+      "previous": "Précédent",
+      "submit": "Envoyer",
+      "sending": "Envoi…",
+      "merciTitle": "Merci !",
+      "merciReference": "Référence {reference}",
+      "errorLien": "Ce lien n’est plus actif.",
+      "errorRate": "Trop de demandes envoyées d’affilée. Réessayez dans quelques minutes.",
+      "errorGeneric": "L’envoi a échoué. Réessayez.",
+      "nbCuisines": "Cuisines",
+      "nbDressings": "Dressings",
+      "etatChantier": "État du chantier",
+      "en_cours": "En cours",
+      "fini": "Fini",
+      "dateLivraison": "Date de livraison souhaitée",
+      "errors": {
+        "nom_requis": "Le nom est requis.",
+        "mobile_requis": "Le téléphone mobile est requis.",
+        "telephone_invalide": "Numéro invalide — chiffres uniquement.",
+        "email_invalide": "Adresse e-mail invalide.",
+        "origine_requise": "Choisissez une réponse.",
+        "origine_detail_requise": "Précisez votre réponse."
+      },
+      "whatsapp": "Joignable sur WhatsApp",
+      "sectionShowroom": "Votre showroom",
+      "showroomAide": "Choisissez la zone où vous souhaitez vous rendre : le showroom et son numéro s’affichent aussitôt.",
+      "zone": "Zone",
+      "zoneVide": "Choisir une zone…",
+      "sectionProjet": "Votre projet",
+      "types": {
+        "cuisine": "Une cuisine",
+        "dressing": "Un dressing"
+      },
+      "cuisines": "Cuisines",
+      "dressings": "Dressings"
+    },
+    "client": {
+      "title": "Parlez-nous de votre projet",
+      "subtitle": "Trois minutes, et un conseiller CUISINA vous rappelle.",
+      "sectionCoordonnees": "Vos coordonnées",
+      "sectionProjet": "Votre projet",
+      "nom": "Votre nom complet",
+      "mobile": "Votre téléphone mobile",
+      "telAutre": "Autre téléphone",
+      "email": "Votre e-mail",
+      "adresse": "Votre adresse",
+      "codePostal": "Code postal",
+      "ville": "Ville",
+      "origineQuestion": "Comment avez-vous connu CUISINA ?",
+      "budget": "Votre budget estimatif (DT)",
+      "observations": "Autre chose à nous dire ?",
+      "merciBody": "Votre demande est bien arrivée. Un conseiller CUISINA vous rappelle très vite."
+    },
+    "equipe": {
+      "title": "Fiche Contact",
+      "subtitle": "Saisie de la fiche client, depuis le showroom ou la foire.",
+      "sectionCoordonnees": "Coordonnées du client",
+      "sectionProjet": "Le projet du client",
+      "nom": "Nom du client",
+      "mobile": "Téléphone mobile",
+      "telAutre": "Téléphone domicile",
+      "email": "E-mail",
+      "adresse": "Adresse complète",
+      "codePostal": "Code postal",
+      "ville": "Ville",
+      "origineQuestion": "Où le client a-t-il connu CUISINA ?",
+      "budget": "Budget estimatif (DT)",
+      "observations": "Observations",
+      "merciBody": "La fiche est partie. Elle attend sa validation avant d’entrer au pipeline."
+    },
+    "souhaits": {
+      "intro": "Rien n’est obligatoire ici. Chaque réponse permet au conseiller de préparer votre rendez-vous.",
+      "facade": "Le type de façade",
+      "facadeAide": "Des cuisines que nous avons réalisées — désignez celle qui s’approche de votre idée.",
+      "facades": {
+        "laque_mat": "Laque mate",
+        "laque_brillant": "Laque brillante",
+        "bois_massif": "Bois massif",
+        "stratifie": "Stratifié",
+        "pvc": "PVC"
+      },
+      "croquis": "Votre croquis",
+      "croquisAide": "Dessinez l’implantation que vous imaginez, même approximative.",
+      "croquisInvite": "Dessinez ici avec le doigt ou la souris",
+      "croquisEffacer": "Effacer le dessin",
+      "photos": "Vos photos",
+      "photosAide": "Votre cuisine actuelle, un plan, ou des images qui vous inspirent.",
+      "photoTropGrosse": "« {nom} » dépasse 8 Mo.",
+      "modele_cuisine": "Le modèle qui vous plaît",
+      "modele_dressing": "Le type de dressing",
+      "modeleAide_cuisine": "Sept gammes au catalogue — désignez celle qui vous plaît, puis ses coloris.",
+      "modeleAide_dressing": "Trois configurations — sans façades, coulissant ou ouvrant.",
+      "croquisOuvrir": "Dessiner mon idée",
+      "croquisFermer": "Fermer et effacer le dessin"
+    }
+  },
+  "sequences": {
+    "title": "Séquences WhatsApp",
+    "sousTitreSimulation": "En simulation : l’outil calcule tout, vous appuyez sur envoyer.",
+    "sousTitreActif": "Passerelle connectée — les séquences envoient d’elles-mêmes.",
+    "tabs": {
+      "messages": "Messages",
+      "activation": "Activation des messages automatisés",
+      "textes": "Textes des messages"
+    },
+    "intro": "Chaque ligne est un automatisme que vous allumez ou éteignez. Tant que la passerelle n’est pas branchée, l’allumer remplit vos discussions WhatsApp — ça n’envoie rien tout seul.",
+    "nouvelle": "Nouvelle séquence",
+    "vide": "Aucune séquence pour l’instant. Créez-en une : elle ne fera rien tant que vous ne l’aurez pas relue en file d’attente.",
+    "desactivee": "Désactivée",
+    "desactiver": "Désactiver",
+    "activer": "Activer",
+    "fenetre": "Entre {debut}h et {fin}h",
+    "enFile": "{count, plural, =0 {Rien en file} one {# message en file d’attente} other {# messages en file d’attente}}",
+    "modeleIntrouvable": "Modèle introuvable",
+    "supprimerTitre": "Supprimer cette séquence ?",
+    "supprimerTexte": "« {nom} » et ses étapes seront supprimées. Les messages déjà envoyés restent au journal.",
+    "modes": {
+      "simulation": "Simulation",
+      "actif": "Actif"
+    },
+    "declencheurs": {
+      "fiche_creee": "À la création de la fiche",
+      "stage_atteint": "À l’arrivée sur une étape",
+      "rdv_planifie": "Autour d’un rendez-vous",
+      "devis_sans_reponse": "Devis sans réponse",
+      "pause_reprise": "À la reprise d’une pause",
+      "apres_signature": "Après la signature",
+      "client_inactif": "Client sans nouvelles"
+    },
+    "declencheursAide": {
+      "fiche_creee": "Dès qu’un lead entre en « nouveau contact ». S’arrête si la fiche avance.",
+      "stage_atteint": "Quand la fiche atteint l’étape choisie, quel que soit le chemin parcouru.",
+      "rdv_planifie": "Calé sur l’heure du rendez-vous. Un délai négatif envoie avant : −1 jour, c’est la veille.",
+      "devis_sans_reponse": "Le devis est remis, le client n’a pas bougé depuis le seuil de silence.",
+      "pause_reprise": "Le jour où la date de reprise d’un lead en pause arrive à échéance.",
+      "apres_signature": "Une fois l’affaire signée : remerciement, puis nouvelles après la pose.",
+      "client_inactif": "Rien n’a bougé sur la fiche depuis le seuil de silence, et elle n’est ni signée ni perdue."
+    },
+    "categories": {
+      "relance": "Relances",
+      "rdv": "Rendez-vous",
+      "devis": "Devis",
+      "apres_vente": "Après-vente",
+      "courtoisie": "Courtoisie"
+    },
+    "statuts": {
+      "simule": "Simulé",
+      "planifie": "Planifié",
+      "envoye": "Envoyé",
+      "repondu": "Répondu",
+      "echec": "Échec",
+      "annule": "Annulé"
+    },
+    "editeur": {
+      "titreCreation": "Nouvelle séquence",
+      "titreEdition": "Modifier la séquence",
+      "intro": "Trois questions : qu’est-ce qui la déclenche, que dit-elle, et quand se tait-elle.",
+      "nom": "Nom de la séquence",
+      "nomPlaceholder": "Nouveau lead — les 72 premières heures",
+      "nomExiste": "Une séquence porte déjà ce nom.",
+      "description": "Description",
+      "quand": "Quand elle se déclenche",
+      "declencheur": "Déclencheur",
+      "stageCible": "Étape du pipeline",
+      "stageCiblePlaceholder": "Choisir une étape",
+      "seuil": "Seuil de silence (jours)",
+      "seuilAide": "La séquence ne s’arme que si rien n’a bougé sur la fiche depuis ce nombre de jours.",
+      "etapes": "Ce qu’elle envoie",
+      "ajouterEtape": "Ajouter une étape",
+      "retirerEtape": "Retirer cette étape",
+      "modele": "Modèle de message",
+      "jours": "Jours",
+      "heures": "Heures",
+      "etapesAide": "Le délai se compte depuis le déclencheur. Négatif = avant : −1 jour rappelle un rendez-vous la veille.",
+      "gardeFous": "Garde-fous",
+      "pasAvant": "Pas avant",
+      "pasApres": "Pas après",
+      "maxMessages": "Maximum",
+      "stopSiReponse": "S’arrêter si le client répond",
+      "stopSiStage": "S’arrêter si la fiche change d’étape",
+      "exclureVendredi": "Pas le vendredi",
+      "exclureDimanche": "Pas le dimanche",
+      "portee": "Portée",
+      "tousLesPdv": "Tous les points de vente"
+    },
+    "modeles": {
+      "intro": "Les textes des messages, écrits une fois et relus par la direction. On corrige un texte ici et toutes les discussions qui l’emploient suivent.",
+      "nouveau": "Nouveau modèle",
+      "vide": "Aucun modèle. Un message type vaut mieux que neuf versions improvisées.",
+      "usage": "{count, plural, one {Employé dans # étape} other {Employé dans # étapes}}",
+      "inutilise": "Inutilisé",
+      "titreCreation": "Nouveau modèle",
+      "titreEdition": "Modifier le modèle",
+      "editeurIntro": "Écrivez comme vous parleriez au client. L’aperçu montre le message tel qu’il arrivera.",
+      "libelle": "Nom du modèle",
+      "categorie": "Catégorie",
+      "code": "Code",
+      "codeAide": "L’identifiant qu’on cite en réunion. Minuscules et tirets, jamais modifié après coup.",
+      "codeExiste": "Ce code est déjà pris.",
+      "corps": "Message",
+      "variableInconnue": "Variable inconnue : {variables}. Elle partirait chez le client telle quelle.",
+      "apercu": "Aperçu",
+      "apercuVide": "Écrivez le message pour le voir apparaître ici."
+    },
+    "chat": {
+      "discussions": "Discussions",
+      "rechercher": "Rechercher un client",
+      "aucunResultat": "Aucune discussion ne correspond.",
+      "choisirDiscussion": "Choisissez une discussion pour voir le fil.",
+      "aucuneConversation": "Aucune conversation",
+      "aucuneConversationAide": "Rien n’est encore parti et rien n’est programmé. Activez une séquence, ou attendez qu’un lead entre.",
+      "bandeauTitre": "Envoi manuel.",
+      "bandeauTexte": "La passerelle n’est pas branchée : l’outil écrit le message et choisit l’heure, vous appuyez sur envoyer. Le fil se remplit exactement comme il le fera en automatique.",
+      "envoyer": "Envoyer",
+      "copier": "Copier le texte",
+      "enRetard": "En retard",
+      "prevuPour": "Prévu pour {quand}",
+      "rienEnAttente": "Rien de programmé pour ce client.",
+      "sansNumero": "Pas de mobile",
+      "sansNumeroAide": "Ce client n’a pas de numéro mobile — rien ne peut partir.",
+      "clientARepondu": "Le client a répondu — la séquence s’arrête ici.",
+      "blocages": {
+        "sans_telephone": "Pas de mobile",
+        "variables_manquantes": "Champs manquants"
+      },
+      "accueilTitre": "Messages WhatsApp CUISINA",
+      "accueilPied": "Rien ne part sans votre accord."
+    }
+  },
+  "parametres": {
+    "title": "Paramètres",
+    "subtitle": "Votre profil, l’apparence de l’application et sa langue.",
+    "profil": {
+      "title": "Profil",
+      "description": "Le nom affiché à votre équipe et sur vos fiches.",
+      "prenom": "Prénom",
+      "nom": "Nom"
+    },
+    "apparence": {
+      "title": "Apparence",
+      "description": "Choisissez le thème de l’application — d’autres thèmes arrivent.",
+      "themes": {
+        "light": "Clair",
+        "dark": "Sombre"
+      }
+    },
+    "langue": {
+      "title": "Langue",
+      "description": "La langue de l’interface — enregistrée sur votre profil."
+    }
+  },
+  "errors": {
+    "db": "Enregistrement impossible. Réessayez, puis prévenez un administrateur si le problème persiste.",
+    "db_droits": "Vous n'avez pas les droits sur cette fiche. Demandez à votre responsable de vous la réattribuer.",
+    "db_doublon": "Cet élément existe déjà. Vérifiez la liste avant de le recréer.",
+    "db_champ_manquant": "Un champ obligatoire est vide. Complétez-le puis réessayez.",
+    "db_reference_absente": "Un élément lié est introuvable (profil ou point de vente). Prévenez un administrateur.",
+    "db_valeur_refusee": "Cette valeur est refusée. Vérifiez votre saisie.",
+    "db_valeur_invalide": "Une valeur saisie est mal formée. Vérifiez les dates et les numéros.",
+    "db_introuvable": "Élément introuvable — il a peut-être été supprimé entre-temps.",
+    "no_point_de_vente": "Votre profil n'est rattaché à aucun point de vente : impossible de créer une fiche. Demandez à un administrateur de vous rattacher à un showroom.",
+    "unauthenticated": "Votre session a expiré. Reconnectez-vous.",
+    "validation": "Certains champs sont invalides. Corrigez-les puis réessayez.",
+    "not_found": "Fiche introuvable."
+  },
+  "production": {
+    "title": "Client actif",
+    "subtitle": "Le suivi de production, une fois le dossier envoyé.",
+    "empty": "Aucun dossier à cette étape.",
+    "entreLe": "Entré le {date}",
+    "voirDossier": "Voir le dossier commercial",
+    "remarques": "Remarques",
+    "etapes": {
+      "bureau_ordre": "Bureau d'ordre",
+      "bureau_etude": "Bureau d'étude",
+      "approvisionnement": "Approvisionnement",
+      "achat": "Achat",
+      "production": "Production",
+      "planification": "Planification"
+    },
+    "deplacer": "Déplacer"
+  },
+  "acces": {
+    "refuseTitre": "Section réservée",
+    "refuseTexte": "Votre rôle ne donne pas accès à cette section. Si vous pensez qu'il s'agit d'une erreur, demandez à votre responsable de vérifier vos droits.",
+    "retour": "Retour au tableau de bord"
+  },
+  "catalogue": {
+    "nbCouleurs": "{count} coloris",
+    "couleursDe": "Coloris {modele}",
+    "couleursAide": "Plusieurs coloris possibles.",
+    "titre_cuisine": "Modèle de cuisine",
+    "titre_dressing": "Modèle de dressing",
+    "aide_cuisine": "Le modèle choisi avec le client, et ses coloris de façade. Repris du catalogue CUISINA.",
+    "aide_dressing": "Le type de dressing choisi avec le client. Seul l ouvrant se décline en coloris."
+  },
+  "contact": {
+    "question": "Comment préférez-vous être recontacté ?",
+    "whatsapp": "WhatsApp",
+    "email": "E-mail",
+    "emailLabel": "Votre adresse e-mail",
+    "whatsappRepris": "Nous utiliserons le {numero}.",
+    "mobileDabord": "Saisissez d abord un téléphone mobile."
   }
 }

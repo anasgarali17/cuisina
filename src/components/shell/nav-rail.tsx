@@ -4,14 +4,16 @@ import { Fragment } from "react";
 import { useTranslations } from "next-intl";
 import { ChevronDown, LogOut } from "lucide-react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { NAV_GROUPS } from "./nav-config";
+import { navPourRole } from "./nav-config";
 import { signOut } from "@/lib/actions/auth-actions";
 import { cn } from "@/lib/utils";
+import type { Role } from "@/lib/domain";
 
-export function NavRail() {
+export function NavRail({ role }: { role: Role }) {
   const t = useTranslations("nav");
   const tApp = useTranslations("app");
   const pathname = usePathname();
+  const groupes = navPourRole(role);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -31,7 +33,7 @@ export function NavRail() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
-        {NAV_GROUPS.map((group) => (
+        {groupes.map((group) => (
           <Fragment key={group.key}>
             <div className="mb-1 mt-5 flex items-center justify-between px-3 first:mt-2">
               <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">

@@ -5,9 +5,7 @@ import {
   FileClock,
   FolderOpen,
   Percent,
-  Trophy,
   Users,
-  Wallet,
 } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
 import {
@@ -22,13 +20,15 @@ import {
 import { daysBetween, formatDate, isToday, startOfToday } from "@/lib/dates";
 import { formatDT } from "@/lib/utils";
 import { exigencesSchema } from "@/lib/schemas/fiche";
-import { HeroBanner, type SparkPoint } from "@/components/dashboard/hero-banner";
+import {
+  SectionSwitcher,
+  type DashboardSection,
+} from "@/components/dashboard/section-switcher";
 import { PastelKpi } from "@/components/dashboard/pastel-kpi";
 import {
   ActivityChart,
   type ActivityPoint,
 } from "@/components/dashboard/activity-chart";
-import { TopClients } from "@/components/dashboard/top-clients";
 import { PipelineCounters } from "@/components/dashboard/pipeline-counters";
 import { Echeances, type EcheanceItem } from "@/components/dashboard/echeances";
 import {
@@ -42,26 +42,32 @@ import {
   type ClassementRow,
 } from "@/components/dashboard/classement";
 import { LatestFiches } from "@/components/dashboard/latest-fiches";
+import { RdvDemain } from "@/components/dashboard/rdv-demain";
+import {
+  TableauHebdo,
+  celluleVide,
+  type CelluleHebdo,
+  type FamilleHebdo,
+  type SemaineRow,
+} from "@/components/dashboard/tableau-hebdo";
 import {
   ProductsStrip,
   type ProductCounts,
 } from "@/components/dashboard/products-strip";
 
+/** Les étapes où un silence se paie : ni tout début, ni dossier conclu. */
 const MID_STAGES = new Set([
-  "contacte",
-  "rdv_showroom",
-  "metre_releve",
+  "releve_preliminaire",
   "conception_devis",
-  "devis_envoye",
-  "negociation",
+  "rdv_showroom",
+  "cloture",
 ]);
 
 const ENCOURS_STAGES = new Set([
-  "contacte",
-  "rdv_showroom",
-  "metre_releve",
+  "releve_preliminaire",
   "conception_devis",
-  "negociation",
+  "rdv_showroom",
+  "cloture",
 ]);
 
 export default async function MaJourneePage({
@@ -103,6 +109,18 @@ export default async function MaJourneePage({
     .filter((r) => isToday(r.debut))
     .sort((a, b) => a.debut.localeCompare(b.debut));
 
+  /* — RDV de demain, du plus proche au plus lointain — */
+  const demainDebut = new Date(today);
+  demainDebut.setDate(demainDebut.getDate() + 1);
+  const demainFin = new Date(demainDebut);
+  demainFin.setDate(demainFin.getDate() + 1);
+  const rdvDemain = rdv
+    .filter((r) => {
+      const d = new Date(r.debut);
+      return d >= demainDebut && d < demainFin;
+    })
+    .sort((a, b) => a.debut.localeCompare(b.debut));
+
   /* — Relances en retard — */
   const relancesRetard = taches.filter(
     (task) =>
@@ -114,13 +132,17 @@ export default async function MaJourneePage({
   ).length;
 
   /* — Devis en attente — */
-  const devisAttente = fiches.filter((f) => f.stage === "devis_envoye");
+  const devisAttente = fiches.filter((f) => f.stage === "conception_devis");
   const devisTotal = devisAttente.reduce(
     (sum, f) => sum + (f.budget_estimatif ?? 0),
     0,
   );
 
-  /* — CA signé ce mois vs objectif — */
+  /*
+   * Les fiches signées ce mois. La carte « CA signé » a disparu du tableau de
+   * bord, mais le classement de la direction s'appuie encore sur cet ensemble
+   * — c'est la seule raison de le calculer ici.
+   */
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const signedThisMonth = new Set(
     historique
@@ -129,40 +151,6 @@ export default async function MaJourneePage({
       )
       .map((h) => h.fiche_id),
   );
-  const caSigne = [...signedThisMonth].reduce((sum, id) => {
-    const fiche = ficheById.get(id);
-    return sum + (fiche?.budget_estimatif ?? 0);
-  }, 0);
-  const objectif =
-    profile.role === "conseiller"
-      ? profile.objectif_mensuel
-      : profiles
-          .filter(
-            (p) =>
-              p.role === "conseiller" &&
-              (profile.role !== "chef_showroom" ||
-                p.point_de_vente_id === profile.point_de_vente_id),
-          )
-          .reduce((sum, p) => sum + p.objectif_mensuel, 0);
-
-  /* — CA du mois précédent → delta du hero — */
-  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const signedPrevMonth = new Set(
-    historique
-      .filter((h) => {
-        const at = new Date(h.created_at);
-        return h.stage_to === "signe" && at >= prevMonthStart && at < monthStart;
-      })
-      .map((h) => h.fiche_id),
-  );
-  const caPrevMonth = [...signedPrevMonth].reduce((sum, id) => {
-    const fiche = ficheById.get(id);
-    return sum + (fiche?.budget_estimatif ?? 0);
-  }, 0);
-  const deltaPct =
-    caPrevMonth > 0
-      ? Math.round(((caSigne - caPrevMonth) / caPrevMonth) * 100)
-      : null;
 
   /* — Nouvelles fiches, 30 jours (area chart) — */
   const fiches30d: ActivityPoint[] = [];
@@ -174,20 +162,6 @@ export default async function MaJourneePage({
       d: formatDate(d, "d MMM", locale),
       label: formatDate(d, "d", locale),
       v: fiches.filter((f) => f.created_at.slice(0, 10) === key).length,
-    });
-  }
-
-  /* — Fiches créées par mois, 12 derniers mois (hero spark) — */
-  const spark12m: SparkPoint[] = [];
-  for (let i = 11; i >= 0; i--) {
-    const month = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const next = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
-    spark12m.push({
-      d: formatDate(month, "MMM", locale),
-      v: fiches.filter((f) => {
-        const c = new Date(f.created_at);
-        return c >= month && c < next;
-      }).length,
     });
   }
 
@@ -208,17 +182,8 @@ export default async function MaJourneePage({
         )
       : 0;
 
-  /* — Top client signé — */
-  const signedFiches = fiches
-    .filter((f) => f.stage === "signe")
-    .sort((a, b) => (b.budget_estimatif ?? 0) - (a.budget_estimatif ?? 0));
-  const topSigned = signedFiches[0] ?? null;
-
-  /* — Top clients par CA cumulé — */
-  const topClients = [...clients]
-    .sort((a, b) => b.ca_cumule - a.ca_cumule)
-    .slice(0, 5)
-    .map((c) => ({ id: c.id, nom: c.nom, ca: c.ca_cumule }));
+  /* — Fiches signées, pour le compteur du pipeline — */
+  const signedFiches = fiches.filter((f) => f.stage === "signe");
 
   /* — Prochain RDV (toutes dates) — */
   const prochainRdv = [...rdv]
@@ -230,7 +195,7 @@ export default async function MaJourneePage({
 
   /* — Compteurs pipeline — */
   const pipelineCounts = {
-    aFaire: fiches.filter((f) => f.stage === "nouveau_contact").length,
+    aFaire: fiches.filter((f) => f.stage === "nouveau_lead").length,
     enCours: fiches.filter((f) => ENCOURS_STAGES.has(f.stage)).length,
     devis: devisAttente.length,
     signe: signedFiches.length,
@@ -286,7 +251,7 @@ export default async function MaJourneePage({
         continue;
       }
     }
-    if (f.stage === "devis_envoye" && f.date_effective_remise_devis) {
+    if (f.stage === "conception_devis" && f.date_effective_remise_devis) {
       const days = daysBetween(f.date_effective_remise_devis, now);
       if (days > 5) {
         insights.push({
@@ -298,7 +263,7 @@ export default async function MaJourneePage({
         continue;
       }
     }
-    if (f.stage === "metre_releve") {
+    if (f.stage === "releve_preliminaire") {
       const days = daysBetween(f.updated_at, now);
       if (days > 10) {
         insights.push({
@@ -421,139 +386,231 @@ export default async function MaJourneePage({
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
     .slice(0, 6);
 
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">
-          {t("dashboard.greeting", { name: profile.prenom })}
-        </h1>
-        <p className="mt-1 text-sm capitalize text-muted-foreground">
-          {formatDate(now, "EEEE d MMMM yyyy", locale)}
-        </p>
-      </div>
+  /*
+   * Tableau hebdomadaire — la reprise du fichier Excel de la direction.
+   *
+   * Un devis se compte au passage en « Conception devis », un bon de commande
+   * au passage en « Signé » : c'est la date du mouvement qui compte, pas celle
+   * de création de la fiche. La valeur vient du budget estimatif.
+   *
+   * Une fiche qui porte une cuisine *et* un dressing compte dans les deux
+   * familles — c'est ce que fait le fichier papier, où une affaire mixte
+   * apparaît sur les deux colonnes. Sa valeur, elle, est répartie au prorata
+   * du nombre d'éléments, pour qu'un total de ligne reste juste.
+   */
+  const semaines: SemaineRow[] = [];
+  for (let i = 0; i < 8; i++) {
+    // Semaine du lundi au dimanche : `getDay()` renvoie 0 pour dimanche, qu'on
+    // ramène à 6 pour que la semaine commence le lundi comme sur l'agenda.
+    const debut = new Date(today);
+    const decalage = (debut.getDay() + 6) % 7;
+    debut.setDate(debut.getDate() - decalage - i * 7);
+    const finSemaine = new Date(debut);
+    finSemaine.setDate(finSemaine.getDate() + 7);
 
-      {/* — Hero banner — */}
-      <HeroBanner
-        label={t("dashboard.hub.heroLabel")}
-        amount={formatDT(caSigne)}
-        deltaPct={deltaPct}
-        vsLabel={t("dashboard.hub.vsM1")}
-        pendingLabel={t("dashboard.hub.enAttente")}
-        pendingAmount={formatDT(devisTotal)}
-        objectifLabel={t("dashboard.kpi.objectif", {
-          total: formatDT(objectif),
-        })}
-        sparkTitle={t("dashboard.hub.derniersMois")}
-        sparkData={spark12m}
-        pipelineTitle={t("dashboard.hub.valeurPipeline")}
-        pipelineValue={formatDT(valeurPipeline)}
-        pipelineCount={`${t("dashboard.hub.fichesActives")} · ${activeCount}`}
-      />
+    const dans = (iso: string) => {
+      const d = new Date(iso);
+      return d >= debut && d < finSemaine;
+    };
 
-      {/* — Pastel KPI grid — */}
-      <div className="stagger mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <PastelKpi
-          tone="green"
-          title={t("dashboard.kpi.caSigne")}
-          value={formatDT(caSigne)}
-          icon={<Wallet className="size-5" />}
-        />
-        <PastelKpi
-          tone="blue"
-          title={t("dashboard.kpi.devisAttente")}
-          value={devisAttente.length}
-          hint={t("dashboard.kpi.devisTotal", { total: formatDT(devisTotal) })}
-          icon={<FileClock className="size-5" />}
-        />
-        <PastelKpi
-          tone="rouge"
-          title={t("dashboard.kpi.tauxConversion")}
-          value={`${conversion}%`}
-          hint={t("dashboard.kpi.conversionWindow")}
-          icon={<Percent className="size-5" />}
-        />
-        <PastelKpi
-          tone="amber"
-          title={t("dashboard.kpi.relancesRetard")}
-          value={relancesRetard}
-          icon={<BellRing className="size-5" />}
-        />
-        <PastelKpi
-          tone="orange"
-          title={t("dashboard.hub.fichesActives")}
-          value={activeCount}
-          hint={formatDT(valeurPipeline)}
-          icon={<FolderOpen className="size-5" />}
-        />
-        <PastelKpi
-          tone="green"
-          title={t("dashboard.hub.prochainRdv")}
-          value={<span className="text-2xl">{prochainRdvValue}</span>}
-          icon={<CalendarDays className="size-5" />}
-        />
-        <PastelKpi
-          tone="rouge"
-          title={t("dashboard.hub.topClient")}
-          value={
-            <span className="block truncate text-2xl">
-              {topSigned?.client_nom ?? "—"}
-            </span>
-          }
-          hint={topSigned ? formatDT(topSigned.budget_estimatif) : undefined}
-          icon={<Trophy className="size-5" />}
-        />
-        <PastelKpi
-          tone="blue"
-          title={t("dashboard.hub.clientsActifs")}
-          value={clients.length}
-          icon={<Users className="size-5" />}
-        />
-      </div>
+    const familles: Record<FamilleHebdo, CelluleHebdo> = {
+      cuisine: celluleVide(),
+      dressing: celluleVide(),
+      electro: celluleVide(),
+      pt: celluleVide(),
+    };
 
-      {/* — Activity + top clients — */}
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <ActivityChart
-          data={fiches30d}
-          title={t("dashboard.hub.activite")}
-          subtitle={t("dashboard.hub.activiteSub")}
-          label7={t("dashboard.hub.jours7")}
-          label30={t("dashboard.hub.jours30")}
-          seriesLabel={t("dashboard.hub.fichesJour")}
-          trendLabel={t("dashboard.hub.tendance")}
-        />
-        <TopClients clients={topClients} />
-      </div>
+    for (const h of historique) {
+      const devis = h.stage_to === "conception_devis";
+      const bc = h.stage_to === "signe";
+      if ((!devis && !bc) || !dans(h.created_at)) continue;
 
-      {/* — Pipeline + échéances — */}
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <PipelineCounters counts={pipelineCounts} total={fiches.length} />
-        <Echeances items={echeances} locale={locale} />
-      </div>
+      const fiche = ficheById.get(h.fiche_id);
+      if (!fiche) continue;
 
-      {/* — Operational row — */}
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <InsightsPanel insights={insights.slice(0, 8)} />
-        <AgendaJour rdv={rdvToday} />
-        <TasksWidget taches={widgetTaches} ficheNames={ficheNames} />
-      </div>
+      const elements = fiche.nb_cuisines + fiche.nb_dressings;
+      if (elements === 0) continue;
+      const valeur = fiche.budget_estimatif ?? 0;
 
-      <div className="mt-4">
-        <ProductsStrip counts={productCounts} />
-      </div>
+      for (const [famille, nb] of [
+        ["cuisine", fiche.nb_cuisines],
+        ["dressing", fiche.nb_dressings],
+      ] as const) {
+        if (nb === 0) continue;
+        const part = Math.round((valeur * nb) / elements);
+        const cellule = familles[famille];
+        if (devis) {
+          cellule.nbDevis += 1;
+          cellule.valeurDevis += part;
+        } else {
+          cellule.nbBc += 1;
+          cellule.valeurBc += part;
+        }
+      }
+    }
 
-      {classement && classement.length > 0 && (
-        <div className="mt-4">
-          <Classement rows={classement} />
+    semaines.push({
+      libelle: `${formatDate(debut, "d", locale)}–${formatDate(
+        new Date(finSemaine.getTime() - 86_400_000),
+        "d MMM",
+        locale,
+      )}`,
+      familles,
+    });
+  }
+
+  /* — Sections filtrables depuis la barre d'emojis — */
+  const sections: DashboardSection[] = [
+    {
+      id: "chiffres",
+      emoji: "📊",
+      label: t("dashboard.views.chiffres"),
+      content: (
+        // Chaque carte mène à l'écran qui détaille son chiffre : lire « 7 » ne
+        // sert à rien si retrouver les sept demande trois clics de plus.
+        <div className="stagger grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <PastelKpi
+            tone="amber"
+            title={t("dashboard.kpi.relancesRetard")}
+            value={relancesRetard}
+            hint={t("dashboard.kpi.relances48h")}
+            icon={<BellRing className="size-5" />}
+            href="/taches?filtre=retard"
+            urgent={relancesRetard > 0}
+          />
+          <PastelKpi
+            tone="blue"
+            title={t("dashboard.kpi.devisAttente")}
+            value={devisAttente.length}
+            hint={t("dashboard.kpi.devisTotal", { total: formatDT(devisTotal) })}
+            icon={<FileClock className="size-5" />}
+            href="/etat-dossier?stage=conception_devis"
+          />
+          <PastelKpi
+            tone="rouge"
+            title={t("dashboard.kpi.tauxConversion")}
+            value={`${conversion}%`}
+            hint={t("dashboard.kpi.conversionWindow")}
+            icon={<Percent className="size-5" />}
+            href="/etat-dossier"
+          />
+          <PastelKpi
+            tone="orange"
+            title={t("dashboard.hub.fichesActives")}
+            value={activeCount}
+            hint={`${t("dashboard.hub.valeurPipeline")} : ${formatDT(
+              valeurPipeline,
+            )}`}
+            icon={<FolderOpen className="size-5" />}
+            href="/fiches"
+          />
+          <PastelKpi
+            tone="green"
+            title={t("dashboard.hub.prochainRdv")}
+            value={<span className="text-2xl">{prochainRdvValue}</span>}
+            icon={<CalendarDays className="size-5" />}
+            href="/agenda-client"
+          />
+          <PastelKpi
+            tone="blue"
+            title={t("dashboard.hub.clientsActifs")}
+            value={clients.length}
+            icon={<Users className="size-5" />}
+            href="/clients"
+          />
         </div>
-      )}
+      ),
+    },
+    /*
+     * L'ordre de la journée, de haut en bas : ce qui dérape d'abord, puis ce
+     * qu'il y a à faire aujourd'hui et à préparer pour demain. La courbe vient
+     * après — elle explique le mois, elle ne dit pas quoi faire dans l'heure,
+     * et occuper le haut de l'écran avec un contexte fait descendre l'action
+     * sous la ligne de flottaison.
+     *
+     * Les quatre tiennent dans une seule section pour qu'on ne puisse pas en
+     * masquer une en filtrant.
+     */
+    {
+      id: "courbe",
+      emoji: "📈",
+      label: t("dashboard.views.courbe"),
+      content: (
+        <div className="space-y-4">
+          <InsightsPanel insights={insights.slice(0, 8)} alerte />
 
-      <div className="mt-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <TasksWidget taches={widgetTaches} ficheNames={ficheNames} />
+            <RdvDemain rdv={rdvDemain} />
+          </div>
+
+          <ActivityChart
+            data={fiches30d}
+            title={t("dashboard.hub.activite")}
+            subtitle={t("dashboard.hub.activiteSub")}
+            label7={t("dashboard.hub.jours7")}
+            label30={t("dashboard.hub.jours30")}
+            seriesLabel={t("dashboard.hub.fichesJour")}
+            trendLabel={t("dashboard.hub.tendance")}
+          />
+
+          <TableauHebdo semaines={semaines} />
+        </div>
+      ),
+    },
+    {
+      id: "pipeline",
+      emoji: "🧭",
+      label: t("dashboard.views.pipeline"),
+      content: (
+        <div className="space-y-4">
+          <PipelineCounters counts={pipelineCounts} total={fiches.length} />
+          <ProductsStrip counts={productCounts} />
+        </div>
+      ),
+    },
+    {
+      id: "a-venir",
+      emoji: "📅",
+      label: t("dashboard.views.aVenir"),
+      content: (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Echeances items={echeances} locale={locale} />
+          <AgendaJour rdv={rdvToday} />
+        </div>
+      ),
+    },
+    ...(classement && classement.length > 0
+      ? [
+          {
+            id: "classement",
+            emoji: "🏆",
+            label: t("dashboard.views.classement"),
+            content: <Classement rows={classement} />,
+          },
+        ]
+      : []),
+    {
+      id: "fiches",
+      emoji: "🗂️",
+      label: t("dashboard.views.fiches"),
+      content: (
         <LatestFiches
           fiches={latest}
           conseillers={conseillerNames}
           total={fiches.length}
         />
-      </div>
-    </div>
+      ),
+    },
+  ];
+
+  return (
+    <SectionSwitcher
+      title={t("dashboard.greeting", { name: profile.prenom })}
+      subtitle={formatDate(now, "EEEE d MMMM yyyy", locale)}
+      allLabel={t("dashboard.views.tout")}
+      groupLabel={t("dashboard.views.groupLabel")}
+      sections={sections}
+    />
   );
 }

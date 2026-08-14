@@ -2,10 +2,11 @@
 
 import { useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Bell, Globe, LogOut, Moon, Search, Sun } from "lucide-react";
+import { Bell, Globe, LogOut, Moon, Search, Settings, Sun } from "lucide-react";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { locales, type Locale } from "@/i18n/routing";
 import { persistLocale, signOut } from "@/lib/actions/auth-actions";
+import { applyTheme } from "@/lib/theme";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -25,17 +26,13 @@ const LOCALE_LABELS: Record<Locale, string> = {
 };
 
 function toggleTheme() {
-  const root = document.documentElement;
-  const dark = root.classList.toggle("dark");
-  try {
-    localStorage.setItem("cuisina-theme", dark ? "dark" : "light");
-  } catch {
-    // Preference only — safe to lose in private browsing.
-  }
+  const dark = document.documentElement.classList.contains("dark");
+  applyTheme(dark ? "light" : "dark");
 }
 
 export function TopBar({ profile }: { profile: ProfileRow }) {
   const t = useTranslations("app");
+  const tNav = useTranslations("nav");
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -133,6 +130,10 @@ export function TopBar({ profile }: { profile: ProfileRow }) {
               {profile.prenom} {profile.nom}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => router.push("/parametres")}>
+              <Settings />
+              {tNav("parametres")}
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => void signOut()}>
               <LogOut />
               {t("logout")}

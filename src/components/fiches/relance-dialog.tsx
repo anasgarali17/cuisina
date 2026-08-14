@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { messageErreur } from "@/lib/utils";
 
 interface RelanceDialogProps {
   ficheId: string;
@@ -65,7 +66,7 @@ export function RelanceDialog({
       });
       if (!result.ok) {
         setError(
-          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+          messageErreur(t, result.error),
         );
         return;
       }

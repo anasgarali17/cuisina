@@ -1,8 +1,10 @@
+import { profilAutorise } from "@/lib/garde";
+import { ENCADREMENT } from "@/components/shell/nav-config";
+import { AccesRefuse } from "@/components/shell/acces-refuse";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MapPin, Phone } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { getCurrentProfile } from "@/lib/auth";
 import {
   listFiches,
   listHistoriqueSince,
@@ -25,9 +27,9 @@ export default async function ShowroomDetailPage({
   const { locale, id } = await params;
   const [t, profile] = await Promise.all([
     getTranslations(),
-    getCurrentProfile(),
+    profilAutorise(ENCADREMENT),
   ]);
-  if (!profile) return null;
+  if (!profile) return <AccesRefuse />;
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

@@ -21,6 +21,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RelanceDialog } from "@/components/fiches/relance-dialog";
+import { messageErreur } from "@/lib/utils";
 
 const CANAL_ICONS: Record<Canal, typeof Phone> = {
   whatsapp: MessageCircle,
@@ -63,9 +64,7 @@ export function SuiviPanel({
       setMessage(
         result.ok
           ? t("app.saved")
-          : result.error === "demo_mode"
-            ? t("app.demoReadOnly")
-            : t("app.error"),
+          : messageErreur(t, result.error),
       );
       if (result.ok) router.refresh();
     });

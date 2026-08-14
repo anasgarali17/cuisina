@@ -23,7 +23,6 @@ const PAPER_KEYS = [
   "nombre",
   "cuisines",
   "dressings",
-  "sdb",
   "etatChantier",
   "enCours",
   "fini",
@@ -71,10 +70,10 @@ const ORIGINE_DETAIL_KEYS = [
   "architecte_decorateur",
   "promoteur_entrepreneur",
   "ami",
-  "spot_publicitaire",
-  "magasine",
-  "affiche_enseigne",
-  "catalogue",
+  "facebook",
+  "instagram",
+  "tiktok",
+  "autre_reseau",
 ] as const;
 
 export function ExportPdfButton({

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   closestCorners,
   useDraggable,
@@ -34,7 +34,7 @@ import {
 import { formatDate, startOfToday, toISODate } from "@/lib/dates";
 import { PRIORITES, type Canal, type Priorite } from "@/lib/domain";
 import type { ProfileRow, TacheRow } from "@/lib/database.types";
-import { cn } from "@/lib/utils";
+import { cn, messageErreur } from "@/lib/utils";
 import { PageHeader } from "@/components/shell/page-header";
 import { RelanceDialog } from "@/components/fiches/relance-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -144,10 +144,12 @@ export function TachesBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taches]);
 
+  // Not PointerSensor: on touch it races native scrolling and dies on
+  // pointercancel. Touch goes through the long-press TouchSensor alone.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 8 },
+      activationConstraint: { delay: 200, tolerance: 10 },
     }),
   );
 
@@ -170,7 +172,7 @@ export function TachesBoard({
       if (!result.ok) {
         setStatut(task.id, previous);
         setError(
-          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+          messageErreur(t, result.error),
         );
       }
     });
@@ -197,11 +199,7 @@ export function TachesBoard({
       if (results.some((r) => !r.ok)) {
         setTaches((list) => list.map((tk) => (tk.id === task.id ? previous : tk)));
         const failed = results.find((r) => !r.ok);
-        setError(
-          failed && !failed.ok && failed.error === "demo_mode"
-            ? t("app.demoReadOnly")
-            : t("app.error"),
-        );
+        setError(failed && !failed.ok ? messageErreur(t, failed.error) : null);
       }
     });
   }
@@ -444,7 +442,12 @@ function DraggableTaskCard(props: {
     id: props.task.id,
   });
   return (
-    <div ref={setNodeRef} {...attributes} {...listeners} className={cn(isDragging && "opacity-40")}>
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={cn("drag-item touch-manipulation select-none", isDragging && "opacity-40")}
+    >
       <TaskCard {...props} />
     </div>
   );
@@ -609,7 +612,7 @@ function CreateTaskDialog({
       });
       if (!result.ok) {
         setError(
-          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+          messageErreur(t, result.error),
         );
         return;
       }

@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   pointerWithin,
   useSensor,
@@ -27,7 +27,8 @@ import {
 import { useRouter } from "@/i18n/navigation";
 import { createRdv, deleteRdv, moveRdv } from "@/lib/actions/rdv-actions";
 import { createTache, updateTacheEcheance } from "@/lib/actions/tache-actions";
-import { formatDate, toISODate } from "@/lib/dates";
+import { formatDate } from "@/lib/dates";
+import { tzDay, tzHhmm, tzInstant } from "@/lib/tz";
 import { PRIORITES, RDV_TYPES, type RdvType } from "@/lib/domain";
 import type {
   PointDeVenteRow,
@@ -35,7 +36,7 @@ import type {
   RendezVousRow,
   TacheRow,
 } from "@/lib/database.types";
-import { cn } from "@/lib/utils";
+import { cn, messageErreur } from "@/lib/utils";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -121,11 +122,10 @@ function emptyDraft(day: string, variant: AgendaVariant, ownerId: string, pdvId:
   };
 }
 
-/** `yyyy-MM-dd` + `HH:mm` in the browser's zone, as an absolute instant. */
-function localInstant(day: string, time: string): Date {
-  const [y, m, d] = day.split("-").map(Number);
-  const [hh, mm] = time.split(":").map(Number);
-  return new Date(y, m - 1, d, hh, mm, 0, 0);
+/** `yyyy-MM-dd` as a plain calendar date — même valeur serveur et client. */
+function dayToDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 
 export function AgendaView({
@@ -147,15 +147,19 @@ export function AgendaView({
 }) {
   const t = useTranslations("agenda");
   const tApp = useTranslations("app");
+  /** Racine — `messageErreur` résout des clés `errors.*` et `app.*`. */
+  const tRoot = useTranslations();
   const tRdv = useTranslations("rdv.types");
   const tPri = useTranslations("taches");
   const locale = useLocale();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const today = toISODate(new Date());
+  const today = tzDay(new Date());
   const [view, setView] = useState<CalendarView>("mois");
-  const [cursor, setCursor] = useState(() => new Date());
+  // Ancré sur le jour du showroom : `new Date()` place le curseur sur le jour
+  // du serveur (UTC), qui n'est pas toujours celui d'ici.
+  const [cursor, setCursor] = useState(() => dayToDate(today));
   const [selected, setSelected] = useState(today);
   const [owner, setOwner] = useState(ALL);
   const [category, setCategory] = useState(ALL);
@@ -170,8 +174,10 @@ export function AgendaView({
 
   const sensors = useSensors(
     // A few pixels of travel before a drag starts, so chips stay clickable.
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+    // Not PointerSensor: on touch it races native scrolling and dies on
+    // pointercancel. Touch goes through the long-press TouchSensor alone.
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 10 } }),
   );
 
   const profileById = useMemo(
@@ -228,8 +234,9 @@ export function AgendaView({
   }
 
   function goToday() {
-    setCursor(new Date());
-    setSelected(today);
+    const iso = tzDay(new Date());
+    setCursor(dayToDate(iso));
+    setSelected(iso);
   }
 
   function selectDay(iso: string) {
@@ -263,7 +270,7 @@ export function AgendaView({
         const result = await updateTacheEcheance({ id: event.id, echeance: day });
         if (!result.ok) {
           setTacheRows(previous);
-          setError(result.error === "demo_mode" ? tApp("demoReadOnly") : tApp("error"));
+          setError(messageErreur(tRoot, result.error));
         } else {
           router.refresh();
         }
@@ -292,7 +299,7 @@ export function AgendaView({
       const result = await moveRdv({ id: event.id, day });
       if (!result.ok) {
         setRdvRows(previous);
-        setError(result.error === "demo_mode" ? tApp("demoReadOnly") : tApp("error"));
+        setError(messageErreur(tRoot, result.error));
       } else {
         router.refresh();
       }
@@ -309,9 +316,9 @@ export function AgendaView({
           ? await createRdv({
               titre: draft.titre,
               type: draft.type,
-              debut: localInstant(draft.day, draft.heure).toISOString(),
+              debut: tzInstant(draft.day, draft.heure).toISOString(),
               fin: new Date(
-                localInstant(draft.day, draft.heure).getTime() +
+                tzInstant(draft.day, draft.heure).getTime() +
                   Number(draft.duree) * 60_000,
               ).toISOString(),
               fiche_id: draft.fiche === NONE ? null : draft.fiche,
@@ -331,7 +338,7 @@ export function AgendaView({
             });
 
       if (!result.ok) {
-        setError(result.error === "demo_mode" ? tApp("demoReadOnly") : tApp("error"));
+        setError(messageErreur(tRoot, result.error));
         return;
       }
       setDraft(null);
@@ -344,7 +351,7 @@ export function AgendaView({
     startTransition(async () => {
       const result = await deleteRdv({ id: event.id });
       if (!result.ok) {
-        setError(result.error === "demo_mode" ? tApp("demoReadOnly") : tApp("error"));
+        setError(messageErreur(tRoot, result.error));
         return;
       }
       setRdvRows((rows) => rows.filter((r) => r.id !== event.id));
@@ -358,15 +365,27 @@ export function AgendaView({
       ? (CLIENT_TYPES as EventCategory[])
       : [...(RDV_TYPES as readonly EventCategory[]), "tache"];
 
-  const openDraft = () =>
-    setDraft(
-      emptyDraft(
-        selected || today,
-        variant,
-        currentProfile.id,
-        currentProfile.point_de_vente_id ?? pdvs[0]?.id ?? "",
-      ),
+  const openDraft = (day?: string, heure?: string) => {
+    const base = emptyDraft(
+      day ?? selected ?? today,
+      variant,
+      currentProfile.id,
+      currentProfile.point_de_vente_id ?? pdvs[0]?.id ?? "",
     );
+    setDraft(heure ? { ...base, heure } : base);
+  };
+
+  /** L'heure de fin, telle qu'elle tombera — début + durée choisie. */
+  const draftEnd = draft
+    ? formatDate(
+        new Date(
+          tzInstant(draft.day, draft.heure).getTime() +
+            Number(draft.duree) * 60_000,
+        ),
+        "HH:mm",
+        locale,
+      )
+    : "";
 
   return (
     <div>
@@ -374,7 +393,7 @@ export function AgendaView({
         title={t(`${variant}.title`)}
         subtitle={t(`${variant}.subtitle`)}
         actions={
-          <Button onClick={openDraft}>
+          <Button onClick={() => openDraft()}>
             <Plus className="size-4" />
             {t("newEvent")}
           </Button>
@@ -473,12 +492,16 @@ export function AgendaView({
       )}
 
       <DndContext
+        // Sans id fixe, dnd-kit numérote ses `aria-describedby` dans l'ordre de
+        // montage : le serveur dit 0, le client dit 1, et React régénère tout
+        // l'arbre à l'hydratation.
+        id="agenda-dnd"
         sensors={sensors}
         collisionDetection={pointerWithin}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        <div className="grid gap-4 xl:grid-cols-[1fr_320px]">
+        <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
           <div className={cn(pending && "opacity-70 transition-opacity")}>
             {view === "mois" ? (
               <MonthGrid
@@ -521,6 +544,7 @@ export function AgendaView({
             iso={selected}
             events={selectedEvents}
             onOpen={setDetail}
+            onCreateAt={(day, heure) => openDraft(day, heure)}
             ownerName={ownerName}
             emptyLabel={t("emptyDay")}
           />
@@ -567,8 +591,7 @@ export function AgendaView({
                   <div className="flex items-center gap-2.5 text-muted-foreground">
                     <Clock className="size-4 shrink-0" />
                     <span className="tabular-nums text-foreground">
-                      {formatDate(detail.start, "HH:mm", locale)} –{" "}
-                      {formatDate(detail.end, "HH:mm", locale)}
+                      {tzHhmm(detail.start)} – {tzHhmm(detail.end)}
                     </span>
                   </div>
                 )}
@@ -597,7 +620,7 @@ export function AgendaView({
                   </p>
                 )}
               </dl>
-              <DialogFooter>
+              <DialogFooter className="flex-wrap">
                 {detail.kind === "rdv" && (
                   <Button
                     variant="ghost"
@@ -607,6 +630,32 @@ export function AgendaView({
                   >
                     <Trash2 className="size-4" />
                     {tApp("delete")}
+                  </Button>
+                )}
+                {/* Enchaîner depuis le rendez-vous ouvert : le suivant démarre
+                    quand celui-ci finit, sur la même fiche. */}
+                {detail.end && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const end = tzHhmm(detail.end!);
+                      const base = emptyDraft(
+                        detail.day,
+                        variant,
+                        detail.ownerId,
+                        currentProfile.point_de_vente_id ?? pdvs[0]?.id ?? "",
+                      );
+                      setDetail(null);
+                      setDraft({
+                        ...base,
+                        heure: end,
+                        fiche: detail.ficheId ?? NONE,
+                        lieu: detail.lieu ?? "",
+                      });
+                    }}
+                  >
+                    <Plus className="size-4" />
+                    {t("addAfter")}
                   </Button>
                 )}
                 <Button variant="outline" onClick={() => setDetail(null)}>
@@ -696,7 +745,14 @@ export function AgendaView({
                       />
                     </div>
                     <div>
-                      <Label>{t("fDuration")}</Label>
+                      <Label className="flex items-baseline justify-between gap-2">
+                        {t("fDuration")}
+                        {/* L'heure de fin se lit ici plutôt qu'en tête : c'est
+                            elle qui dit si le créneau suivant reste libre. */}
+                        <span className="text-xs font-normal tabular-nums text-muted-foreground">
+                          {t("endsAt", { time: draftEnd })}
+                        </span>
+                      </Label>
                       <Select
                         value={draft.duree}
                         onValueChange={(v) => setDraft({ ...draft, duree: v })}
@@ -705,11 +761,18 @@ export function AgendaView({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {["30", "60", "90", "120", "180", "240"].map((m) => (
-                            <SelectItem key={m} value={m}>
-                              {t("minutes", { count: Number(m) })}
-                            </SelectItem>
-                          ))}
+                          {["15", "30", "45", "60", "90", "120", "180", "240", "480"].map(
+                            (m) => (
+                              <SelectItem key={m} value={m}>
+                                {Number(m) >= 60
+                                  ? t("hours", {
+                                      h: Math.floor(Number(m) / 60),
+                                      m: Number(m) % 60,
+                                    })
+                                  : t("minutes", { count: Number(m) })}
+                              </SelectItem>
+                            ),
+                          )}
                         </SelectContent>
                       </Select>
                     </div>

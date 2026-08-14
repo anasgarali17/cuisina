@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { MOBILE_TABS, NAV_GROUPS } from "@/components/shell/nav-config";
+import { MOBILE_TABS, navPourRole } from "@/components/shell/nav-config";
 import {
   Dialog,
   DialogContent,
@@ -12,8 +12,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import type { Role } from "@/lib/domain";
 
-export function BottomTabs() {
+export function BottomTabs({ role }: { role: Role }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -30,7 +31,7 @@ export function BottomTabs() {
             href={tab.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
+              "flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
               active ? "text-foreground" : "text-muted-foreground",
             )}
           >
@@ -42,7 +43,7 @@ export function BottomTabs() {
             >
               <Icon className="size-5" />
             </span>
-            {t(tab.key)}
+            <span className="max-w-full truncate px-0.5">{t(tab.key)}</span>
           </Link>
         );
       })}
@@ -50,17 +51,17 @@ export function BottomTabs() {
         <DialogTrigger asChild>
           <button
             type="button"
-            className="flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground"
+            className="flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground"
           >
             <span className="grid size-9 place-items-center rounded-full">
               <Menu className="size-5" />
             </span>
-            {t("plus")}
+            <span className="max-w-full truncate px-0.5">{t("plus")}</span>
           </button>
         </DialogTrigger>
         <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogTitle className="mb-2">{t("plus")}</DialogTitle>
-          {NAV_GROUPS.map((group) => (
+          {navPourRole(role).map((group) => (
             <div key={group.key} className="mb-4">
               <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-chene">
                 {t(`groups.${group.key}`)}

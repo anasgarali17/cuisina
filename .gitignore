@@ -40,4 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# cache du générateur de carte (frontières geoBoundaries téléchargées)
+/.cache/
+
+# réglages locaux de l'outil : les permissions dépendent de la machine
+.claude/settings.local.json
+
 .vercel

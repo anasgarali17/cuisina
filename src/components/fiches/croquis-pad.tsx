@@ -1,10 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
+  AppWindow,
   Check,
+  DoorOpen,
   Eraser,
+  FlipHorizontal,
+  Hand,
+  Maximize2,
+  Minimize2,
   Minus,
   Pencil,
   RotateCcw,
@@ -12,6 +18,8 @@ import {
   Trash2,
   Type,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { saveCroquis } from "@/lib/actions/fiche-actions";
 import {
@@ -21,11 +29,19 @@ import {
   type Croquis,
   type CroquisShape,
 } from "@/lib/schemas/fiche";
-import { cn } from "@/lib/utils";
+import { cn, messageErreur } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type Tool = "trait" | "rectangle" | "ligne" | "texte" | "gomme";
+type Tool =
+  | "trait"
+  | "rectangle"
+  | "ligne"
+  | "porte"
+  | "fenetre"
+  | "texte"
+  | "gomme"
+  | "main";
 
 /** Quick presets — brand colors first, plus a full spectrum picker beside them. */
 const PRESETS = [
@@ -41,12 +57,50 @@ const PRESETS = [
 
 const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
 
+/** 1 = the whole sketch fits the frame; anything above is a zoom-in. */
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 8;
+const ZOOM_STEP = 1.5;
+/** Backing store multiplier, so strokes stay crisp once zoomed in. */
+const RES = 2;
+
 interface EditorState {
   mode: "texte" | "cote";
   screenX: number;
   screenY: number;
   commit: (value: string) => void;
   cancel: () => void;
+}
+
+/** Zoom factor plus the sketch's offset inside the frame, in CSS pixels. */
+interface View {
+  z: number;
+  tx: number;
+  ty: number;
+}
+
+interface Size {
+  w: number;
+  h: number;
+}
+
+/** CSS pixels per logical unit when the sketch is fitted to the frame. */
+function fitScale(size: Size) {
+  if (!size.w || !size.h) return 0;
+  return Math.min(size.w / CROQUIS_W, size.h / CROQUIS_H);
+}
+
+/** Keeps the zoom in range and the sketch from being dragged out of the frame. */
+function clampView(v: View, size: Size): View {
+  const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.z));
+  const s = fitScale(size) * z;
+  const cw = CROQUIS_W * s;
+  const ch = CROQUIS_H * s;
+  return {
+    z,
+    tx: cw <= size.w ? (size.w - cw) / 2 : Math.min(0, Math.max(size.w - cw, v.tx)),
+    ty: ch <= size.h ? (size.h - ch) / 2 : Math.min(0, Math.max(size.h - ch, v.ty)),
+  };
 }
 
 /** Where a pointer landed, in the canvas's logical 1000×700 space. */
@@ -78,33 +132,65 @@ function distanceToSegment(
   return Math.hypot(px - cx, py - cy);
 }
 
-/** True when a click at (px,py) should be treated as hitting this shape. */
-function hits(shape: CroquisShape, px: number, py: number): boolean {
-  const TOL = 12;
+/**
+ * True when a click at (px,py) should be treated as hitting this shape.
+ * `tol` comes from the current zoom, so a fingertip is as forgiving zoomed
+ * out as a mouse is zoomed in.
+ */
+function hits(shape: CroquisShape, px: number, py: number, tol: number): boolean {
   switch (shape.type) {
     case "trait":
-      return shape.points.some((p) => Math.hypot(p.x - px, p.y - py) < TOL);
+      return shape.points.some((p) => Math.hypot(p.x - px, p.y - py) < tol);
     case "rectangle": {
       const x1 = Math.min(shape.x, shape.x + shape.w);
       const x2 = Math.max(shape.x, shape.x + shape.w);
       const y1 = Math.min(shape.y, shape.y + shape.h);
       const y2 = Math.max(shape.y, shape.y + shape.h);
       const near =
-        px > x1 - TOL && px < x2 + TOL && py > y1 - TOL && py < y2 + TOL;
+        px > x1 - tol && px < x2 + tol && py > y1 - tol && py < y2 + tol;
       const inside =
-        px > x1 + TOL && px < x2 - TOL && py > y1 + TOL && py < y2 - TOL;
+        px > x1 + tol && px < x2 - tol && py > y1 + tol && py < y2 - tol;
       return near && !inside;
     }
     case "ligne":
+    case "porte":
+    case "fenetre":
       return (
-        distanceToSegment(px, py, shape.x1, shape.y1, shape.x2, shape.y2) < TOL
+        distanceToSegment(px, py, shape.x1, shape.y1, shape.x2, shape.y2) < tol
       );
     case "texte":
-      return Math.abs(shape.x - px) < 90 && Math.abs(shape.y - py) < 22;
+      return (
+        Math.abs(shape.x - px) < 90 + tol && Math.abs(shape.y - py) < 22 + tol
+      );
   }
 }
 
+/** L'étiquette de cote, posée au milieu d'un segment sur fond blanc. */
+function drawCote(
+  ctx: CanvasRenderingContext2D,
+  texte: string,
+  x1: number,
+  y1: number,
+  x2: number,
+  y2: number,
+  couleur: string,
+): void {
+  if (!texte) return;
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  ctx.font = "600 20px ui-sans-serif, system-ui, sans-serif";
+  const w = ctx.measureText(texte).width;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(mx - w / 2 - 5, my - 22, w + 10, 24);
+  ctx.fillStyle = couleur;
+  ctx.textAlign = "center";
+  ctx.fillText(texte, mx, my - 4);
+  ctx.textAlign = "start";
+}
+
 function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
+  // Backing store is RES× the logical size — draw in logical units regardless.
+  ctx.setTransform(RES, 0, 0, RES, 0, 0);
   ctx.clearRect(0, 0, CROQUIS_W, CROQUIS_H);
 
   // Graph paper, so a sketch reads as a measured plan.
@@ -160,18 +246,94 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
           ctx.lineTo(ex + 12 * Math.cos(dir + 0.4), ey + 12 * Math.sin(dir + 0.4));
           ctx.stroke();
         }
-        if (s.cote) {
-          const mx = (s.x1 + s.x2) / 2;
-          const my = (s.y1 + s.y2) / 2;
-          ctx.font = "600 20px ui-sans-serif, system-ui, sans-serif";
-          const w = ctx.measureText(s.cote).width;
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(mx - w / 2 - 5, my - 22, w + 10, 24);
-          ctx.fillStyle = s.couleur;
-          ctx.textAlign = "center";
-          ctx.fillText(s.cote, mx, my - 4);
-          ctx.textAlign = "start";
+        drawCote(ctx, s.cote, s.x1, s.y1, s.x2, s.y2, s.couleur);
+        break;
+      }
+      case "porte": {
+        // Le symbole normalisé : l'ouverture dans le mur, le battant, et
+        // l'arc de débattement — c'est l'arc qui dit de quel côté ça ouvre.
+        const dx = s.x2 - s.x1;
+        const dy = s.y2 - s.y1;
+        const largeur = Math.hypot(dx, dy);
+        const angle = Math.atan2(dy, dx);
+
+        // Les deux tableaux, épais : ils interrompent le mur.
+        ctx.lineWidth = s.epaisseur * 1.6;
+        for (const [cx, cy] of [
+          [s.x1, s.y1],
+          [s.x2, s.y2],
+        ] as const) {
+          ctx.beginPath();
+          ctx.moveTo(
+            cx - 5 * Math.sin(angle) * s.sens,
+            cy + 5 * Math.cos(angle) * s.sens,
+          );
+          ctx.lineTo(
+            cx + 5 * Math.sin(angle) * s.sens,
+            cy - 5 * Math.cos(angle) * s.sens,
+          );
+          ctx.stroke();
         }
+
+        // Le battant, perpendiculaire au mur depuis le gond.
+        const gondX = s.x1;
+        const gondY = s.y1;
+        const battantAngle = angle - (Math.PI / 2) * s.sens;
+        ctx.lineWidth = s.epaisseur;
+        ctx.beginPath();
+        ctx.moveTo(gondX, gondY);
+        ctx.lineTo(
+          gondX + largeur * Math.cos(battantAngle),
+          gondY + largeur * Math.sin(battantAngle),
+        );
+        ctx.stroke();
+
+        // L'arc, du battant vers le mur.
+        ctx.beginPath();
+        ctx.setLineDash([6, 5]);
+        ctx.lineWidth = Math.max(1, s.epaisseur * 0.7);
+        ctx.arc(
+          gondX,
+          gondY,
+          largeur,
+          Math.min(battantAngle, angle),
+          Math.max(battantAngle, angle),
+        );
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        drawCote(ctx, s.cote, s.x1, s.y1, s.x2, s.y2, s.couleur);
+        break;
+      }
+      case "fenetre": {
+        // Deux traits parallèles entre deux tableaux : le dormant vu en plan.
+        const dx = s.x2 - s.x1;
+        const dy = s.y2 - s.y1;
+        const angle = Math.atan2(dy, dx);
+        const nx = -Math.sin(angle);
+        const ny = Math.cos(angle);
+        const demi = 4;
+
+        ctx.lineWidth = s.epaisseur * 1.6;
+        for (const [cx, cy] of [
+          [s.x1, s.y1],
+          [s.x2, s.y2],
+        ] as const) {
+          ctx.beginPath();
+          ctx.moveTo(cx - demi * nx, cy - demi * ny);
+          ctx.lineTo(cx + demi * nx, cy + demi * ny);
+          ctx.stroke();
+        }
+
+        ctx.lineWidth = s.epaisseur;
+        for (const offset of [-demi, demi]) {
+          ctx.beginPath();
+          ctx.moveTo(s.x1 + offset * nx, s.y1 + offset * ny);
+          ctx.lineTo(s.x2 + offset * nx, s.y2 + offset * ny);
+          ctx.stroke();
+        }
+
+        drawCote(ctx, s.cote, s.x1, s.y1, s.x2, s.y2, s.couleur);
         break;
       }
       case "texte":
@@ -185,6 +347,11 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
 /**
  * Métré sketch pad: the conseiller draws the room and writes its dimensions
  * straight onto the fiche. Vector shapes, saved to Supabase as jsonb.
+ *
+ * The sketch is a fixed 1000×700 page shown through a frame: pinch (or the
+ * zoom buttons / wheel) to magnify, drag with the hand tool or two fingers to
+ * move around. On a phone that is the difference between drawing blind and
+ * drawing a room.
  */
 export function CroquisPad({
   ficheId,
@@ -194,10 +361,21 @@ export function CroquisPad({
   initial: unknown;
 }) {
   const t = useTranslations();
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const startRef = useRef<{ x: number; y: number } | null>(null);
+  const draftRef = useRef<CroquisShape | null>(null);
+
+  // Live pointers, so two fingers can be told from one.
+  const pointersRef = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<
+    | { dist: number; fx: number; fy: number; z: number; tx: number; ty: number }
+    | null
+  >(null);
+  const panRef = useRef<
+    { x: number; y: number; tx: number; ty: number } | null
+  >(null);
 
   const parsed = croquisSchema.safeParse(initial);
   const [shapes, setShapes] = useState<CroquisShape[]>(
@@ -205,6 +383,8 @@ export function CroquisPad({
   );
   const [draft, setDraft] = useState<CroquisShape | null>(null);
   const [tool, setTool] = useState<Tool>("trait");
+  /** De quel côté du mur la porte s'ouvre. Se retourne avant de la poser. */
+  const [sensPorte, setSensPorte] = useState<1 | -1>(1);
   const [couleur, setCouleur] = useState<string>(PRESETS[0] as string);
   const [hexInput, setHexInput] = useState<string>(PRESETS[0] as string);
   const [editor, setEditor] = useState<EditorState | null>(null);
@@ -212,11 +392,88 @@ export function CroquisPad({
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+
+  const [size, setSize] = useState<Size>({ w: 0, h: 0 });
+  const sizeRef = useRef<Size>({ w: 0, h: 0 });
+  const [view, setView] = useState<View>({ z: 1, tx: 0, ty: 0 });
+  const viewRef = useRef<View>({ z: 1, tx: 0, ty: 0 });
+
+  const scale = fitScale(size) * view.z;
 
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (ctx) draw(ctx, draft ? [...shapes, draft] : shapes);
   }, [shapes, draft]);
+
+  const applyView = useCallback((next: View) => {
+    const clamped = clampView(next, sizeRef.current);
+    viewRef.current = clamped;
+    setView(clamped);
+  }, []);
+
+  /** Zooms by `ratio` around a point given in frame coordinates. */
+  const zoomAt = useCallback(
+    (ratio: number, fx: number, fy: number) => {
+      const v = viewRef.current;
+      const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.z * ratio));
+      const r = z / v.z;
+      applyView({ z, tx: fx - (fx - v.tx) * r, ty: fy - (fy - v.ty) * r });
+    },
+    [applyView],
+  );
+
+  const zoomFromButton = useCallback(
+    (ratio: number) =>
+      zoomAt(ratio, sizeRef.current.w / 2, sizeRef.current.h / 2),
+    [zoomAt],
+  );
+
+  // The frame drives everything: refit whenever it is resized (or fullscreened).
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const r = entry.contentRect;
+      // A hidden or detached frame reports 0×0 — keep the last real size so the
+      // sketch never scales itself down to nothing.
+      if (!r.width || !r.height) return;
+      sizeRef.current = { w: r.width, h: r.height };
+      setSize({ w: r.width, h: r.height });
+      applyView(viewRef.current);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [applyView]);
+
+  // Wheel zoom needs a non-passive listener to keep the page from scrolling.
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      // Plain wheel keeps scrolling the fiche; ctrl/⌘ (and trackpad pinch) zooms.
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const r = el.getBoundingClientRect();
+      zoomAt(Math.exp(-e.deltaY * 0.002), e.clientX - r.left, e.clientY - r.top);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [zoomAt]);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [fullscreen]);
 
   /** Selecting a color (preset or picker) keeps the hex field in sync. */
   function selectColor(c: string) {
@@ -224,17 +481,27 @@ export function CroquisPad({
     setHexInput(c);
   }
 
-  /** Maps a logical canvas point to a CSS pixel position inside the wrapper. */
+  /** Maps a logical canvas point to a CSS pixel position inside the frame. */
   function logicalToScreen(p: { x: number; y: number }) {
     const canvas = canvasRef.current;
-    const wrapper = wrapperRef.current;
-    if (!canvas || !wrapper) return { x: 0, y: 0 };
+    const viewport = viewportRef.current;
+    if (!canvas || !viewport) return { x: 0, y: 0 };
     const cr = canvas.getBoundingClientRect();
-    const wr = wrapper.getBoundingClientRect();
+    const vr = viewport.getBoundingClientRect();
+    const x = cr.left - vr.left + (p.x / CROQUIS_W) * cr.width;
+    const y = cr.top - vr.top + (p.y / CROQUIS_H) * cr.height;
+    // The popup follows the point, but never off the edge of the frame.
+    const { w, h } = sizeRef.current;
+    const mx = Math.min(130, w / 2);
     return {
-      x: cr.left - wr.left + (p.x / CROQUIS_W) * cr.width,
-      y: cr.top - wr.top + (p.y / CROQUIS_H) * cr.height,
+      x: Math.min(w - mx, Math.max(mx, x)),
+      y: Math.min(h - 28, Math.max(28, y)),
     };
+  }
+
+  function setDraftShape(next: CroquisShape | null) {
+    draftRef.current = next;
+    setDraft(next);
   }
 
   function commit(next: CroquisShape[]) {
@@ -264,7 +531,9 @@ export function CroquisPad({
     });
   }
 
-  function openCoteEditor(ligne: Extract<CroquisShape, { type: "ligne" }>) {
+  function openCoteEditor(
+    ligne: Extract<CroquisShape, { type: "ligne" | "porte" | "fenetre" }>,
+  ) {
     const mid = { x: (ligne.x1 + ligne.x2) / 2, y: (ligne.y1 + ligne.y2) / 2 };
     const screen = logicalToScreen(mid);
     setEditorValue("");
@@ -284,15 +553,51 @@ export function CroquisPad({
     });
   }
 
+  /** A second finger always means pinch — never a stroke. */
+  function beginPinch() {
+    const el = viewportRef.current;
+    const pts = [...pointersRef.current.values()].slice(0, 2);
+    if (!el || pts.length < 2) return;
+    const r = el.getBoundingClientRect();
+    const v = viewRef.current;
+    pinchRef.current = {
+      dist: Math.max(1, Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y)),
+      fx: (pts[0].x + pts[1].x) / 2 - r.left,
+      fy: (pts[0].y + pts[1].y) / 2 - r.top,
+      z: v.z,
+      tx: v.tx,
+      ty: v.ty,
+    };
+  }
+
   function onPointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
-    if (editor) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     canvas.setPointerCapture(e.pointerId);
+
+    if (pointersRef.current.size >= 2) {
+      drawingRef.current = false;
+      startRef.current = null;
+      panRef.current = null;
+      setDraftShape(null);
+      beginPinch();
+      return;
+    }
+
+    if (editor) return;
+
+    if (tool === "main") {
+      const v = viewRef.current;
+      panRef.current = { x: e.clientX, y: e.clientY, tx: v.tx, ty: v.ty };
+      return;
+    }
+
     const p = toLogical(e, canvas);
 
     if (tool === "gomme") {
-      const idx = [...shapes].reverse().findIndex((s) => hits(s, p.x, p.y));
+      const tol = Math.min(60, Math.max(10, 14 / (scale || 1)));
+      const idx = [...shapes].reverse().findIndex((s) => hits(s, p.x, p.y, tol));
       if (idx !== -1) commit(shapes.filter((_, i) => i !== shapes.length - 1 - idx));
       return;
     }
@@ -305,21 +610,62 @@ export function CroquisPad({
     drawingRef.current = true;
     startRef.current = p;
     if (tool === "trait") {
-      setDraft({ type: "trait", points: [p], couleur, epaisseur: 3 });
+      setDraftShape({ type: "trait", points: [p], couleur, epaisseur: 3 });
     }
   }
 
   function onPointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (pointersRef.current.has(e.pointerId)) {
+      pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    const pinch = pinchRef.current;
+    if (pinch) {
+      const el = viewportRef.current;
+      const pts = [...pointersRef.current.values()].slice(0, 2);
+      if (!el || pts.length < 2) return;
+      const r = el.getBoundingClientRect();
+      const dist = Math.max(
+        1,
+        Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y),
+      );
+      const z = Math.min(
+        MAX_ZOOM,
+        Math.max(MIN_ZOOM, (pinch.z * dist) / pinch.dist),
+      );
+      const ratio = z / pinch.z;
+      // Zoom around the first midpoint, and follow it as the fingers travel.
+      const mx = (pts[0].x + pts[1].x) / 2 - r.left;
+      const my = (pts[0].y + pts[1].y) / 2 - r.top;
+      applyView({
+        z,
+        tx: mx - (pinch.fx - pinch.tx) * ratio,
+        ty: my - (pinch.fy - pinch.ty) * ratio,
+      });
+      return;
+    }
+
+    const pan = panRef.current;
+    if (pan) {
+      applyView({
+        z: viewRef.current.z,
+        tx: pan.tx + (e.clientX - pan.x),
+        ty: pan.ty + (e.clientY - pan.y),
+      });
+      return;
+    }
+
     if (!drawingRef.current || !canvasRef.current || !startRef.current) return;
     const p = toLogical(e, canvasRef.current);
     const s = startRef.current;
 
     if (tool === "trait") {
-      setDraft((d) =>
-        d && d.type === "trait" ? { ...d, points: [...d.points, p] } : d,
-      );
+      const d = draftRef.current;
+      if (d && d.type === "trait") {
+        setDraftShape({ ...d, points: [...d.points, p] });
+      }
     } else if (tool === "rectangle") {
-      setDraft({
+      setDraftShape({
         type: "rectangle",
         x: s.x,
         y: s.y,
@@ -329,8 +675,31 @@ export function CroquisPad({
         epaisseur: 3,
       });
     } else if (tool === "ligne") {
-      setDraft({
+      setDraftShape({
         type: "ligne",
+        x1: s.x,
+        y1: s.y,
+        x2: p.x,
+        y2: p.y,
+        couleur,
+        epaisseur: 3,
+        cote: "",
+      });
+    } else if (tool === "porte") {
+      setDraftShape({
+        type: "porte",
+        x1: s.x,
+        y1: s.y,
+        x2: p.x,
+        y2: p.y,
+        sens: sensPorte,
+        couleur,
+        epaisseur: 3,
+        cote: "",
+      });
+    } else if (tool === "fenetre") {
+      setDraftShape({
+        type: "fenetre",
         x1: s.x,
         y1: s.y,
         x2: p.x,
@@ -342,27 +711,35 @@ export function CroquisPad({
     }
   }
 
-  function onPointerUp() {
+  function onPointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    pointersRef.current.delete(e.pointerId);
+    if (pointersRef.current.size < 2) pinchRef.current = null;
+    panRef.current = null;
+
     if (!drawingRef.current) return;
     drawingRef.current = false;
     startRef.current = null;
 
-    setDraft((d) => {
-      if (!d) return null;
-      // Ignore accidental taps.
-      const tiny =
-        (d.type === "rectangle" && Math.abs(d.w) < 6 && Math.abs(d.h) < 6) ||
-        (d.type === "ligne" && Math.hypot(d.x2 - d.x1, d.y2 - d.y1) < 6) ||
-        (d.type === "trait" && d.points.length < 2);
-      if (tiny) return null;
+    const d = draftRef.current;
+    setDraftShape(null);
+    if (!d) return;
 
-      if (d.type === "ligne") {
-        openCoteEditor(d);
-      } else {
-        commit([...shapes, d]);
-      }
-      return null;
-    });
+    // Ignore accidental taps. Une porte ou une fenêtre demande un peu plus de
+    // course qu'un trait : sous 20 px le symbole serait illisible.
+    const tiny =
+      (d.type === "rectangle" && Math.abs(d.w) < 6 && Math.abs(d.h) < 6) ||
+      (d.type === "ligne" && Math.hypot(d.x2 - d.x1, d.y2 - d.y1) < 6) ||
+      ((d.type === "porte" || d.type === "fenetre") &&
+        Math.hypot(d.x2 - d.x1, d.y2 - d.y1) < 20) ||
+      (d.type === "trait" && d.points.length < 2);
+    if (tiny) return;
+
+    // Les trois portent une cote : c'est la mesure qui intéresse l'atelier.
+    if (d.type === "ligne" || d.type === "porte" || d.type === "fenetre") {
+      openCoteEditor(d);
+    } else {
+      commit([...shapes, d]);
+    }
   }
 
   async function persist() {
@@ -376,7 +753,7 @@ export function CroquisPad({
       setMessage(t("app.saved"));
     } else {
       setMessage(
-        result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+        messageErreur(t, result.error),
       );
     }
   }
@@ -391,22 +768,45 @@ export function CroquisPad({
     { id: "trait", icon: Pencil, label: t("fiches.croquis.crayon") },
     { id: "rectangle", icon: Square, label: t("fiches.croquis.rectangle") },
     { id: "ligne", icon: Minus, label: t("fiches.croquis.cote") },
+    { id: "porte", icon: DoorOpen, label: t("fiches.croquis.porte") },
+    { id: "fenetre", icon: AppWindow, label: t("fiches.croquis.fenetre") },
     { id: "texte", icon: Type, label: t("fiches.croquis.texte") },
     { id: "gomme", icon: Eraser, label: t("fiches.croquis.gomme") },
+    { id: "main", icon: Hand, label: t("fiches.croquis.main") },
   ];
 
   const isPreset = PRESETS.includes(couleur as (typeof PRESETS)[number]);
+  const iconButton =
+    "grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-40";
 
-  return (
-    <Card className="no-print">
-      <CardHeader>
+  const pad = (
+    <Card
+      className={cn(
+        "no-print",
+        fullscreen && "flex min-h-0 flex-1 flex-col rounded-2xl",
+      )}
+    >
+      <CardHeader
+        className={cn(
+          "p-4 pb-2 sm:p-6 sm:pb-2",
+          // Fullscreen is for drawing — give the frame the space back.
+          fullscreen && "p-3 pb-1 sm:p-4 sm:pb-1",
+        )}
+      >
         <CardTitle>{t("fiches.croquis.title")}</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          {t("fiches.croquis.hint")}
-        </p>
+        {!fullscreen && (
+          <p className="text-xs text-muted-foreground">
+            {t("fiches.croquis.hint")}
+          </p>
+        )}
       </CardHeader>
-      <CardContent>
-        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+      <CardContent
+        className={cn(
+          "p-4 pt-2 sm:p-6 sm:pt-2",
+          fullscreen && "flex min-h-0 flex-1 flex-col",
+        )}
+      >
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
           {tools.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
@@ -416,18 +816,64 @@ export function CroquisPad({
               aria-label={label}
               title={label}
               className={cn(
-                "grid size-10 place-items-center rounded-xl border transition-colors",
-                tool === id
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:bg-secondary",
+                iconButton,
+                tool === id &&
+                  "border-primary bg-primary/10 text-primary hover:bg-primary/10",
               )}
             >
               <Icon className="size-4" />
             </button>
           ))}
 
+          {/* Le sens d'ouverture ne s'affiche que quand il veut dire quelque
+              chose — un bouton de plus en permanence encombrerait la barre. */}
+          {tool === "porte" && (
+            <button
+              type="button"
+              onClick={() => setSensPorte((s) => (s === 1 ? -1 : 1))}
+              aria-label={t("fiches.croquis.sensPorte")}
+              title={t("fiches.croquis.sensPorte")}
+              className={cn(iconButton, "text-primary")}
+            >
+              <FlipHorizontal className="size-4" />
+            </button>
+          )}
+
           <span aria-hidden className="mx-1 h-6 w-px bg-border" />
 
+          <button
+            type="button"
+            onClick={() => commit(shapes.slice(0, -1))}
+            disabled={shapes.length === 0}
+            aria-label={t("fiches.croquis.annuler")}
+            title={t("fiches.croquis.annuler")}
+            className={iconButton}
+          >
+            <RotateCcw className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => commit([])}
+            disabled={shapes.length === 0}
+            aria-label={t("fiches.croquis.effacer")}
+            title={t("fiches.croquis.effacer")}
+            className={iconButton}
+          >
+            <Trash2 className="size-4" />
+          </button>
+
+          <div className="ms-auto flex items-center gap-3">
+            {message && (
+              <span className="text-xs text-muted-foreground">{message}</span>
+            )}
+            <Button size="sm" onClick={persist} disabled={saving || !dirty}>
+              {t("app.save")}
+            </Button>
+          </div>
+        </div>
+
+        {/* Colors scroll sideways rather than pushing the frame off a phone. */}
+        <div className="mb-3 -mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1">
           {PRESETS.map((c) => (
             <button
               key={c}
@@ -437,9 +883,7 @@ export function CroquisPad({
               aria-label={c}
               className={cn(
                 "size-7 shrink-0 rounded-full border-2 transition-transform",
-                couleur === c
-                  ? "scale-110 border-foreground"
-                  : "border-border",
+                couleur === c ? "scale-110 border-foreground" : "border-border",
               )}
               style={{ backgroundColor: c }}
             />
@@ -475,56 +919,97 @@ export function CroquisPad({
             maxLength={7}
             aria-label={t("fiches.croquis.codeCouleur")}
             title={t("fiches.croquis.codeCouleur")}
-            className="h-9 w-20 shrink-0 rounded-lg border border-border bg-card px-2 font-mono text-xs uppercase text-foreground"
+            className="hidden h-9 w-20 shrink-0 rounded-lg border border-border bg-card px-2 font-mono text-xs uppercase text-foreground sm:block"
           />
-
-          <span aria-hidden className="mx-1 h-6 w-px bg-border" />
-
-          <button
-            type="button"
-            onClick={() => commit(shapes.slice(0, -1))}
-            disabled={shapes.length === 0}
-            aria-label={t("fiches.croquis.annuler")}
-            title={t("fiches.croquis.annuler")}
-            className="grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground hover:bg-secondary disabled:opacity-40"
-          >
-            <RotateCcw className="size-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => commit([])}
-            disabled={shapes.length === 0}
-            aria-label={t("fiches.croquis.effacer")}
-            title={t("fiches.croquis.effacer")}
-            className="grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground hover:bg-secondary disabled:opacity-40"
-          >
-            <Trash2 className="size-4" />
-          </button>
-
-          <div className="ms-auto flex items-center gap-3">
-            {message && (
-              <span className="text-xs text-muted-foreground">{message}</span>
-            )}
-            <Button size="sm" onClick={persist} disabled={saving || !dirty}>
-              {t("app.save")}
-            </Button>
-          </div>
         </div>
 
-        <div ref={wrapperRef} className="relative">
+        <div
+          ref={viewportRef}
+          className={cn(
+            "relative touch-none overflow-hidden rounded-2xl border border-border bg-white",
+            fullscreen && "min-h-0 flex-1",
+          )}
+          style={
+            fullscreen
+              ? undefined
+              : { aspectRatio: `${CROQUIS_W} / ${CROQUIS_H}` }
+          }
+        >
           <canvas
             ref={canvasRef}
-            width={CROQUIS_W}
-            height={CROQUIS_H}
+            width={CROQUIS_W * RES}
+            height={CROQUIS_H * RES}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerLeave={onPointerUp}
-            className="w-full touch-none rounded-2xl border border-border bg-white"
-            style={{ aspectRatio: `${CROQUIS_W} / ${CROQUIS_H}`, cursor: "crosshair" }}
+            onPointerCancel={onPointerUp}
+            className="absolute left-0 top-0 origin-top-left touch-none bg-white"
+            style={{
+              width: `${CROQUIS_W}px`,
+              height: `${CROQUIS_H}px`,
+              transform: `translate(${view.tx}px, ${view.ty}px) scale(${scale})`,
+              opacity: size.w ? 1 : 0,
+              cursor: tool === "main" ? "grab" : "crosshair",
+            }}
             role="img"
             aria-label={t("fiches.croquis.title")}
           />
+
+          {/* Zoom sits on the sketch: always in reach of a thumb, and laid out
+              along the bottom so it hides as little of the plan as possible. */}
+          <div className="absolute bottom-2 end-2 flex items-center gap-0.5 rounded-2xl border border-border bg-card/90 p-1 shadow-md backdrop-blur">
+            <button
+              type="button"
+              onClick={() => zoomFromButton(1 / ZOOM_STEP)}
+              disabled={view.z <= MIN_ZOOM}
+              aria-label={t("fiches.croquis.zoomOut")}
+              title={t("fiches.croquis.zoomOut")}
+              className="grid size-9 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-40"
+            >
+              <ZoomOut className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => applyView({ z: 1, tx: 0, ty: 0 })}
+              aria-label={t("fiches.croquis.zoomFit")}
+              title={t("fiches.croquis.zoomFit")}
+              className="h-9 min-w-11 rounded-lg px-1 text-[11px] font-semibold tabular-nums text-muted-foreground hover:bg-secondary"
+            >
+              {Math.round(view.z * 100)}%
+            </button>
+            <button
+              type="button"
+              onClick={() => zoomFromButton(ZOOM_STEP)}
+              disabled={view.z >= MAX_ZOOM}
+              aria-label={t("fiches.croquis.zoomIn")}
+              title={t("fiches.croquis.zoomIn")}
+              className="grid size-9 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-40"
+            >
+              <ZoomIn className="size-4" />
+            </button>
+            <span aria-hidden className="mx-0.5 h-5 w-px bg-border" />
+            <button
+              type="button"
+              onClick={() => setFullscreen((v) => !v)}
+              aria-label={
+                fullscreen
+                  ? t("fiches.croquis.quitterPleinEcran")
+                  : t("fiches.croquis.pleinEcran")
+              }
+              title={
+                fullscreen
+                  ? t("fiches.croquis.quitterPleinEcran")
+                  : t("fiches.croquis.pleinEcran")
+              }
+              className="grid size-9 place-items-center rounded-xl text-muted-foreground hover:bg-secondary"
+            >
+              {fullscreen ? (
+                <Minimize2 className="size-4" />
+              ) : (
+                <Maximize2 className="size-4" />
+              )}
+            </button>
+          </div>
 
           {editor && (
             <div
@@ -537,7 +1022,11 @@ export function CroquisPad({
                 onChange={(e) => setEditorValue(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") editor.commit(editorValue);
-                  if (e.key === "Escape") editor.cancel();
+                  if (e.key === "Escape") {
+                    // Don't let Escape also drop out of fullscreen.
+                    e.stopPropagation();
+                    editor.cancel();
+                  }
                 }}
                 placeholder={
                   editor.mode === "texte"
@@ -545,7 +1034,7 @@ export function CroquisPad({
                     : t("fiches.croquis.coteHint")
                 }
                 maxLength={editor.mode === "texte" ? 80 : 24}
-                className="h-8 w-40 rounded-lg border border-border bg-card px-2 text-sm text-foreground"
+                className="h-8 w-32 rounded-lg border border-border bg-card px-2 text-sm text-foreground sm:w-40"
               />
               <button
                 type="button"
@@ -566,7 +1055,27 @@ export function CroquisPad({
             </div>
           )}
         </div>
+
+        {!fullscreen && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {t("fiches.croquis.zoomHint")}
+          </p>
+        )}
       </CardContent>
     </Card>
+  );
+
+  // Same wrapper element either way: swapping it would remount the canvas and
+  // strand the ResizeObserver on a detached frame.
+  return (
+    <div
+      className={cn(
+        fullscreen
+          ? "fixed inset-0 z-50 flex flex-col bg-background p-2 sm:p-4"
+          : "contents",
+      )}
+    >
+      {pad}
+    </div>
   );
 }

@@ -10,7 +10,7 @@ import { startOfToday } from "@/lib/dates";
 import { PageHeader } from "@/components/shell/page-header";
 import { KanbanBoard } from "@/components/pipeline/kanban-board";
 
-export default async function PipelinePage() {
+export default async function EtatDossierPage() {
   const [t, profile] = await Promise.all([
     getTranslations(),
     getCurrentProfile(),

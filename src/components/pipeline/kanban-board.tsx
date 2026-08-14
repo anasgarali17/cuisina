@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useDraggable,
   useDroppable,
@@ -30,8 +30,9 @@ import {
   StageReasonDialog,
   type StageReason,
 } from "@/components/pipeline/stage-reason-dialog";
+import { FicheInfoDialog } from "@/components/pipeline/fiche-info-dialog";
 import type { FicheRow, PointDeVenteRow, ProfileRow } from "@/lib/database.types";
-import { cn, formatDT, initials } from "@/lib/utils";
+import { cn, formatDT, initials, messageErreur } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,7 +60,7 @@ interface Filters {
   origine: string;
   from: string;
   to: string;
-  types: { cuisine: boolean; dressing: boolean; sdb: boolean };
+  types: { cuisine: boolean; dressing: boolean };
 }
 
 const EMPTY_FILTERS: Filters = {
@@ -68,7 +69,7 @@ const EMPTY_FILTERS: Filters = {
   origine: ALL,
   from: "",
   to: "",
-  types: { cuisine: false, dressing: false, sdb: false },
+  types: { cuisine: false, dressing: false },
 };
 
 /** A drop that needs a reason before it can be persisted. */
@@ -95,8 +96,12 @@ export function KanbanBoard({
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingReason | null>(null);
+  const [openInfo, setOpenInfo] = useState<FicheRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const columnRefs = useRef(new Map<string, HTMLDivElement>());
+  // Un drag se termine par un click fantôme sur la carte : on l'avale pour ne
+  // pas ouvrir le panneau à la fin de chaque glissement.
+  const dragEndedAt = useRef(0);
 
   const overdue = useMemo(() => new Set(overdueFicheIds), [overdueFicheIds]);
   const profileById = useMemo(
@@ -116,12 +121,11 @@ export function KanbanBoard({
       if (filters.from && f.created_at.slice(0, 10) < filters.from) return false;
       if (filters.to && f.created_at.slice(0, 10) > filters.to) return false;
       const anyType =
-        filters.types.cuisine || filters.types.dressing || filters.types.sdb;
+        filters.types.cuisine || filters.types.dressing;
       if (anyType) {
         const match =
           (filters.types.cuisine && f.nb_cuisines > 0) ||
-          (filters.types.dressing && f.nb_dressings > 0) ||
-          (filters.types.sdb && f.nb_sdb > 0);
+          (filters.types.dressing && f.nb_dressings > 0);
         if (!match) return false;
       }
       return true;
@@ -135,10 +139,13 @@ export function KanbanBoard({
     return map;
   }, [filtered]);
 
+  // Not PointerSensor: it also reacts to touch, activates on 6px of movement,
+  // then dies on the pointercancel the browser fires when native scroll kicks
+  // in. Touch must go through the long-press TouchSensor alone.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 8 },
+      activationConstraint: { delay: 200, tolerance: 10 },
     }),
   );
 
@@ -168,7 +175,7 @@ export function KanbanBoard({
       if (!result.ok) {
         setFiches(previous);
         setError(
-          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+          messageErreur(t, result.error),
         );
       }
     });
@@ -191,9 +198,15 @@ export function KanbanBoard({
 
   function onDragEnd(event: DragEndEvent) {
     setActiveId(null);
+    dragEndedAt.current = Date.now();
     const over = event.over;
     if (!over) return;
     requestMove(String(event.active.id), over.id as StageOrPerdu);
+  }
+
+  function openCard(fiche: FicheRow) {
+    if (Date.now() - dragEndedAt.current < 350) return;
+    setOpenInfo(fiche);
   }
 
   const activeFiche = activeId
@@ -266,7 +279,6 @@ export function KanbanBoard({
             [
               ["cuisine", t("pipeline.filters.cuisine")],
               ["dressing", t("pipeline.filters.dressing")],
-              ["sdb", t("pipeline.filters.sdb")],
             ] as const
           ).map(([key, label]) => (
             <button
@@ -329,7 +341,10 @@ export function KanbanBoard({
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        <div className="kanban-scroll -mx-4 flex gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0">
+        <div
+          data-dragging={activeId ? "" : undefined}
+          className="kanban-scroll -mx-4 flex gap-3 overflow-x-auto px-4 pb-4 md:mx-0 md:px-0"
+        >
           {STAGES.map((stage) => (
             <KanbanColumn
               key={stage}
@@ -338,6 +353,7 @@ export function KanbanBoard({
               profileById={profileById}
               overdue={overdue}
               onMove={requestMove}
+              onOpen={openCard}
               refCallback={(el) => {
                 if (el) columnRefs.current.set(stage, el);
               }}
@@ -355,6 +371,7 @@ export function KanbanBoard({
             profileById={profileById}
             overdue={overdue}
             onMove={requestMove}
+            onOpen={openCard}
           />
           <OutOfFunnelLane
             stage="perdu"
@@ -364,6 +381,7 @@ export function KanbanBoard({
             profileById={profileById}
             overdue={overdue}
             onMove={requestMove}
+            onOpen={openCard}
           />
         </div>
 
@@ -374,11 +392,22 @@ export function KanbanBoard({
               profileById={profileById}
               overdue={overdue}
               onMove={() => undefined}
+              onOpen={() => undefined}
               overlay
             />
           )}
         </DragOverlay>
       </DndContext>
+
+      {/* Toutes les infos du client, ouvertes sur place */}
+      <FicheInfoDialog
+        fiche={openInfo}
+        profileById={profileById}
+        pdvs={pdvs}
+        onOpenChange={(open) => {
+          if (!open) setOpenInfo(null);
+        }}
+      />
 
       {/* Why the fiche left the funnel — mandatory for perdu and en pause */}
       <StageReasonDialog
@@ -437,6 +466,7 @@ function KanbanColumn({
   profileById,
   overdue,
   onMove,
+  onOpen,
   refCallback,
 }: {
   stage: Stage;
@@ -444,6 +474,7 @@ function KanbanColumn({
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
+  onOpen: (fiche: FicheRow) => void;
   refCallback: (el: HTMLDivElement | null) => void;
 }) {
   const t = useTranslations();
@@ -487,6 +518,7 @@ function KanbanColumn({
               profileById={profileById}
               overdue={overdue}
               onMove={onMove}
+              onOpen={onOpen}
             />
           ))
         )}
@@ -504,6 +536,7 @@ function OutOfFunnelLane({
   profileById,
   overdue,
   onMove,
+  onOpen,
 }: {
   stage: "en_pause" | "perdu";
   title: string;
@@ -512,6 +545,7 @@ function OutOfFunnelLane({
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
+  onOpen: (fiche: FicheRow) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
   const isPause = stage === "en_pause";
@@ -548,6 +582,7 @@ function OutOfFunnelLane({
               profileById={profileById}
               overdue={overdue}
               onMove={onMove}
+              onOpen={onOpen}
             />
           ))}
         </div>
@@ -561,6 +596,7 @@ function DraggableFicheCard(props: {
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
+  onOpen: (fiche: FicheRow) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: props.fiche.id,
@@ -570,7 +606,7 @@ function DraggableFicheCard(props: {
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={cn(isDragging && "opacity-40")}
+      className={cn("drag-item touch-manipulation select-none", isDragging && "opacity-40")}
     >
       <FicheCard {...props} />
     </div>
@@ -582,12 +618,14 @@ function FicheCard({
   profileById,
   overdue,
   onMove,
+  onOpen,
   overlay,
 }: {
   fiche: FicheRow;
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
+  onOpen: (fiche: FicheRow) => void;
   overlay?: boolean;
 }) {
   const t = useTranslations();
@@ -597,11 +635,17 @@ function FicheCard({
     chips.push(t("pipeline.projectChips.cuisine", { n: fiche.nb_cuisines }));
   if (fiche.nb_dressings > 0)
     chips.push(t("pipeline.projectChips.dressing", { n: fiche.nb_dressings }));
-  if (fiche.nb_sdb > 0)
-    chips.push(t("pipeline.projectChips.sdb", { n: fiche.nb_sdb }));
 
   return (
+    // La carte entière s'ouvre au tap ; les liens et menus qu'elle contient
+    // gardent la main (closest en fait le tri), et le drag avale le sien.
     <div
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("a, button, [role='menu']")) {
+          return;
+        }
+        onOpen(fiche);
+      }}
       className={cn(
         "card-lift cursor-grab rounded-2xl border border-border bg-card p-3",
         overlay && "rotate-2 shadow-xl",
@@ -615,6 +659,8 @@ function FicheCard({
             // for each one floods the network for a page the user may never open.
             prefetch={false}
             onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
             className="block truncate text-sm font-medium hover:underline"
           >
             {fiche.client_nom}
@@ -626,8 +672,10 @@ function FicheCard({
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               aria-label={t("fiches.columns.stage")}
-              className="rounded-full p-1 text-muted-foreground hover:bg-secondary hover:ring-1 hover:ring-border"
+              className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:ring-1 hover:ring-border"
             >
               <MoreHorizontal className="size-4" />
             </button>

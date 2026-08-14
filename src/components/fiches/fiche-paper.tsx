@@ -1,7 +1,6 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { exigencesSchema, EXIGENCES_VIDES } from "@/lib/schemas/fiche";
 import { formatDate } from "@/lib/dates";
-import { formatDT } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { FicheRelanceRow, FicheRow } from "@/lib/database.types";
 
@@ -26,7 +25,9 @@ function Opt({ on, children }: { on?: boolean; children: React.ReactNode }) {
 
 function L({ children }: { children: React.ReactNode }) {
   return (
-    <span className="whitespace-nowrap text-[13px] font-bold italic underline underline-offset-2">
+    // nowrap only where the paper is wide enough: on a phone the long
+    // labels must wrap or they run past the screen edge.
+    <span className="text-[13px] font-bold italic underline underline-offset-2 md:whitespace-nowrap">
       {children}
     </span>
   );
@@ -52,7 +53,9 @@ function Dotted({
 }
 
 function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-end gap-1">{children}</div>;
+  // flex-wrap: on a phone, a value squeezed out by a long label drops to
+  // its own dotted line instead of painting past the page edge.
+  return <div className="flex flex-wrap items-end gap-1">{children}</div>;
 }
 
 /**
@@ -101,20 +104,20 @@ export async function FichePaper({
     >
       {/* ═ Header: logo | title | form code ═ */}
       <div className="grid grid-cols-[auto_1fr_auto] border-2 border-ardoise/80">
-        <div className="flex flex-col items-center justify-center border-e-2 border-ardoise/80 px-4 py-2">
-          <span className="rounded-[50%] bg-rouge px-4 py-1.5 font-display text-lg font-bold tracking-wider text-white">
+        <div className="flex flex-col items-center justify-center border-e-2 border-ardoise/80 px-2 py-2 md:px-4">
+          <span className="rounded-[50%] bg-rouge px-2.5 py-1 font-display text-sm font-bold tracking-wider text-white md:px-4 md:py-1.5 md:text-lg">
             CUISINA
           </span>
-          <span className="mt-1 text-[8px] uppercase tracking-widest text-rouge/80">
+          <span className="mt-1 hidden text-[8px] uppercase tracking-widest text-rouge/80 sm:block">
             {t("app.tagline")}
           </span>
         </div>
-        <div className="grid place-items-center px-4">
-          <h1 className="font-serif text-2xl font-bold tracking-widest md:text-3xl">
+        <div className="grid place-items-center px-2 md:px-4">
+          <h1 className="text-center font-serif text-base font-bold tracking-widest sm:text-2xl md:text-3xl">
             FICHE CONTACT
           </h1>
         </div>
-        <div className="grid place-items-center border-s-2 border-ardoise/80 px-4 py-2 text-center font-serif text-sm font-bold">
+        <div className="grid place-items-center border-s-2 border-ardoise/80 px-2 py-2 text-center font-serif text-xs font-bold md:px-4 md:text-sm">
           FO-COM-02
           <br />
           IE : 09 ;JUIL 2018
@@ -170,8 +173,6 @@ export async function FichePaper({
             <Dotted>{fiche.email}</Dotted>
           </Row>
           <Row>
-            <L>{p("cp")} :</L>
-            <Dotted className="max-w-24 font-mono">{fiche.code_postal}</Dotted>
             <L>{p("ville")}:</L>
             <Dotted>{fiche.ville}</Dotted>
           </Row>
@@ -212,10 +213,10 @@ export async function FichePaper({
             <div className="ms-5 flex flex-col gap-1.5">
               {(
                 [
-                  "spot_publicitaire",
-                  "magasine",
-                  "affiche_enseigne",
-                  "catalogue",
+                  "facebook",
+                  "instagram",
+                  "tiktok",
+                  "autre_reseau",
                 ] as const
               ).map((sub) => (
                 <Opt key={sub} on={fiche.origine_detail === sub}>
@@ -245,36 +246,12 @@ export async function FichePaper({
             </span>
             {p("dressings")} <Sq on={fiche.nb_dressings > 0} />
           </span>
-          <span className="inline-flex items-end gap-1 text-[13px]">
-            {p("nombre")} :
-            <span className="w-8 border-b border-dotted border-ardoise/50 text-center font-mono">
-              {fiche.nb_sdb || ""}
-            </span>
-            {p("sdb")} <Sq on={fiche.nb_sdb > 0} />
-          </span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-10 gap-y-1.5">
-          <L>{p("etatChantier")} :</L>
-          <Opt on={fiche.etat_chantier === "en_cours"}>{p("enCours")}</Opt>
-          <Opt on={fiche.etat_chantier === "fini"}>{p("fini")}</Opt>
-        </div>
-        <Row>
-          <L>{p("budget")} :</L>
-          <Dotted className="font-mono">
-            {fiche.budget_estimatif != null
-              ? formatDT(fiche.budget_estimatif)
-              : ""}
-          </Dotted>
-        </Row>
         <Row>
           <L>{p("dateLivraison")}:</L>
           <Dotted className="font-mono">
             {fmt(fiche.date_livraison_souhaitee)}
           </Dotted>
-        </Row>
-        <Row>
-          <L>{p("observations")} :</L>
-          <Dotted>{fiche.observations}</Dotted>
         </Row>
       </div>
 

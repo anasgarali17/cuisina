@@ -3,23 +3,41 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/env";
 import type {
+  ClientActifRow,
   ClientRow,
   FicheHistoriqueRow,
+  FicheLienRow,
   FicheRelanceRow,
   FicheRow,
+  FicheSubmissionRow,
+  FournisseurRow,
+  MessageEnvoyeRow,
+  ModeleMessageRow,
   PointDeVenteRow,
   ProfileRow,
   RendezVousRow,
+  SequenceEtapeRow,
+  SequenceRow,
   TacheRow,
 } from "@/lib/database.types";
+import type { LienAudience } from "@/lib/domain";
+import { resolveVille } from "@/lib/geo/tunisia";
+import type { RegionCode } from "@/lib/geo/tunisia-regions";
 import {
   demoClients,
+  demoClientsActifs,
+  demoEnvois,
   demoFiches,
+  demoFournisseurs,
   demoHistorique,
+  demoLiensPublics,
+  demoModeles,
   demoPdvs,
   demoProfiles,
   demoRdv,
   demoRelances,
+  demoSequenceEtapes,
+  demoSequences,
   demoTaches,
 } from "@/lib/data/demo";
 
@@ -52,6 +70,10 @@ interface Snapshot {
   taches: TacheRow[];
   rdv: RendezVousRow[];
   clients: ClientRow[];
+  fournisseurs: FournisseurRow[];
+  sequences: SequenceRow[];
+  sequence_etapes: SequenceEtapeRow[];
+  modeles: ModeleMessageRow[];
   historique: FicheHistoriqueRow[];
   relances: FicheRelanceRow[];
 }
@@ -63,6 +85,10 @@ const EMPTY_SNAPSHOT: Snapshot = {
   taches: [],
   rdv: [],
   clients: [],
+  fournisseurs: [],
+  sequences: [],
+  sequence_etapes: [],
+  modeles: [],
   historique: [],
   relances: [],
 };
@@ -99,6 +125,15 @@ function demoScope(profile: ProfileRow): (f: {
 export const listPdvs = cache(async (): Promise<PointDeVenteRow[]> => {
   if (!supabaseConfigured()) return demoPdvs;
   return (await getSnapshot()).pdvs;
+});
+
+/**
+ * Donnée référentielle, comme les points de vente : la même liste pour tout
+ * le monde. `app_snapshot` ne renvoie que les fournisseurs actifs.
+ */
+export const listFournisseurs = cache(async (): Promise<FournisseurRow[]> => {
+  if (!supabaseConfigured()) return demoFournisseurs;
+  return (await getSnapshot()).fournisseurs;
 });
 
 export const listProfiles = cache(async (): Promise<ProfileRow[]> => {
@@ -227,6 +262,211 @@ export const listHistoriqueSince = cache(
     const { historique } = await getSnapshot();
     // The snapshot spans 90 days; narrow if the caller asked for less.
     return historique.filter((h) => h.created_at >= sinceIso);
+  },
+);
+
+/* — Séquences WhatsApp — */
+
+/**
+ * Modèles et séquences sont du paramétrage : la même liste pour tout le
+ * monde, comme les points de vente. Ce que chacun voit filtré, c'est le
+ * journal — il suit la fiche, donc la portée du conseiller.
+ */
+export const listModeles = cache(async (): Promise<ModeleMessageRow[]> => {
+  if (!supabaseConfigured()) return demoModeles;
+  return (await getSnapshot()).modeles;
+});
+
+export const listSequences = cache(async (): Promise<SequenceRow[]> => {
+  if (!supabaseConfigured()) return demoSequences;
+  return (await getSnapshot()).sequences;
+});
+
+export const listSequenceEtapes = cache(
+  async (): Promise<SequenceEtapeRow[]> => {
+    if (!supabaseConfigured()) return demoSequenceEtapes;
+    return (await getSnapshot()).sequence_etapes;
+  },
+);
+
+/**
+ * Le journal. Hors snapshot à dessein : il grossit à chaque message et une
+ * seule page le lit. RLS le borne déjà au périmètre du conseiller.
+ */
+export const listEnvois = cache(
+  async (profile: ProfileRow, limite = 200): Promise<MessageEnvoyeRow[]> => {
+    if (!supabaseConfigured()) {
+      // Le journal suit la fiche : en démo on reproduit à la main la portée
+      // que la policy `envois_select` applique en base.
+      const visibles = new Set(
+        demoFiches.filter(demoScope(profile)).map((f) => f.id),
+      );
+      return demoEnvois
+        .filter((e) => e.fiche_id && visibles.has(e.fiche_id))
+        .sort((a, b) => b.planifie_le.localeCompare(a.planifie_le));
+    }
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("messages_envoyes")
+      .select("*")
+      .order("planifie_le", { ascending: false })
+      .limit(limite);
+    return data ?? [];
+  },
+);
+
+/* — Fiche remplie par le client : liens de collecte et demandes reçues — */
+
+export const listLiens = cache(async (): Promise<FicheLienRow[]> => {
+  if (!supabaseConfigured()) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("fiche_liens")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  return data ?? [];
+});
+
+export const listSubmissions = cache(async (): Promise<FicheSubmissionRow[]> => {
+  if (!supabaseConfigured()) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("fiche_submissions")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  return data ?? [];
+});
+
+export interface LienPublic {
+  libelle: string;
+  audience: LienAudience;
+  locale: "fr" | "ar" | "en";
+  pdv_nom: string;
+  pdv_ville: string;
+}
+
+/**
+ * En-tête d'un lien de collecte, lu sans session. Passe par une fonction
+ * security definer : le visiteur n'a aucun droit sur les tables.
+ */
+export const getLienPublic = cache(
+  async (token: string): Promise<LienPublic | null> => {
+    if (!supabaseConfigured()) {
+      // En démo, les deux tokens semés par la migration 0011 ouvrent le même
+      // formulaire vide : sans cela le parcours client serait le seul écran
+      // impossible à montrer sans base.
+      const lien = demoLiensPublics[token];
+      return lien ?? null;
+    }
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("lien_public", {
+      p_token: token,
+    });
+    if (error || !data) return null;
+    return data as LienPublic;
+  },
+);
+
+/**
+ * Les dossiers en production, avec le nom du client repris de la fiche —
+ * une carte sans nom ne sert à rien, et le nom vit côté fiche.
+ *
+ * `clients_actifs` n'entre pas dans `app_snapshot` : cette liste ne s'affiche
+ * que sur son propre écran, et la charger partout coûterait plus qu'elle ne
+ * rapporte.
+ */
+export interface ClientActifDetail extends ClientActifRow {
+  client_nom: string;
+  reference: string;
+  budget_estimatif: number | null;
+  ville: string | null;
+}
+
+export const listClientsActifs = cache(
+  async (profile: ProfileRow): Promise<ClientActifDetail[]> => {
+    if (!supabaseConfigured()) {
+      const scope = demoScope(profile);
+      const ficheById = new Map(demoFiches.map((f) => [f.id, f]));
+      return demoClientsActifs.filter(scope).flatMap((ca) => {
+        const fiche = ficheById.get(ca.fiche_id);
+        return fiche
+          ? [
+              {
+                ...ca,
+                client_nom: fiche.client_nom,
+                reference: fiche.reference,
+                budget_estimatif: fiche.budget_estimatif,
+                ville: fiche.ville,
+              },
+            ]
+          : [];
+      });
+    }
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("clients_actifs")
+      .select(
+        "*, fiches_contact(client_nom, reference, budget_estimatif, ville)",
+      )
+      .order("updated_at", { ascending: false });
+    if (!data) return [];
+    type Joined = ClientActifRow & {
+      fiches_contact: {
+        client_nom: string;
+        reference: string;
+        budget_estimatif: number | null;
+        ville: string | null;
+      } | null;
+    };
+    return (data as unknown as Joined[]).map(({ fiches_contact, ...ca }) => ({
+      ...ca,
+      client_nom: fiches_contact?.client_nom ?? "—",
+      reference: fiches_contact?.reference ?? "—",
+      budget_estimatif: fiches_contact?.budget_estimatif ?? null,
+      ville: fiches_contact?.ville ?? null,
+    }));
+  },
+);
+
+/**
+ * Les showrooms tels que le formulaire public les montre : regroupés par
+ * zone commerciale, avec le téléphone qui s'affiche dès la sélection.
+ *
+ * Passe par `showrooms_publics()` — le client n'a pas de compte, et
+ * `points_de_vente` n'est lisible que par les comptes authentifiés. La zone
+ * est déduite de la ville, comme sur la carte du réseau.
+ */
+export interface ShowroomPublic {
+  id: string;
+  nom: string;
+  ville: string;
+  adresse: string | null;
+  telephone: string | null;
+  region: RegionCode | null;
+}
+
+export const listShowroomsPublics = cache(
+  async (): Promise<ShowroomPublic[]> => {
+    const brut: Array<Omit<ShowroomPublic, "region">> = supabaseConfigured()
+      ? await (async () => {
+          const supabase = await createClient();
+          const { data } = await supabase.rpc("showrooms_publics");
+          return (data as Array<Omit<ShowroomPublic, "region">>) ?? [];
+        })()
+      : demoPdvs.map((p) => ({
+          id: p.id,
+          nom: p.nom,
+          ville: p.ville,
+          adresse: p.adresse,
+          telephone: p.telephone,
+        }));
+
+    return brut.map((p) => ({
+      ...p,
+      region: resolveVille(p.ville)?.region ?? null,
+    }));
   },
 );
 

@@ -12,10 +12,15 @@ import {
   stageChangeSchema,
   suiviSchema,
 } from "@/lib/schemas/fiche";
-import { CADENCE_PAR_MOTIF, CANAUX, RELANCE_RESULTATS } from "@/lib/domain";
+import {
+  CADENCE_PAR_MOTIF,
+  CANAUX,
+  RELANCE_RESULTATS,
+  STAGE_FINAL_COMMERCIAL,
+} from "@/lib/domain";
 import { toISODate } from "@/lib/dates";
 import type { FicheRow } from "@/lib/database.types";
-import { type ActionResult, fail, succeed } from "./result";
+import { type ActionResult, dbError, fail, succeed } from "./result";
 
 function addDays(base: Date, days: number): string {
   const d = new Date(base);
@@ -46,9 +51,10 @@ export async function saveFiche(
 
   const profile = await getCurrentProfile();
   if (!profile) return fail("unauthenticated");
-  if (!profile.point_de_vente_id && profile.role === "conseiller") {
-    return fail("no_point_de_vente");
-  }
+  // `fiches_contact.point_de_vente_id` est NOT NULL : sans point de vente
+  // rattaché au profil, l'insertion est impossible quel que soit le rôle.
+  // Le dire ici plutôt que laisser Postgres refuser une chaîne vide.
+  if (!profile.point_de_vente_id) return fail("no_point_de_vente");
 
   const { id, draft } = parsed.data;
   const score = computeScoreCompletude(draft);
@@ -57,20 +63,21 @@ export async function saveFiche(
     tel_domicile: draft.identite.tel_domicile ?? null,
     tel_bureau: draft.identite.tel_bureau ?? null,
     tel_mobile: draft.identite.tel_mobile ?? null,
+    whatsapp: draft.identite.whatsapp ?? false,
     email: draft.identite.email || null,
     adresse_complete: draft.identite.adresse_complete ?? null,
-    code_postal: draft.identite.code_postal ?? null,
     ville: draft.identite.ville ?? null,
     origine: draft.origine.origine,
     origine_detail: draft.origine.origine_detail,
     nb_cuisines: draft.projet.nb_cuisines ?? 0,
     nb_dressings: draft.projet.nb_dressings ?? 0,
-    nb_sdb: draft.projet.nb_sdb ?? 0,
-    etat_chantier: draft.projet.etat_chantier ?? null,
-    budget_estimatif: draft.projet.budget_estimatif ?? null,
     date_livraison_souhaitee: draft.projet.date_livraison_souhaitee ?? null,
-    observations: draft.projet.observations || null,
     exigences: draft.exigences,
+    modele: draft.modele,
+    couleurs: draft.couleurs ?? [],
+    signature: draft.signature,
+    // L'horodatage suit la signature, et disparaît si elle est effacée.
+    signature_le: draft.signature ? new Date().toISOString() : null,
     score_completude: score,
   };
 
@@ -83,7 +90,7 @@ export async function saveFiche(
       .eq("id", id)
       .select("id, reference")
       .single();
-    if (error || !data) return fail("db");
+    if (error || !data) return fail(dbError(error));
     revalidatePath("/", "layout");
     return succeed({ id: data.id, reference: data.reference, score });
   }
@@ -93,13 +100,72 @@ export async function saveFiche(
     .insert({
       ...row,
       conseiller_id: profile.id,
-      point_de_vente_id: profile.point_de_vente_id ?? "",
+      point_de_vente_id: profile.point_de_vente_id,
     })
     .select("id, reference")
     .single();
-  if (error || !data) return fail("db");
+  if (error || !data) return fail(dbError(error));
   revalidatePath("/", "layout");
   return succeed({ id: data.id, reference: data.reference, score });
+}
+
+const pieceJointeSchema = z.object({
+  fiche_id: z.string().uuid(),
+  chemin: z.string().min(1).max(500),
+  nom_fichier: z.string().min(1).max(255),
+  type_mime: z.string().max(150).nullable().default(null),
+  taille_octets: z.number().int().nonnegative().nullable().default(null),
+});
+
+/**
+ * Référence un document déjà déposé dans le bucket.
+ *
+ * L'upload se fait côté client — le fichier ne transite pas par le serveur.
+ * Cette action ne fait qu'inscrire la ligne qui lui donne un nom et un
+ * propriétaire.
+ */
+export async function enregistrerPieceJointe(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = pieceJointeSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("fiche_pieces_jointes").insert({
+    ...parsed.data,
+    ajoute_par: profile.id,
+  });
+  if (error) return fail(dbError(error));
+
+  revalidatePath(`/fiches/${parsed.data.fiche_id}`);
+  return succeed(undefined);
+}
+
+export async function supprimerPieceJointe(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = z
+    .object({ id: z.string().uuid(), fiche_id: z.string().uuid() })
+    .safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("fiche_pieces_jointes")
+    .delete()
+    .eq("id", parsed.data.id);
+  if (error) return fail(dbError(error));
+
+  revalidatePath(`/fiches/${parsed.data.fiche_id}`);
+  return succeed(undefined);
 }
 
 /**
@@ -182,7 +248,7 @@ export async function changeStage(
       pause_reprise_le: cadence ? addDays(today, cadence) : null,
     })
     .eq("id", fiche_id);
-  if (updateError) return fail("db");
+  if (updateError) return fail(dbError(updateError));
 
   const { error: histError } = await supabase.from("fiche_historique").insert({
     fiche_id,
@@ -190,7 +256,7 @@ export async function changeStage(
     stage_to: stage,
     user_id: profile.id,
   });
-  if (histError) return fail("db");
+  if (histError) return fail(dbError(histError));
 
   // Leaving the funnel: close the open auto-relances for this fiche.
   if (stage === "perdu" || stage === "en_pause") {
@@ -203,8 +269,14 @@ export async function changeStage(
   }
 
   // Auto-generated relances — the digital heir of the paper's five contact lines.
+  // Un relevé préliminaire se rappelle à J+3 ; un devis conçu, deux fois, parce
+  // qu'un devis sans réponse est ce qui se perd le plus silencieusement.
   const relanceOffsets =
-    stage === "contacte" ? [3] : stage === "devis_envoye" ? [3, 7] : [];
+    stage === "releve_preliminaire"
+      ? [3]
+      : stage === "conception_devis"
+        ? [3, 7]
+        : [];
   if (relanceOffsets.length > 0) {
     await supabase.from("taches").insert(
       relanceOffsets.map((offset) => ({
@@ -274,11 +346,14 @@ export async function changeStage(
 
   // Targeted: the board updated optimistically, so only the views that read
   // this data need re-rendering — not the whole layout tree.
-  revalidatePath("/pipeline");
+  revalidatePath("/etat-dossier");
   revalidatePath("/fiches");
   revalidatePath("/ma-journee");
   revalidatePath("/taches");
   revalidatePath(`/fiches/${fiche_id}`);
+  // « Dossier envoyé » ouvre la fiche de production : c'est le trigger Postgres
+  // qui la crée, mais la page doit la voir apparaître.
+  if (stage === STAGE_FINAL_COMMERCIAL) revalidatePath("/clients-actifs");
   return succeed(undefined);
 }
 
@@ -299,7 +374,7 @@ export async function updateSuivi(
       remarques_client: parsed.data.remarques_client || null,
     })
     .eq("id", parsed.data.fiche_id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidatePath(`/fiches/${parsed.data.fiche_id}`);
   return succeed(undefined);
 }
@@ -342,7 +417,7 @@ export async function logRelance(
     commentaire: commentaire || null,
     user_id: profile.id,
   });
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
 
   if (tache_id) {
     await supabase.from("taches").update({ statut: "fait" }).eq("id", tache_id);
@@ -406,7 +481,7 @@ export async function saveCroquis(
     .from("fiches_contact")
     .update({ croquis: parsed.data.croquis })
     .eq("id", parsed.data.fiche_id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
 
   revalidatePath(`/fiches/${parsed.data.fiche_id}`);
   return succeed(undefined);
@@ -445,7 +520,7 @@ export async function setFichePhoto(
     .from("fiches_contact")
     .update({ photo_fiche_url: parsed.data.path })
     .eq("id", parsed.data.fiche_id);
-  if (error) return fail("db");
+  if (error) return fail(dbError(error));
   revalidatePath("/", "layout");
   return succeed(undefined);
 }

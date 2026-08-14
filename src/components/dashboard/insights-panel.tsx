@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface Insight {
@@ -27,12 +28,24 @@ const ICONS: Record<Insight["type"], { icon: LucideIcon; className: string }> =
     ficheIncomplete: { icon: CircleDashed, className: "text-muted-foreground" },
   };
 
-/** Computed signals — every row is actionable and links to its fiche. */
-export async function InsightsPanel({ insights }: { insights: Insight[] }) {
+/**
+ * Computed signals — every row is actionable and links to its fiche.
+ *
+ * `alerte` fait de la carte elle-même le bloc rouge du tableau de bord :
+ * l'imbriquer dans un second encadré doublait le titre et alourdissait la
+ * page pour ne rien dire de plus.
+ */
+export async function InsightsPanel({
+  insights,
+  alerte = false,
+}: {
+  insights: Insight[];
+  alerte?: boolean;
+}) {
   const t = await getTranslations();
 
   return (
-    <Card>
+    <Card className={cn(alerte && "signaux-bar border-2")}>
       <CardHeader className="flex-row items-center gap-3">
         <span
           aria-hidden

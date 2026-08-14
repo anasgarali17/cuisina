@@ -35,25 +35,27 @@
       "automatisation": "Automation",
       "administration": "Administration"
     },
-    "maJournee": "My Day",
+    "maJournee": "Dashboard",
     "fiches": "Fiches Contact",
-    "pipeline": "Pipeline",
     "clients": "Clients",
     "commandes": "Confirmed Orders",
     "devis": "Devis & Invoices",
     "agendaEquipe": "Team Agenda",
     "agendaClient": "Client Agenda",
     "taches": "My Tasks",
-    "sequences": "WhatsApp Sequences",
-    "modeles": "Message Templates",
-    "journalEnvoi": "Send Log",
+    "sequences": "Automation switches",
+    "modeles": "Message texts",
     "flux": "Flows & Margins",
     "reglements": "Payments & Collections",
     "rayonnement": "Reach",
     "commissions": "Commissions & Compensation",
     "equipe": "Conseillers & Points of Sale",
     "configuration": "Workshop Settings",
-    "plus": "More"
+    "plus": "More",
+    "messages": "WhatsApp Messages",
+    "parametres": "Settings",
+    "etatDossier": "File status",
+    "clientsActifs": "Active client"
   },
   "login": {
     "title": "Sign in",
@@ -71,18 +73,6 @@
     "devis": {
       "title": "Devis & Invoices",
       "description": "Generate and number Devis and invoices straight from the Fiche Contact, with version tracking."
-    },
-    "sequences": {
-      "title": "WhatsApp Sequences",
-      "description": "Automatic WhatsApp follow-ups triggered by pipeline stages. You stay in control — the tool never forgets."
-    },
-    "modeles": {
-      "title": "Message Templates",
-      "description": "Your standard messages, approved by management, ready to send in one tap."
-    },
-    "journalEnvoi": {
-      "title": "Send Log",
-      "description": "Every message sent — to whom, when, and what came of it."
     },
     "flux": {
       "title": "Flows & Margins",
@@ -106,14 +96,14 @@
     }
   },
   "stages": {
-    "nouveau_contact": "New contact",
-    "contacte": "Contacted",
+    "nouveau_lead": "New lead",
+    "releve_preliminaire": "Preliminary survey",
+    "conception_devis": "Quote design",
     "rdv_showroom": "Showroom appointment",
-    "metre_releve": "Métré taken",
-    "conception_devis": "Devis in design",
-    "devis_envoye": "Devis sent",
-    "negociation": "Negotiation",
+    "cloture": "Closed",
     "signe": "Signed",
+    "releve_definitif": "Final survey",
+    "dossier_envoye": "File sent",
     "perdu": "Lost",
     "en_pause": "On hold"
   },
@@ -132,17 +122,17 @@
     "bouche_a_oreille": "Word of mouth",
     "site_web": "Website",
     "foire": "Trade fair",
-    "publicite": "Advertising",
     "details": {
       "prospection": "Prospecting",
       "architecte_decorateur": "Architect / Interior designer",
       "promoteur_entrepreneur": "Developer / Contractor",
       "ami": "Friend",
-      "spot_publicitaire": "Ad spot",
-      "magasine": "Magazine",
-      "affiche_enseigne": "Poster / Signage",
-      "catalogue": "Catalogue"
-    }
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "tiktok": "TikTok",
+      "autre_reseau": "Another network"
+    },
+    "publicite": "Social media"
   },
   "fiches": {
     "title": "Fiches Contact",
@@ -184,7 +174,6 @@
       "dateContact": "Contact date",
       "nbCuisines": "Kitchens",
       "nbDressings": "Dressings",
-      "nbSdb": "Bathrooms",
       "etatChantier": "Site status",
       "en_cours": "In progress",
       "fini": "Finished",
@@ -203,7 +192,8 @@
         "origine_requise": "Choose an origin.",
         "origine_detail_requise": "Specify the origin."
       },
-      "telBureau": "Office phone"
+      "telBureau": "Office phone",
+      "whatsapp": "Reachable on WhatsApp"
     },
     "exigences": {
       "finitionFacade": "Front Finish",
@@ -277,7 +267,6 @@
       "nombre": "Nombre",
       "cuisines": "Cuisine(s)",
       "dressings": "Dressing(s)",
-      "sdb": "SDB",
       "etatChantier": "Etat de chantier",
       "enCours": "En cours",
       "fini": "Fini",
@@ -337,7 +326,34 @@
       "couleurPerso": "Custom color",
       "codeCouleur": "Color code (hex)",
       "texteHint": "Write here…",
-      "coteHint": "Dimension (e.g. 3.20 m)"
+      "coteHint": "Dimension (e.g. 3.20 m)",
+      "main": "Move the sketch",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomFit": "Fit to screen",
+      "pleinEcran": "Full screen",
+      "quitterPleinEcran": "Exit full screen",
+      "zoomHint": "Pinch to zoom, two fingers to move around. The hand tool pans with one finger.",
+      "porte": "Door",
+      "fenetre": "Window",
+      "sensPorte": "Opening side"
+    },
+    "tabs": {
+      "fiches": "Fiches",
+      "demandes": "Incoming requests",
+      "liens": "Link & QR code"
+    },
+    "signature": {
+      "titre": "Client signature",
+      "invite": "Sign here",
+      "effacer": "Clear",
+      "le": "Signed on {date}"
+    },
+    "pieces": {
+      "titre": "Attachments",
+      "ajouter": "Add",
+      "vide": "No documents yet. Plans, site photos, quotes received…",
+      "tropGros": "“{nom}” is over 10 MB."
     }
   },
   "canaux": {
@@ -355,7 +371,8 @@
     "a_rappeler": "Call back"
   },
   "pipeline": {
-    "title": "Pipeline",
+    "title": "File status",
+    "openFiche": "Open the contact fiche",
     "emptyColumn": "Nothing at this stage. Fiches will glide in on their own.",
     "perduLane": "Lost fiches",
     "relanceOverdue": "Follow-up overdue",
@@ -368,13 +385,11 @@
       "all": "All",
       "reset": "Reset",
       "cuisine": "Kitchen",
-      "dressing": "Dressing",
-      "sdb": "Bathroom"
+      "dressing": "Dressing"
     },
     "projectChips": {
       "cuisine": "Kitchen ×{n}",
-      "dressing": "Dressing ×{n}",
-      "sdb": "Bathroom ×{n}"
+      "dressing": "Dressing ×{n}"
     },
     "pause": {
       "title": "Put the lead on hold",
@@ -415,7 +430,8 @@
       "tauxConversion": "Conversion rate",
       "conversionWindow": "Last 90 days",
       "projetDuMois": "Project of the month",
-      "origineContacts": "Contact origins"
+      "origineContacts": "Contact origins",
+      "relances48h": "New lead with no record for 48 h"
     },
     "insights": {
       "title": "Signals",
@@ -449,10 +465,7 @@
       "dernieresFiches": "Latest fiches",
       "produits": "Requested products",
       "produitsHint": "Across active fiches",
-      "heroLabel": "Signed revenue",
       "vsM1": "vs last month",
-      "enAttente": "Pending",
-      "derniersMois": "Last 12 months",
       "valeurPipeline": "Pipeline value",
       "activite": "Showroom activity",
       "activiteSub": "New fiches created, day by day.",
@@ -469,6 +482,40 @@
       "jours30": "30 d",
       "fichesJour": "Fiches / day",
       "tendance": "Trend"
+    },
+    "views": {
+      "groupLabel": "Dashboard sections",
+      "tout": "All",
+      "chiffres": "Figures",
+      "courbe": "Chart",
+      "pipeline": "Pipeline",
+      "aVenir": "Upcoming",
+      "taches": "Tasks",
+      "signaux": "Signals",
+      "classement": "Ranking",
+      "fiches": "Fiches"
+    },
+    "hebdo": {
+      "titre": "Weekly table",
+      "vide": "Not enough data yet.",
+      "semaine": "Week",
+      "familles": {
+        "cuisine": "Kitchen",
+        "dressing": "Dressing",
+        "electro": "Appliances",
+        "pt": "Worktops"
+      },
+      "colonnes": {
+        "nbDevis": "Quotes",
+        "valeurDevis": "Quote value",
+        "nbBc": "Orders",
+        "valeurBc": "Order value"
+      },
+      "note": "Quotes counted when a file reaches “Quote design”, orders when it reaches “Signed”. Appliances and worktops are not tracked per file yet — their columns stay empty."
+    },
+    "rdvDemain": {
+      "titre": "Tomorrow's appointments",
+      "vide": "No appointments tomorrow."
     }
   },
   "taches": {
@@ -508,12 +555,64 @@
     "identity": "Identity",
     "linkedFiches": "Linked fiches",
     "projectHistory": "Project history",
-    "tierComing": "Client tier — Essentiel · Signature · Prestige — coming in Phase 2, along with scoring.",
     "nom": "Name",
     "tel": "Phone",
     "email": "Email",
     "adresse": "Address",
-    "ville": "City"
+    "ville": "City",
+    "count": "{count, plural, one {# client} other {# clients}}",
+    "emptyFiltered": "No client matches these filters.",
+    "columns": {
+      "statut": "Status",
+      "projets": "Projects",
+      "derniereActivite": "Last activity"
+    },
+    "statuts": {
+      "actif": "Active",
+      "signe": "Signed",
+      "dormant": "Dormant"
+    },
+    "tranches": {
+      "haut": "{montant} and up",
+      "moyen": "{min} – {max}",
+      "bas": "Under {montant}"
+    },
+    "achete": "bought from us",
+    "detail": {
+      "signes": "Signed",
+      "enCours": "In progress",
+      "ficheContact": "Contact fiche"
+    },
+    "score": {
+      "label": "Client score",
+      "achats": "How much they bought",
+      "projets": "Projects signed",
+      "activite": "Recent activity",
+      "contact": "Contact details complete"
+    },
+    "vip": "VIP",
+    "vipAdd": "Pin as VIP",
+    "vipRemove": "Remove VIP",
+    "filters": {
+      "tous": "All",
+      "tranche": "Total bought"
+    },
+    "view": {
+      "cards": "List view",
+      "board": "Column view",
+      "emptyColumn": "No client in this bracket."
+    },
+    "sort": {
+      "label": "Sort",
+      "ca": "Lifetime revenue",
+      "score": "Client score",
+      "nom": "Name (A–Z)",
+      "activite": "Recent activity"
+    },
+    "clientDepuis": "Client since {date}",
+    "aucunProjet": "No linked project.",
+    "openFull": "Open client record",
+    "versTranche": "{montant} more in purchases to pass {seuil}."
   },
   "equipe": {
     "title": "Conseillers & Points of Sale",
@@ -538,6 +637,52 @@
     "aucuneFiche": "No fiche for this showroom yet.",
     "depuis": "Open since",
     "activite": "Showroom activity"
+  },
+  "carte": {
+    "aria": "Map of Tunisia: showrooms, clients, leads and suppliers by governorate",
+    "couches": "Visible layers",
+    "zone": "Area",
+    "toutLePays": "All of Tunisia",
+    "reinitialiser": "All of Tunisia",
+    "astuce": "Scroll to zoom · drag to pan · click a governorate, then a delegation",
+    "rien": "Nothing to show in this area.",
+    "horsCarte": "{count, plural, one {# row with an unrecognised city, not plotted} other {# rows with an unrecognised city, not plotted}}",
+    "fichesShowroom": "Showrooms in this area",
+    "layers": {
+      "showrooms": "Showrooms",
+      "clients": "Clients",
+      "prospects": "Leads",
+      "fournisseurs": "Suppliers"
+    },
+    "regions": {
+      "grand_tunis": "Greater Tunis",
+      "nord_est": "North-East",
+      "nord_ouest": "North-West",
+      "centre_est": "Central-East (Sahel)",
+      "centre_ouest": "Central-West",
+      "sud_est": "South-East",
+      "sud_ouest": "South-West"
+    },
+    "delegation": "Delegation",
+    "toutesDelegations": "All delegations",
+    "nPunaises": "{count, plural, one {# item} other {# items}}",
+    "chargement": "Loading…",
+    "zoomPlus": "Zoom in",
+    "zoomMoins": "Zoom out",
+    "recadrer": "Fit to selection"
+  },
+  "fournisseurs": {
+    "title": "Suppliers",
+    "delai": "{count, plural, one {# day} other {# days}}",
+    "categories": {
+      "caisson": "Cabinets & fronts",
+      "plan_travail": "Worktops",
+      "electromenager": "Appliances",
+      "quincaillerie": "Hardware",
+      "pose": "Installation",
+      "transport": "Transport",
+      "autre": "Other"
+    }
   },
   "rdv": {
     "types": {
@@ -580,6 +725,10 @@
     "fStart": "Start time",
     "fDuration": "Duration",
     "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "hours": "{m, plural, =0 {{h} h} other {{h} h {m}}}",
+    "endsAt": "Ends {time}",
+    "addAt": "Add at {time}",
+    "addAfter": "Add right after",
     "fDueDate": "Due date",
     "fPriority": "Priority",
     "fOwner": "Assigned to",
@@ -588,5 +737,408 @@
     "fPdv": "Point of sale",
     "fPlace": "Location",
     "fNotes": "Notes"
+  },
+  "demandes": {
+    "title": "Incoming requests",
+    "empty": "Nothing yet. Put the QR code up in the showroom and the fiches will arrive already filled in.",
+    "emptyFiltered": "No request in this state.",
+    "score": "Completeness {score}%",
+    "origineDetail": "Origin detail",
+    "assigne": "Adviser",
+    "filters": {
+      "all": "All"
+    },
+    "statuts": {
+      "en_attente": "Pending",
+      "accepte": "Accepted",
+      "refuse": "Declined"
+    },
+    "actions": {
+      "accept": "Accept",
+      "hold": "Put back on hold",
+      "note": "Annotate",
+      "refuse": "Decline",
+      "openFiche": "Open the fiche"
+    },
+    "dialog": {
+      "assignTo": "Assign to",
+      "note": "Internal note",
+      "accepte": {
+        "title": "Accept the request",
+        "prompt": "{client}’s request becomes a fiche in the pipeline, at new contact, with a call-back scheduled for tomorrow.",
+        "placeholder": "What you took away from the conversation…"
+      },
+      "en_attente": {
+        "title": "Leave it pending",
+        "prompt": "{client} hasn’t decided yet — the request stays on top of the pile.",
+        "placeholder": "“Will call back after the works”, “waiting on the quote”…"
+      },
+      "refuse": {
+        "title": "Decline the request",
+        "prompt": "{client}’s request will not enter the pipeline. It stays readable here.",
+        "placeholder": "Out of area, duplicate, not a serious enquiry…"
+      }
+    }
+  },
+  "liens": {
+    "intro": "One link per place: the showroom poster isn’t the trade-fair stand’s.",
+    "new": "New link",
+    "empty": "No link yet. Create one, print its poster, and the fiches fill themselves in.",
+    "inactive": "Disabled",
+    "count": "{count, plural, =0 {No request} one {# request} other {# requests}}",
+    "copy": "Copy",
+    "copied": "Copied",
+    "share": "Share",
+    "activate": "Enable",
+    "deactivate": "Disable",
+    "audiences": {
+      "client": "Filled by the client",
+      "equipe": "Filled by the team"
+    },
+    "audienceHints": {
+      "client": "“How did you hear about CUISINA?” — to display or send over WhatsApp.",
+      "equipe": "“Where did the client hear about CUISINA?” — to fill in on their behalf."
+    },
+    "poster": {
+      "client": {
+        "titre": "Your project starts here",
+        "sousTitre": "Scan, fill it in, we call you back."
+      },
+      "equipe": {
+        "titre": "Fiche Contact",
+        "sousTitre": "Scan to fill in the client’s fiche."
+      },
+      "lienLabel": "Or type this link",
+      "alt": "QR code poster — {libelle}",
+      "png": "PNG",
+      "svg": "SVG",
+      "print": "Print the poster"
+    },
+    "dialog": {
+      "title": "New collection link",
+      "prompt": "Name it after the place it will live: that name is what tells you where a request came from.",
+      "libelle": "Link name",
+      "libellePlaceholder": "Sousse showroom, Sfax trade fair 2026…",
+      "audience": "Who fills the form in?",
+      "pdv": "Point of sale",
+      "conseiller": "Default adviser",
+      "create": "Create the link",
+      "creating": "Creating…"
+    }
+  },
+  "public": {
+    "shared": {
+      "tagline": "Kitchens, another way",
+      "footer": "CUISINA · Kitchens, another way",
+      "expiredTitle": "This link is no longer active",
+      "expiredBody": "It has expired or been disabled. Contact your CUISINA showroom and they will send you a new one.",
+      "stepOf": "Step {current} of {total}",
+      "steps": {
+        "step1": "Your details and your project",
+        "step2": "What you would like"
+      },
+      "next": "Continue",
+      "previous": "Back",
+      "submit": "Send",
+      "sending": "Sending…",
+      "merciTitle": "Thank you!",
+      "merciReference": "Reference {reference}",
+      "errorLien": "This link is no longer active.",
+      "errorRate": "Too many requests in a row. Try again in a few minutes.",
+      "errorGeneric": "Sending failed. Please try again.",
+      "nbCuisines": "Kitchens",
+      "nbDressings": "Dressings",
+      "etatChantier": "Site status",
+      "en_cours": "In progress",
+      "fini": "Finished",
+      "dateLivraison": "Preferred delivery date",
+      "errors": {
+        "nom_requis": "A name is required.",
+        "mobile_requis": "A mobile number is required.",
+        "telephone_invalide": "Invalid number — digits only.",
+        "email_invalide": "Invalid e-mail address.",
+        "origine_requise": "Pick an answer.",
+        "origine_detail_requise": "Please be more specific."
+      },
+      "whatsapp": "Reachable on WhatsApp",
+      "sectionShowroom": "Your showroom",
+      "showroomAide": "Pick the area you would like to visit — the showroom and its phone number appear straight away.",
+      "zone": "Area",
+      "zoneVide": "Choose an area…",
+      "sectionProjet": "Your project",
+      "types": {
+        "cuisine": "A kitchen",
+        "dressing": "A dressing room"
+      },
+      "cuisines": "Kitchens",
+      "dressings": "Dressing rooms"
+    },
+    "client": {
+      "title": "Tell us about your project",
+      "subtitle": "Three minutes, and a CUISINA adviser calls you back.",
+      "sectionCoordonnees": "Your details",
+      "sectionProjet": "Your project",
+      "nom": "Your full name",
+      "mobile": "Your mobile number",
+      "telAutre": "Another number",
+      "email": "Your e-mail",
+      "adresse": "Your address",
+      "codePostal": "Post code",
+      "ville": "Town",
+      "origineQuestion": "How did you hear about CUISINA?",
+      "budget": "Your estimated budget (DT)",
+      "observations": "Anything else we should know?",
+      "merciBody": "Your request has arrived. A CUISINA adviser will call you back shortly."
+    },
+    "equipe": {
+      "title": "Fiche Contact",
+      "subtitle": "Filling in the client’s fiche, from the showroom or the fair.",
+      "sectionCoordonnees": "Client details",
+      "sectionProjet": "The client’s project",
+      "nom": "Client name",
+      "mobile": "Mobile number",
+      "telAutre": "Home number",
+      "email": "E-mail",
+      "adresse": "Full address",
+      "codePostal": "Post code",
+      "ville": "Town",
+      "origineQuestion": "Where did the client hear about CUISINA?",
+      "budget": "Estimated budget (DT)",
+      "observations": "Observations",
+      "merciBody": "The fiche is on its way. It awaits approval before entering the pipeline."
+    },
+    "souhaits": {
+      "intro": "Nothing here is required. Every answer helps your adviser prepare the appointment.",
+      "facade": "Front type",
+      "facadeAide": "Kitchens we have built — point at the one closest to your idea.",
+      "facades": {
+        "laque_mat": "Matt lacquer",
+        "laque_brillant": "Gloss lacquer",
+        "bois_massif": "Solid wood",
+        "stratifie": "Laminate",
+        "pvc": "PVC"
+      },
+      "croquis": "Your sketch",
+      "croquisAide": "Draw the layout you have in mind, however rough.",
+      "croquisInvite": "Draw here with your finger or the mouse",
+      "croquisEffacer": "Clear the drawing",
+      "photos": "Your photos",
+      "photosAide": "Your current kitchen, a plan, or images that inspire you.",
+      "photoTropGrosse": "“{nom}” is over 8 MB.",
+      "modele_cuisine": "The model you like",
+      "modele_dressing": "The dressing type",
+      "modeleAide_cuisine": "Seven ranges — pick the one you like, then its colours.",
+      "modeleAide_dressing": "Three configurations — open, sliding or hinged.",
+      "croquisOuvrir": "Draw my idea",
+      "croquisFermer": "Close and clear the drawing"
+    }
+  },
+  "sequences": {
+    "title": "WhatsApp Sequences",
+    "sousTitreSimulation": "Simulation mode: the tool works everything out, you press send.",
+    "sousTitreActif": "Gateway connected — sequences send on their own.",
+    "tabs": {
+      "messages": "Messages",
+      "activation": "Automated message activation",
+      "textes": "Message texts"
+    },
+    "intro": "Each row is an automation you switch on or off. Until the gateway is connected, switching one on fills your WhatsApp chats — it sends nothing by itself.",
+    "nouvelle": "New sequence",
+    "vide": "No sequences yet. Create one — it will do nothing until you have read it back in the queue.",
+    "desactivee": "Off",
+    "desactiver": "Turn off",
+    "activer": "Turn on",
+    "fenetre": "Between {debut}:00 and {fin}:00",
+    "enFile": "{count, plural, =0 {Nothing queued} one {# message queued} other {# messages queued}}",
+    "modeleIntrouvable": "Template not found",
+    "supprimerTitre": "Delete this sequence?",
+    "supprimerTexte": "“{nom}” and its steps will be removed. Messages already sent stay in the log.",
+    "modes": {
+      "simulation": "Simulation",
+      "actif": "Live"
+    },
+    "declencheurs": {
+      "fiche_creee": "When the lead is created",
+      "stage_atteint": "When a stage is reached",
+      "rdv_planifie": "Around an appointment",
+      "devis_sans_reponse": "Quote with no reply",
+      "pause_reprise": "When a pause runs out",
+      "apres_signature": "After signature",
+      "client_inactif": "Client gone quiet"
+    },
+    "declencheursAide": {
+      "fiche_creee": "As soon as a lead lands in “new contact”. Stops if the lead moves on.",
+      "stage_atteint": "When the lead reaches the chosen stage, whatever route it took.",
+      "rdv_planifie": "Anchored to the appointment time. A negative delay sends before: −1 day is the evening before.",
+      "devis_sans_reponse": "The quote is out and the client has not moved since the silence threshold.",
+      "pause_reprise": "On the day a paused lead's follow-up date comes around.",
+      "apres_signature": "Once the deal is signed: thanks, then a check-in after installation.",
+      "client_inactif": "Nothing has moved on the lead since the silence threshold, and it is neither signed nor lost."
+    },
+    "categories": {
+      "relance": "Follow-ups",
+      "rdv": "Appointments",
+      "devis": "Quotes",
+      "apres_vente": "After-sales",
+      "courtoisie": "Courtesy"
+    },
+    "statuts": {
+      "simule": "Simulated",
+      "planifie": "Scheduled",
+      "envoye": "Sent",
+      "repondu": "Replied",
+      "echec": "Failed",
+      "annule": "Cancelled"
+    },
+    "editeur": {
+      "titreCreation": "New sequence",
+      "titreEdition": "Edit sequence",
+      "intro": "Three questions: what sets it off, what it says, and when it goes quiet.",
+      "nom": "Sequence name",
+      "nomPlaceholder": "New lead — the first 72 hours",
+      "nomExiste": "A sequence already has that name.",
+      "description": "Description",
+      "quand": "When it fires",
+      "declencheur": "Trigger",
+      "stageCible": "Pipeline stage",
+      "stageCiblePlaceholder": "Pick a stage",
+      "seuil": "Silence threshold (days)",
+      "seuilAide": "The sequence only arms if nothing has moved on the lead for this many days.",
+      "etapes": "What it sends",
+      "ajouterEtape": "Add a step",
+      "retirerEtape": "Remove this step",
+      "modele": "Message template",
+      "jours": "Days",
+      "heures": "Hours",
+      "etapesAide": "The delay counts from the trigger. Negative means before: −1 day reminds a client the evening before.",
+      "gardeFous": "Guardrails",
+      "pasAvant": "Not before",
+      "pasApres": "Not after",
+      "maxMessages": "Maximum",
+      "stopSiReponse": "Stop if the client replies",
+      "stopSiStage": "Stop if the lead changes stage",
+      "exclureVendredi": "Not on Friday",
+      "exclureDimanche": "Not on Sunday",
+      "portee": "Scope",
+      "tousLesPdv": "All showrooms"
+    },
+    "modeles": {
+      "intro": "The message texts, written once and reviewed by management. Fix a text here and every chat using it follows.",
+      "nouveau": "New template",
+      "vide": "No templates. One agreed message beats nine improvised ones.",
+      "usage": "{count, plural, one {Used in # step} other {Used in # steps}}",
+      "inutilise": "Unused",
+      "titreCreation": "New template",
+      "titreEdition": "Edit template",
+      "editeurIntro": "Write it the way you would say it. The preview shows the message as it will arrive.",
+      "libelle": "Template name",
+      "categorie": "Category",
+      "code": "Code",
+      "codeAide": "The identifier people quote in meetings. Lowercase and dashes, never changed afterwards.",
+      "codeExiste": "That code is already taken.",
+      "corps": "Message",
+      "variableInconnue": "Unknown variable: {variables}. It would reach the client exactly as written.",
+      "apercu": "Preview",
+      "apercuVide": "Write the message to see it appear here."
+    },
+    "chat": {
+      "discussions": "Chats",
+      "rechercher": "Search a client",
+      "aucunResultat": "No chat matches.",
+      "choisirDiscussion": "Pick a chat to see the thread.",
+      "aucuneConversation": "No conversations",
+      "aucuneConversationAide": "Nothing has gone out and nothing is scheduled. Switch a sequence on, or wait for a lead to arrive.",
+      "bandeauTitre": "Manual sending.",
+      "bandeauTexte": "The gateway is not connected: the tool writes the message and picks the time, you press send. The thread fills up exactly as it will once automated.",
+      "envoyer": "Send",
+      "copier": "Copy the text",
+      "enRetard": "Overdue",
+      "prevuPour": "Scheduled for {quand}",
+      "rienEnAttente": "Nothing scheduled for this client.",
+      "sansNumero": "No mobile",
+      "sansNumeroAide": "This client has no mobile number — nothing can go out.",
+      "clientARepondu": "The client replied — the sequence stops here.",
+      "blocages": {
+        "sans_telephone": "No mobile",
+        "variables_manquantes": "Missing fields"
+      },
+      "accueilTitre": "CUISINA WhatsApp Messages",
+      "accueilPied": "Nothing goes out without your say-so."
+    }
+  },
+  "parametres": {
+    "title": "Settings",
+    "subtitle": "Your profile, the app's appearance and its language.",
+    "profil": {
+      "title": "Profile",
+      "description": "The name shown to your team and on your fiches.",
+      "prenom": "First name",
+      "nom": "Last name"
+    },
+    "apparence": {
+      "title": "Appearance",
+      "description": "Choose the app's theme — more themes are on the way.",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark"
+      }
+    },
+    "langue": {
+      "title": "Language",
+      "description": "The interface language — saved to your profile."
+    }
+  },
+  "errors": {
+    "db": "Could not save. Try again, then tell an administrator if it keeps failing.",
+    "db_droits": "You do not have rights on this record. Ask your manager to reassign it to you.",
+    "db_doublon": "This item already exists. Check the list before creating it again.",
+    "db_champ_manquant": "A required field is empty. Fill it in and try again.",
+    "db_reference_absente": "A linked item is missing (profile or point of sale). Tell an administrator.",
+    "db_valeur_refusee": "That value was rejected. Check your entry.",
+    "db_valeur_invalide": "A value is malformed. Check the dates and numbers.",
+    "db_introuvable": "Not found — it may have been deleted in the meantime.",
+    "no_point_de_vente": "Your profile is not linked to any point of sale, so a record cannot be created. Ask an administrator to attach you to a showroom.",
+    "unauthenticated": "Your session has expired. Please sign in again.",
+    "validation": "Some fields are invalid. Correct them and try again.",
+    "not_found": "Record not found."
+  },
+  "production": {
+    "title": "Active client",
+    "subtitle": "Production tracking, once the file has been sent.",
+    "empty": "No file at this stage.",
+    "entreLe": "Entered on {date}",
+    "voirDossier": "View the sales file",
+    "remarques": "Notes",
+    "etapes": {
+      "bureau_ordre": "Registry office",
+      "bureau_etude": "Design office",
+      "approvisionnement": "Supply",
+      "achat": "Purchasing",
+      "production": "Production",
+      "planification": "Scheduling"
+    },
+    "deplacer": "Move"
+  },
+  "acces": {
+    "refuseTitre": "Restricted section",
+    "refuseTexte": "Your role does not give access to this section. If you think this is a mistake, ask your manager to check your permissions.",
+    "retour": "Back to the dashboard"
+  },
+  "catalogue": {
+    "nbCouleurs": "{count} colours",
+    "couleursDe": "{modele} colours",
+    "couleursAide": "Several colours may be selected.",
+    "titre_cuisine": "Kitchen model",
+    "titre_dressing": "Dressing model",
+    "aide_cuisine": "The model chosen with the client, and its front colours. From the CUISINA catalogue.",
+    "aide_dressing": "The dressing type chosen with the client. Only the hinged one comes in colours."
+  },
+  "contact": {
+    "question": "How would you rather be contacted?",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "emailLabel": "Your email address",
+    "whatsappRepris": "We will use {numero}.",
+    "mobileDabord": "Enter a mobile number first."
   }
 }

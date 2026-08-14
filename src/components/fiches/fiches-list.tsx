@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useDraggable,
   useDroppable,
@@ -26,10 +26,11 @@ import {
   type StageReason,
 } from "@/components/pipeline/stage-reason-dialog";
 import { formatDate } from "@/lib/dates";
-import { cn, formatDT } from "@/lib/utils";
+import { cn, formatDT, messageErreur } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { GradeBadge } from "@/components/ui/grade-badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -55,14 +56,16 @@ export type StageBadgeVariant =
 export function stageBadgeVariant(stage: StageOrPerdu): StageBadgeVariant {
   switch (stage) {
     case "signe":
+    case "releve_definitif":
+    case "dossier_envoye":
       return "vert";
     case "perdu":
       return "rouge";
-    case "devis_envoye":
-    case "negociation":
+    case "conception_devis":
+    case "cloture":
       return "chene";
-    case "nouveau_contact":
-    case "contacte":
+    case "nouveau_lead":
+    case "releve_preliminaire":
       return "default";
     default:
       return "outline";
@@ -82,31 +85,6 @@ function StageChip({ stage }: { stage: StageOrPerdu }) {
         ●
       </span>
       {t(`stages.${stage}`)}
-    </span>
-  );
-}
-
-function gradeOf(score: number): { letter: string; className: string } {
-  if (score >= 85) return { letter: "A", className: "bg-emerald-500" };
-  if (score >= 70) return { letter: "B", className: "bg-lime-500" };
-  if (score >= 50) return { letter: "C", className: "bg-amber-500" };
-  return { letter: "D", className: "bg-red-400" };
-}
-
-function GradeBadge({ score }: { score: number }) {
-  const grade = gradeOf(score);
-  return (
-    <span className="inline-flex items-center gap-1.5">
-      <span className="font-semibold tabular-nums">{score}</span>
-      <span
-        aria-hidden
-        className={cn(
-          "grid size-5 place-items-center rounded-md text-[11px] font-bold text-white",
-          grade.className,
-        )}
-      >
-        {grade.letter}
-      </span>
     </span>
   );
 }
@@ -151,9 +129,6 @@ function ProjectChips({ fiche }: { fiche: FicheRow }) {
   }
   if (fiche.nb_dressings > 0) {
     chips.push(t("pipeline.projectChips.dressing", { n: fiche.nb_dressings }));
-  }
-  if (fiche.nb_sdb > 0) {
-    chips.push(t("pipeline.projectChips.sdb", { n: fiche.nb_sdb }));
   }
   if (chips.length === 0) {
     return <span className="text-muted-foreground">—</span>;
@@ -296,10 +271,12 @@ export function FichesList({
     return map;
   }, [filtered]);
 
+  // Not PointerSensor: on touch it races native scrolling and dies on
+  // pointercancel. Touch goes through the long-press TouchSensor alone.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
-      activationConstraint: { delay: 200, tolerance: 8 },
+      activationConstraint: { delay: 200, tolerance: 10 },
     }),
   );
 
@@ -374,7 +351,7 @@ export function FichesList({
       if (!result.ok) {
         setFiches(previous);
         setError(
-          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+          messageErreur(t, result.error),
         );
       }
     });
@@ -768,7 +745,7 @@ function DraggableRow({
               {...listeners}
               onClick={(e) => e.stopPropagation()}
               aria-label={`${t("fiches.columns.stage")} — ${fiche.client_nom}`}
-              className="grid size-7 cursor-grab place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground active:cursor-grabbing"
+              className="drag-item grid size-7 cursor-grab touch-none place-items-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground active:cursor-grabbing"
             >
               <GripVertical className="size-4" />
             </button>

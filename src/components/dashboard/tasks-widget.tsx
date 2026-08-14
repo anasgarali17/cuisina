@@ -8,7 +8,7 @@ import { formatDate, startOfToday } from "@/lib/dates";
 import type { TacheRow } from "@/lib/database.types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import { cn, messageErreur } from "@/lib/utils";
 
 /** Today's and overdue tasks, checkable inline with optimistic state. */
 export function TasksWidget({
@@ -41,7 +41,7 @@ export function TasksWidget({
           return set;
         });
         setError(
-          result.error === "demo_mode" ? t("app.demoReadOnly") : t("app.error"),
+          messageErreur(t, result.error),
         );
       }
     });
