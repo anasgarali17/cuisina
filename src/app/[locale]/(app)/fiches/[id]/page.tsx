@@ -7,7 +7,9 @@ import { supabaseConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/dates";
 import { CroquisPad } from "@/components/fiches/croquis-pad";
 import { DetailTabs } from "@/components/fiches/detail-tabs";
+import { FicheActionsBar } from "@/components/fiches/fiche-actions-bar";
 import { FichePaper } from "@/components/fiches/fiche-paper";
+import { PiecesJointesPanel } from "@/components/fiches/pieces-jointes-panel";
 import { SuiviPanel } from "@/components/fiches/suivi-panel";
 import { ExportPdfButton } from "@/components/fiches/export-pdf-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +28,7 @@ export default async function FicheDetailPage({
   if (!profile) return null;
   if (!detail) notFound();
 
-  const { fiche, historique, relances } = detail;
+  const { fiche, historique, relances, pieces } = detail;
 
   const [profiles, pdvs] = await Promise.all([listProfiles(), listPdvs()]);
   const names = Object.fromEntries(
@@ -36,18 +38,50 @@ export default async function FicheDetailPage({
     pdvs.find((p) => p.id === fiche.point_de_vente_id)?.nom ?? "—";
 
   let photoUrl: string | null = null;
-  if (fiche.photo_fiche_url && supabaseConfigured()) {
+  /**
+   * Les liens de téléchargement des pièces jointes.
+   *
+   * Le bucket est privé : un chemin ne s'ouvre pas tout seul. On signe au
+   * serveur, pour une heure — assez pour consulter un plan pendant un
+   * rendez-vous, trop peu pour qu'une URL copiée circule ensuite.
+   */
+  const liensPieces: Record<string, string> = {};
+  if (supabaseConfigured()) {
     const supabase = await createClient();
-    const { data } = await supabase.storage
-      .from("fiches")
-      .createSignedUrl(fiche.photo_fiche_url, 3600);
-    photoUrl = data?.signedUrl ?? null;
+
+    if (fiche.photo_fiche_url) {
+      const { data } = await supabase.storage
+        .from("fiches")
+        .createSignedUrl(fiche.photo_fiche_url, 3600);
+      photoUrl = data?.signedUrl ?? null;
+    }
+
+    if (pieces.length > 0) {
+      const { data } = await supabase.storage
+        .from("fiches-pieces")
+        .createSignedUrls(
+          pieces.map((p) => p.chemin),
+          3600,
+        );
+      // `createSignedUrls` rend les résultats dans l'ordre demandé, et met
+      // `signedUrl` à null pour un objet absent — un fichier effacé du bucket
+      // ne doit pas priver les autres de leur lien.
+      (data ?? []).forEach((entree, i) => {
+        const piece = pieces[i];
+        if (piece && entree?.signedUrl) liensPieces[piece.id] = entree.signedUrl;
+      });
+    }
   }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div>
-        <div className="no-print mb-4 flex justify-end">
+        <div className="no-print mb-4 flex flex-wrap items-center justify-end gap-2">
+          <FicheActionsBar
+            ficheId={fiche.id}
+            clientNom={fiche.client_nom}
+            reference={fiche.reference}
+          />
           <ExportPdfButton
             fiche={fiche}
             conseillerName={names[fiche.conseiller_id] ?? "—"}
@@ -74,6 +108,14 @@ export default async function FicheDetailPage({
       </div>
 
       <div className="no-print space-y-4">
+        {/* Les pièces jointes en haut de colonne : un plan reçu après la
+            saisie est ce qu'on vient chercher le plus souvent sur cet écran. */}
+        <PiecesJointesPanel
+          ficheId={fiche.id}
+          pieces={pieces}
+          liens={liensPieces}
+        />
+
         {photoUrl && (
           <Card>
             <CardHeader>

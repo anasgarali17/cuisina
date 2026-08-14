@@ -12,6 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import {
   computeScoreCompletude,
+  exigencesSchema,
   ficheIdentiteSchema,
   ficheOrigineSchema,
   EXIGENCES_VIDES,
@@ -23,6 +24,7 @@ import {
   type Origine,
   type TypeProjet,
 } from "@/lib/domain";
+import type { FicheRow } from "@/lib/database.types";
 import { formatDate } from "@/lib/dates";
 import { cn, messageErreur } from "@/lib/utils";
 import {
@@ -104,6 +106,7 @@ export function FicheWizard({
   pdvName,
   visuels,
   pdvs = [],
+  fiche = null,
 }: {
   conseillerName: string;
   pdvName: string;
@@ -111,42 +114,64 @@ export function FicheWizard({
   pdvs?: { id: string; nom: string; ville: string }[];
   /** Photos du catalogue presentes sur le disque — voir catalogue-server.ts. */
   visuels: string[];
+  /**
+   * La fiche a modifier. Null = creation.
+   *
+   * Le meme assistant sert dans les deux sens : un conseiller qui s'est
+   * trompe d'etage ou de teinte ne devrait pas avoir a resaisir la fiche
+   * entiere, et deux formulaires paralleles auraient diverge des la
+   * premiere evolution du catalogue.
+   */
+  fiche?: FicheRow | null;
 }) {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+  const modeEdition = fiche !== null;
 
   const [step, setStep] = useState(0);
   const [identite, setIdentite] = useState<Identite>({
-    client_nom: "",
-    tel_domicile: "",
-    tel_bureau: "",
-    tel_mobile: "",
-    whatsapp: false,
-    email: "",
-    adresse_complete: "",
-    ville: "",
+    client_nom: fiche?.client_nom ?? "",
+    tel_domicile: fiche?.tel_domicile ?? "",
+    tel_bureau: fiche?.tel_bureau ?? "",
+    tel_mobile: fiche?.tel_mobile ?? "",
+    whatsapp: fiche?.whatsapp ?? false,
+    email: fiche?.email ?? "",
+    adresse_complete: fiche?.adresse_complete ?? "",
+    ville: fiche?.ville ?? "",
   });
-  const [origine, setOrigine] = useState<Origine | null>(null);
+  const [origine, setOrigine] = useState<Origine | null>(fiche?.origine ?? null);
   /** Plus de sous-question : le detail reste vide, la colonne l accepte. */
   const origineDetail = null;
   const [projet, setProjet] = useState<Projet>({
-    nb_cuisines: 0,
-    nb_dressings: 0,
-    date_livraison: "",
+    nb_cuisines: fiche?.nb_cuisines ?? 0,
+    nb_dressings: fiche?.nb_dressings ?? 0,
+    date_livraison: fiche?.date_livraison_souhaitee ?? "",
   });
-  const [exigences, setExigences] = useState<Exigences>(EXIGENCES_VIDES);
-  const [signature, setSignature] = useState<string | null>(null);
+  const [exigences, setExigences] = useState<Exigences>(() => {
+    // Une fiche ancienne peut porter un jsonb d'une version precedente : on
+    // repart des valeurs vides plutot que de faire echouer l'ecran entier.
+    const parsed = exigencesSchema.safeParse(fiche?.exigences);
+    return parsed.success ? parsed.data : EXIGENCES_VIDES;
+  });
+  const [signature, setSignature] = useState<string | null>(
+    fiche?.signature ?? null,
+  );
   const [pieces, setPieces] = useState<PieceJointeLocale[]>([]);
-  const [modele, setModele] = useState<string | null>(null);
-  const [couleurs, setCouleurs] = useState<string[]>([]);
+  const [modele, setModele] = useState<string | null>(fiche?.modele ?? null);
+  const [couleurs, setCouleurs] = useState<string[]>(fiche?.couleurs ?? []);
   /**
    * Le canal choisi est un etat a part entiere, pas une deduction.
    * Le deduire de l e-mail rendait « E-mail » inselectionnable : le champ
    * part vide, donc la deduction retombait aussitot sur « rien de choisi »
    * et la zone de saisie ne s ouvrait jamais.
+   *
+   * A l'ouverture d'une fiche existante, en revanche, il n'y a rien d'autre
+   * a lire que ce qu'elle porte : WhatsApp coche, ou un e-mail renseigne.
    */
-  const [canalContact, setCanalContact] = useState<CanalPrefere>(null);
+  const [canalContact, setCanalContact] = useState<CanalPrefere>(
+    fiche?.whatsapp ? "whatsapp" : fiche?.email ? "email" : null,
+  );
   const [pdvChoisi, setPdvChoisi] = useState<string | null>(null);
   /** Un Set ne traverse pas la frontiere serveur/client : on le reconstruit. */
   const visuelsSet = useMemo(() => new Set(visuels), [visuels]);
@@ -165,7 +190,7 @@ export function FicheWizard({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const savedIdRef = useRef<string | null>(null);
+  const savedIdRef = useRef<string | null>(fiche?.id ?? null);
   const dirtyRef = useRef(false);
   const stateRef = useRef({
     identite,
@@ -343,7 +368,11 @@ export function FicheWizard({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">
-              {t("fiches.wizard.title")}
+              {modeEdition
+                ? t("fiches.wizard.titleEdition", {
+                    reference: fiche.reference,
+                  })
+                : t("fiches.wizard.title")}
             </h1>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {t("fiches.wizard.stepOf", {
@@ -538,7 +567,11 @@ export function FicheWizard({
                   {t("fiches.wizard.dateContact")}
                 </dt>
                 <dd className="font-medium">
-                  {formatDate(new Date(), "d MMM yyyy", locale)}
+                  {formatDate(
+                    fiche ? fiche.created_at : new Date(),
+                    "d MMM yyyy",
+                    locale,
+                  )}
                 </dd>
               </div>
             </dl>
@@ -709,14 +742,27 @@ export function FicheWizard({
 
       {/* — Sticky footer — */}
       <div className="sticky bottom-14 z-20 -mx-4 mt-4 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-3 backdrop-blur md:bottom-0 md:-mx-6 md:px-6">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-          className={cn(step === 0 && "invisible")}
-        >
-          {t("app.previous")}
-        </Button>
+        {/* En modification, la premiere etape n'a pas de « Precedent » — mais
+            elle a besoin d'une sortie : sans elle, on ne quitte l'assistant
+            qu'en enregistrant. */}
+        {step === 0 && modeEdition ? (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => router.push(`/fiches/${fiche.id}`)}
+          >
+            {t("app.cancel")}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            className={cn(step === 0 && "invisible")}
+          >
+            {t("app.previous")}
+          </Button>
+        )}
         <Button
           type="button"
           onClick={isLast ? submit : next}
@@ -725,8 +771,14 @@ export function FicheWizard({
         >
           {isLast
             ? submitting
-              ? t("fiches.wizard.creating")
-              : t("fiches.wizard.create")
+              ? t(
+                  modeEdition
+                    ? "fiches.wizard.saving"
+                    : "fiches.wizard.creating",
+                )
+              : t(
+                  modeEdition ? "fiches.wizard.save" : "fiches.wizard.create",
+                )
             : t("app.next")}
         </Button>
       </div>

@@ -2,6 +2,7 @@ import "server-only";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { FACADES, TOUS_VISUELS } from "@/lib/catalogue";
+import { imageCouleur, TOUTES_TEINTES } from "@/lib/couleurs";
 
 /**
  * Quels visuels du catalogue sont réellement sur le disque.
@@ -16,6 +17,12 @@ import { FACADES, TOUS_VISUELS } from "@/lib/catalogue";
  */
 export function visuelsDisponibles(): string[] {
   const racine = join(process.cwd(), "public");
-  const tous = [...TOUS_VISUELS, ...FACADES.map((f) => f.image)];
+  const tous = [
+    ...TOUS_VISUELS,
+    ...FACADES.map((f) => f.image),
+    // Les échantillons de teinte : absents, la pastille reste calculée en
+    // CSS. Présents, ils la remplacent par la vraie matière.
+    ...TOUTES_TEINTES.map(imageCouleur),
+  ];
   return tous.filter((chemin) => existsSync(join(racine, chemin)));
 }

@@ -25,10 +25,6 @@ import {
   type DashboardSection,
 } from "@/components/dashboard/section-switcher";
 import { PastelKpi } from "@/components/dashboard/pastel-kpi";
-import {
-  ActivityChart,
-  type ActivityPoint,
-} from "@/components/dashboard/activity-chart";
 import { PipelineCounters } from "@/components/dashboard/pipeline-counters";
 import { Echeances, type EcheanceItem } from "@/components/dashboard/echeances";
 import {
@@ -37,10 +33,6 @@ import {
 } from "@/components/dashboard/insights-panel";
 import { AgendaJour } from "@/components/dashboard/agenda-jour";
 import { TasksWidget } from "@/components/dashboard/tasks-widget";
-import {
-  Classement,
-  type ClassementRow,
-} from "@/components/dashboard/classement";
 import { LatestFiches } from "@/components/dashboard/latest-fiches";
 import { RdvDemain } from "@/components/dashboard/rdv-demain";
 import {
@@ -137,33 +129,6 @@ export default async function MaJourneePage({
     (sum, f) => sum + (f.budget_estimatif ?? 0),
     0,
   );
-
-  /*
-   * Les fiches signées ce mois. La carte « CA signé » a disparu du tableau de
-   * bord, mais le classement de la direction s'appuie encore sur cet ensemble
-   * — c'est la seule raison de le calculer ici.
-   */
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const signedThisMonth = new Set(
-    historique
-      .filter(
-        (h) => h.stage_to === "signe" && new Date(h.created_at) >= monthStart,
-      )
-      .map((h) => h.fiche_id),
-  );
-
-  /* — Nouvelles fiches, 30 jours (area chart) — */
-  const fiches30d: ActivityPoint[] = [];
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    fiches30d.push({
-      d: formatDate(d, "d MMM", locale),
-      label: formatDate(d, "d", locale),
-      v: fiches.filter((f) => f.created_at.slice(0, 10) === key).length,
-    });
-  }
 
   /* — Valeur pipeline — */
   const valeurPipeline = activeFiches.reduce(
@@ -297,61 +262,6 @@ export default async function MaJourneePage({
       task.echeance !== null &&
       new Date(task.echeance) <= today,
   );
-
-  /* — Classement (chef / direction) — */
-  let classement: ClassementRow[] | null = null;
-  if (profile.role !== "conseiller") {
-    const conseillers = profiles.filter(
-      (p) =>
-        p.role === "conseiller" &&
-        (profile.role !== "chef_showroom" ||
-          p.point_de_vente_id === profile.point_de_vente_id),
-    );
-    classement = conseillers
-      .map((p) => {
-        const own = fiches.filter((f) => f.conseiller_id === p.id);
-        const ownRecent = own.filter((f) => new Date(f.created_at) >= since90);
-        const ca = [...signedThisMonth].reduce((sum, id) => {
-          const fiche = ficheById.get(id);
-          return fiche?.conseiller_id === p.id
-            ? sum + (fiche.budget_estimatif ?? 0)
-            : sum;
-        }, 0);
-        const withDevis = own.filter(
-          (f) => f.date_effective_remise_devis !== null,
-        );
-        const delai =
-          withDevis.length > 0
-            ? Math.round(
-                withDevis.reduce(
-                  (sum, f) =>
-                    sum +
-                    daysBetween(
-                      f.created_at,
-                      f.date_effective_remise_devis as string,
-                    ),
-                  0,
-                ) / withDevis.length,
-              )
-            : null;
-        return {
-          id: p.id,
-          nom: p.nom,
-          prenom: p.prenom,
-          ca,
-          conversion:
-            ownRecent.length > 0
-              ? Math.round(
-                  (ownRecent.filter((f) => f.stage === "signe").length /
-                    ownRecent.length) *
-                    100,
-                )
-              : 0,
-          delai,
-        };
-      })
-      .sort((a, b) => b.ca - a.ca);
-  }
 
   const conseillerNames = Object.fromEntries(
     profiles.map((p) => [p.id, `${p.prenom} ${p.nom}`]),
@@ -523,13 +433,12 @@ export default async function MaJourneePage({
     },
     /*
      * L'ordre de la journée, de haut en bas : ce qui dérape d'abord, puis ce
-     * qu'il y a à faire aujourd'hui et à préparer pour demain. La courbe vient
-     * après — elle explique le mois, elle ne dit pas quoi faire dans l'heure,
-     * et occuper le haut de l'écran avec un contexte fait descendre l'action
-     * sous la ligne de flottaison.
+     * qu'il y a à faire aujourd'hui et à préparer pour demain.
      *
-     * Les quatre tiennent dans une seule section pour qu'on ne puisse pas en
-     * masquer une en filtrant.
+     * « Activité du showroom » vivait ici et a rejoint Conseillers & Points de
+     * Vente, avec le classement : ces deux-là mesurent l'équipe sur un mois,
+     * pas la journée d'une personne, et ils occupaient l'écran que le
+     * conseiller ouvre le matin pour savoir quoi faire dans l'heure.
      */
     {
       id: "courbe",
@@ -543,16 +452,6 @@ export default async function MaJourneePage({
             <TasksWidget taches={widgetTaches} ficheNames={ficheNames} />
             <RdvDemain rdv={rdvDemain} />
           </div>
-
-          <ActivityChart
-            data={fiches30d}
-            title={t("dashboard.hub.activite")}
-            subtitle={t("dashboard.hub.activiteSub")}
-            label7={t("dashboard.hub.jours7")}
-            label30={t("dashboard.hub.jours30")}
-            seriesLabel={t("dashboard.hub.fichesJour")}
-            trendLabel={t("dashboard.hub.tendance")}
-          />
 
           <TableauHebdo semaines={semaines} />
         </div>
@@ -580,16 +479,6 @@ export default async function MaJourneePage({
         </div>
       ),
     },
-    ...(classement && classement.length > 0
-      ? [
-          {
-            id: "classement",
-            emoji: "🏆",
-            label: t("dashboard.views.classement"),
-            content: <Classement rows={classement} />,
-          },
-        ]
-      : []),
     {
       id: "fiches",
       emoji: "🗂️",

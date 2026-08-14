@@ -194,7 +194,10 @@
       },
       "telBureau": "Téléphone bureau",
       "whatsapp": "Joignable sur WhatsApp",
-      "pdvChoisir": "Choisir un showroom…"
+      "pdvChoisir": "Choisir un showroom…",
+      "titleEdition": "Fiche {reference}",
+      "save": "Enregistrer les modifications",
+      "saving": "Enregistrement…"
     },
     "exigences": {
       "finitionFacade": "Finition Façade",
@@ -354,7 +357,21 @@
       "titre": "Pièces jointes",
       "ajouter": "Ajouter",
       "vide": "Aucun document. Plans, photos de chantier, devis reçus…",
-      "tropGros": "« {nom} » dépasse 10 Mo."
+      "tropGros": "« {nom} » dépasse 10 Mo.",
+      "envoi": "Envoi…",
+      "echecEnvoi": "L'envoi de « {nom} » a échoué. Réessayez.",
+      "ouvrir": "Ouvrir « {nom} »",
+      "retirer": "Retirer « {nom} »"
+    },
+    "supprimer": {
+      "titre": "Supprimer cette fiche ?",
+      "confirmation": "La fiche {reference} de {client} sera supprimée définitivement.",
+      "perteHistorique": "L'historique du dossier et les relances consignées",
+      "pertePieces": "Les pièces jointes et la photo de la fiche papier",
+      "perteTaches": "Les tâches et rappels liés à cette fiche",
+      "irreversible": "Cette action est irréversible. Le client, lui, reste au fichier.",
+      "confirmer": "Supprimer définitivement",
+      "enCours": "Suppression…"
     }
   },
   "canaux": {
