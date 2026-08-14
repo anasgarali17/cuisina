@@ -88,17 +88,37 @@ export async function saveFiche(
     modele: draft.modele,
     couleurs: draft.couleurs ?? [],
     signature: draft.signature,
-    // L'horodatage suit la signature, et disparaît si elle est effacée.
-    signature_le: draft.signature ? new Date().toISOString() : null,
     score_completude: score,
   };
 
   const supabase = await createClient();
 
   if (id) {
+    /*
+     * L'horodatage suit la signature, et disparaît si elle est effacée — mais
+     * il ne se remet pas à l'heure à chaque enregistrement. L'autosave tourne
+     * toutes les vingt secondes : dater la signature à « maintenant » sans
+     * regarder l'ancienne faisait qu'une fiche simplement rouverte pour
+     * corriger une faute de frappe voyait sa date de signature avancer, et le
+     * PDF partait avec la mauvaise.
+     */
+    const { data: avant } = await supabase
+      .from("fiches_contact")
+      .select("signature, signature_le")
+      .eq("id", id)
+      .single();
+
+    const signatureInchangee =
+      avant != null && avant.signature === draft.signature;
+    const signature_le = !draft.signature
+      ? null
+      : signatureInchangee && avant.signature_le
+        ? avant.signature_le
+        : new Date().toISOString();
+
     const { data, error } = await supabase
       .from("fiches_contact")
-      .update(row)
+      .update({ ...row, signature_le })
       .eq("id", id)
       .select("id, reference")
       .single();
@@ -111,6 +131,8 @@ export async function saveFiche(
     .from("fiches_contact")
     .insert({
       ...row,
+      // À la création, la signature — si elle est déjà posée — date d'ici.
+      signature_le: draft.signature ? new Date().toISOString() : null,
       conseiller_id: profile.id,
       point_de_vente_id: pointDeVente,
     })
@@ -170,13 +192,93 @@ export async function supprimerPieceJointe(
   if (!profile) return fail("unauthenticated");
 
   const supabase = await createClient();
+
+  // Le chemin d'abord : une fois la ligne partie, plus rien ne dit où le
+  // fichier dort, et il occuperait le bucket pour toujours.
+  const { data: piece } = await supabase
+    .from("fiche_pieces_jointes")
+    .select("chemin")
+    .eq("id", parsed.data.id)
+    .single();
+
   const { error } = await supabase
     .from("fiche_pieces_jointes")
     .delete()
     .eq("id", parsed.data.id);
   if (error) return fail(dbError(error));
 
+  /*
+   * Le fichier suit la ligne, au mieux. Le bucket n'autorise la suppression
+   * qu'à qui a déposé (`storage.foldername(name)[1] = auth.uid()`) : un chef
+   * qui retire la pièce d'un conseiller efface la référence sans effacer
+   * l'objet. On ne fait pas échouer la suppression pour autant — la pièce a
+   * disparu de la fiche, ce qui était la demande.
+   */
+  if (piece?.chemin) {
+    await supabase.storage.from("fiches-pieces").remove([piece.chemin]);
+  }
+
   revalidatePath(`/fiches/${parsed.data.fiche_id}`);
+  return succeed(undefined);
+}
+
+/**
+ * Supprime une fiche contact, définitivement.
+ *
+ * Tout ce qui pend à la fiche part avec elle : l'historique, les relances,
+ * les pièces jointes et les tâches, par les `on delete cascade` du schéma.
+ * Le client déjà créé à la signature, lui, reste — c'est une entité à part,
+ * et une affaire supprimée par erreur ne doit pas emporter le fichier client.
+ *
+ * Qui a le droit est décidé par la RLS (voir 0019), pas ici : une garde en
+ * TypeScript se contourne en appelant l'action directement.
+ */
+export async function supprimerFiche(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const supabase = await createClient();
+
+  // Les pièces jointes ne sont pas dans la base mais dans le bucket : la
+  // cascade emporte les lignes, pas les fichiers. On les retire avant.
+  const { data: pieces } = await supabase
+    .from("fiche_pieces_jointes")
+    .select("chemin")
+    .eq("fiche_id", parsed.data.id);
+  const chemins = (pieces ?? []).map((p) => p.chemin).filter(Boolean);
+  if (chemins.length > 0) {
+    await supabase.storage.from("fiches-pieces").remove(chemins);
+  }
+
+  const { data: fiche } = await supabase
+    .from("fiches_contact")
+    .select("photo_fiche_url")
+    .eq("id", parsed.data.id)
+    .single();
+  if (fiche?.photo_fiche_url) {
+    await supabase.storage.from("fiches").remove([fiche.photo_fiche_url]);
+  }
+
+  /*
+   * `count` plutôt que la seule absence d'erreur : la RLS ne refuse pas un
+   * DELETE qu'elle interdit, elle le rend sans effet. Sans ce compte, une
+   * suppression refusée pour cause de droits repartait en succès, la page se
+   * fermait, et la fiche était toujours là au rafraîchissement.
+   */
+  const { error, count } = await supabase
+    .from("fiches_contact")
+    .delete({ count: "exact" })
+    .eq("id", parsed.data.id);
+  if (error) return fail(dbError(error));
+  if (!count) return fail("db_droits");
+
+  revalidatePath("/", "layout");
   return succeed(undefined);
 }
 

@@ -194,7 +194,10 @@
       },
       "telBureau": "Office phone",
       "whatsapp": "Reachable on WhatsApp",
-      "pdvChoisir": "Choose a showroom…"
+      "pdvChoisir": "Choose a showroom…",
+      "titleEdition": "Fiche {reference}",
+      "save": "Save changes",
+      "saving": "Saving…"
     },
     "exigences": {
       "finitionFacade": "Front Finish",
@@ -354,7 +357,21 @@
       "titre": "Attachments",
       "ajouter": "Add",
       "vide": "No documents yet. Plans, site photos, quotes received…",
-      "tropGros": "“{nom}” is over 10 MB."
+      "tropGros": "“{nom}” is over 10 MB.",
+      "envoi": "Uploading…",
+      "echecEnvoi": "Uploading “{nom}” failed. Try again.",
+      "ouvrir": "Open “{nom}”",
+      "retirer": "Remove “{nom}”"
+    },
+    "supprimer": {
+      "titre": "Delete this fiche?",
+      "confirmation": "Fiche {reference} for {client} will be permanently deleted.",
+      "perteHistorique": "The pipeline history and every logged follow-up",
+      "pertePieces": "The attachments and the photo of the paper sheet",
+      "perteTaches": "The tasks and reminders tied to this fiche",
+      "irreversible": "This cannot be undone. The client record itself is kept.",
+      "confirmer": "Delete permanently",
+      "enCours": "Deleting…"
     }
   },
   "canaux": {

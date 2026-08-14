@@ -194,7 +194,10 @@
       },
       "telBureau": "هاتف المكتب",
       "whatsapp": "متاح على واتساب",
-      "pdvChoisir": "اختر صالة عرض…"
+      "pdvChoisir": "اختر صالة عرض…",
+      "titleEdition": "Fiche {reference}",
+      "save": "حفظ التعديلات",
+      "saving": "جارٍ الحفظ…"
     },
     "exigences": {
       "finitionFacade": "تشطيب الواجهة",
@@ -354,7 +357,21 @@
       "titre": "المرفقات",
       "ajouter": "إضافة",
       "vide": "لا توجد مستندات. مخططات، صور الورشة، عروض مستلمة…",
-      "tropGros": "«{nom}» يتجاوز 10 ميغابايت."
+      "tropGros": "«{nom}» يتجاوز 10 ميغابايت.",
+      "envoi": "جارٍ الإرسال…",
+      "echecEnvoi": "فشل إرسال «{nom}». حاول مرة أخرى.",
+      "ouvrir": "فتح «{nom}»",
+      "retirer": "إزالة «{nom}»"
+    },
+    "supprimer": {
+      "titre": "حذف هذه الـ fiche؟",
+      "confirmation": "سيتم حذف الـ fiche رقم {reference} الخاصة بـ {client} نهائيًا.",
+      "perteHistorique": "سجلّ الملف وجميع المتابعات المسجّلة",
+      "pertePieces": "المرفقات وصورة الورقة الأصلية",
+      "perteTaches": "المهام والتذكيرات المرتبطة بهذه الـ fiche",
+      "irreversible": "لا يمكن التراجع عن هذا الإجراء. أمّا بطاقة العميل فتبقى محفوظة.",
+      "confirmer": "حذف نهائي",
+      "enCours": "جارٍ الحذف…"
     }
   },
   "canaux": {
