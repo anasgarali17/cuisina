@@ -159,7 +159,7 @@
       "title": "Fiche Contact",
       "step1": "Identity",
       "step2": "Contact origin",
-      "step3": "Project",
+      "step3": "Appointment",
       "step4": "Client Requirements",
       "stepOf": "Step {current} of {total}",
       "clientNom": "Client name",
@@ -190,7 +190,10 @@
         "telephone_invalide": "Invalid number — digits only.",
         "email_invalide": "Invalid email address.",
         "origine_requise": "Choose an origin.",
-        "origine_detail_requise": "Specify the origin."
+        "origine_detail_requise": "Specify the origin.",
+        "rdv_jour": "Pick the day of the appointment.",
+        "rdv_heure": "Pick the time of the appointment.",
+        "rdv_conflit": "This slot overlaps an appointment you already have. Pick another one."
       },
       "telBureau": "Office phone",
       "whatsapp": "Reachable on WhatsApp",
@@ -372,6 +375,26 @@
       "irreversible": "This cannot be undone. The client record itself is kept.",
       "confirmer": "Delete permanently",
       "enCours": "Deleting…"
+    },
+    "rdv": {
+      "titre": "The appointment",
+      "aide": "Book it now, with {client} in front of you — it goes straight into your calendar.",
+      "leClient": "the client",
+      "type": "Appointment type",
+      "jour": "Day",
+      "aujourdhui": "Today",
+      "libre": "free",
+      "nbRdv": "{n} appt.",
+      "autreJour": "Another day…",
+      "journeeDu": "Your day on {date}",
+      "journeeVide": "Nothing booked — the day is yours.",
+      "heure": "Time",
+      "creneauxAide": "Struck-through slots are already taken and cannot be picked.",
+      "duree": "Duration",
+      "minutes": "{n} min",
+      "conflit": "Busy: “{titre}” from {debut} to {fin}. Pick another slot.",
+      "recap": "Appointment on {date}, from {debut} to {fin}.",
+      "notes": "Notes for the appointment"
     }
   },
   "canaux": {

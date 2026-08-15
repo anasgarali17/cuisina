@@ -31,6 +31,16 @@ import {
   PiecesJointes,
   type PieceJointeLocale,
 } from "@/components/fiches/pieces-jointes";
+import {
+  EtapeRendezVous,
+  RDV_VIDE,
+  rdvIncomplet,
+  titreRdv,
+  type CreneauOccupe,
+  type RdvDraft,
+} from "@/components/fiches/etape-rendez-vous";
+import { createRdv } from "@/lib/actions/rdv-actions";
+import { tzInstant } from "@/lib/tz";
 import { SignaturePad } from "@/components/fiches/signature-pad";
 import { ChoixModele } from "@/components/catalogue/choix-modele";
 import {
@@ -73,8 +83,13 @@ interface Projet {
  * Deux etapes, pas quatre. La FO-COM-02 papier en comptait quatre parce
  * qu elle tenait sur deux feuilles ; un ecran n a pas cette contrainte, et
  * chaque « Continuer » est une occasion d abandonner la saisie.
+ *
+ * La troisieme n apparait qu a la creation : elle pose le rendez-vous. En
+ * modification, la fiche a deja le sien — le reproposer en creerait un second
+ * a chaque correction de faute de frappe.
  */
-const STEPS = ["step1", "step2"] as const;
+const STEPS_CREATION = ["step1", "step2", "step3"] as const;
+const STEPS_EDITION = ["step1", "step2"] as const;
 
 function toDraft(
   identite: Identite,
@@ -106,6 +121,8 @@ export function FicheWizard({
   pdvName,
   visuels,
   pdvs = [],
+  occupes = [],
+  aujourdHui = "",
   fiche = null,
 }: {
   conseillerName: string;
@@ -114,6 +131,16 @@ export function FicheWizard({
   pdvs?: { id: string; nom: string; ville: string }[];
   /** Photos du catalogue presentes sur le disque — voir catalogue-server.ts. */
   visuels: string[];
+  /**
+   * Les rendez-vous deja pris par ce conseiller, pour l etape 3.
+   *
+   * Calcules au serveur et reduits au strict necessaire : le conseiller doit
+   * voir son agenda pour ne pas poser deux clients a la meme heure, pas
+   * telecharger toute la table.
+   */
+  occupes?: CreneauOccupe[];
+  /** Jour courant au showroom, calcule au serveur — voir plus bas. */
+  aujourdHui?: string;
   /**
    * La fiche a modifier. Null = creation.
    *
@@ -128,8 +155,10 @@ export function FicheWizard({
   const locale = useLocale();
   const router = useRouter();
   const modeEdition = fiche !== null;
+  const STEPS = modeEdition ? STEPS_EDITION : STEPS_CREATION;
 
   const [step, setStep] = useState(0);
+  const [rdv, setRdv] = useState<RdvDraft>(RDV_VIDE);
   const [identite, setIdentite] = useState<Identite>({
     client_nom: fiche?.client_nom ?? "",
     tel_domicile: fiche?.tel_domicile ?? "",
@@ -288,6 +317,21 @@ export function FicheWizard({
         return false;
       }
     }
+    /*
+     * L'etape du rendez-vous, a la creation : elle ne se passe pas.
+     *
+     * Un chevauchement bloque au meme titre qu'un champ vide — c'est tout
+     * l'objet de l'ecran. La fiche, elle, est deja enregistree en brouillon
+     * par l'autosave : personne ne perd sa saisie parce que le creneau visé
+     * etait pris.
+     */
+    if (!modeEdition && STEPS[current] === "step3") {
+      const manque = rdvIncomplet(rdv, occupes);
+      if (manque) {
+        setErrors({ rdv: `rdv_${manque}` });
+        return false;
+      }
+    }
     return true;
   }
 
@@ -350,6 +394,34 @@ export function FicheWizard({
         // Best-effort, comme la photo.
       }
     }
+
+    /*
+     * Le rendez-vous, lui, n'est pas « au mieux ».
+     *
+     * C'est la raison d'etre de l'etape : une fiche creee sans le rendez-vous
+     * qu'on vient de convenir avec le client devant soi, c'est un client qui
+     * se presentera un jour ou personne ne l'attend. En cas d'echec on reste
+     * donc sur l'ecran, avec le message — la fiche est deja enregistree, et
+     * relancer l'envoi la mettra a jour au lieu de la dupliquer.
+     */
+    if (!modeEdition) {
+      const debut = tzInstant(rdv.day, rdv.heure);
+      const resultRdv = await createRdv({
+        titre: titreRdv(identite.client_nom, t(`rdv.types.${rdv.type}`)),
+        type: rdv.type,
+        debut: debut.toISOString(),
+        fin: new Date(debut.getTime() + rdv.duree * 60_000).toISOString(),
+        fiche_id: ficheId,
+        point_de_vente_id: pdvChoisi,
+        notes: rdv.notes,
+      });
+      if (!resultRdv.ok) {
+        setSubmitting(false);
+        setSubmitError(messageErreur(t, resultRdv.error));
+        return;
+      }
+    }
+
     router.push(`/fiches/${ficheId}`);
   }
 
@@ -732,7 +804,24 @@ export function FicheWizard({
             />
           </div>
         )}
+
+        {/* — Le rendez-vous, uniquement a la creation — */}
+        {!modeEdition && step === 2 && (
+          <EtapeRendezVous
+            valeur={rdv}
+            onChange={setRdv}
+            occupes={occupes}
+            clientNom={identite.client_nom}
+            aujourdHui={aujourdHui}
+          />
+        )}
       </Card>
+
+      {errors.rdv && (
+        <p role="alert" className="mt-3 text-sm font-medium text-rouge">
+          {t(`fiches.wizard.errors.${errors.rdv}`)}
+        </p>
+      )}
 
       {submitError && (
         <p role="alert" className="mt-3 text-sm font-medium text-rouge">

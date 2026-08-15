@@ -159,7 +159,7 @@
       "title": "Fiche Contact",
       "step1": "Identité",
       "step2": "Origine du contact",
-      "step3": "Projet",
+      "step3": "Rendez-vous",
       "step4": "Exigences Client",
       "stepOf": "Étape {current} sur {total}",
       "clientNom": "Nom du client",
@@ -190,7 +190,10 @@
         "telephone_invalide": "Numéro invalide — chiffres uniquement.",
         "email_invalide": "Adresse e-mail invalide.",
         "origine_requise": "Choisissez une origine.",
-        "origine_detail_requise": "Précisez l'origine."
+        "origine_detail_requise": "Précisez l'origine.",
+        "rdv_jour": "Choisissez le jour du rendez-vous.",
+        "rdv_heure": "Choisissez l'heure du rendez-vous.",
+        "rdv_conflit": "Ce créneau chevauche un rendez-vous déjà pris. Choisissez-en un autre."
       },
       "telBureau": "Téléphone bureau",
       "whatsapp": "Joignable sur WhatsApp",
@@ -372,6 +375,26 @@
       "irreversible": "Cette action est irréversible. Le client, lui, reste au fichier.",
       "confirmer": "Supprimer définitivement",
       "enCours": "Suppression…"
+    },
+    "rdv": {
+      "titre": "Le rendez-vous",
+      "aide": "Fixez-le maintenant, avec {client} devant vous — il part directement dans votre agenda.",
+      "leClient": "le client",
+      "type": "Type de rendez-vous",
+      "jour": "Jour",
+      "aujourdhui": "Auj.",
+      "libre": "libre",
+      "nbRdv": "{n} RDV",
+      "autreJour": "Un autre jour…",
+      "journeeDu": "Votre journée du {date}",
+      "journeeVide": "Rien de prévu — la journée est à vous.",
+      "heure": "Heure",
+      "creneauxAide": "Les créneaux barrés sont déjà pris : ils ne se choisissent pas.",
+      "duree": "Durée",
+      "minutes": "{n} min",
+      "conflit": "Occupé : « {titre} » de {debut} à {fin}. Choisissez un autre créneau.",
+      "recap": "Rendez-vous le {date}, de {debut} à {fin}.",
+      "notes": "Notes pour le rendez-vous"
     }
   },
   "canaux": {
