@@ -230,6 +230,14 @@ export async function supprimerPieceJointe(
  * Le client déjà créé à la signature, lui, reste — c'est une entité à part,
  * et une affaire supprimée par erreur ne doit pas emporter le fichier client.
  *
+ * Les rendez-vous, en revanche, demandent un geste : `rendez_vous.fiche_id`
+ * est en `on delete set null` (0001), donc la cascade les détache au lieu de
+ * les emporter. Tant que les rendez-vous se saisissaient à la main, un
+ * fantôme dans l'agenda restait l'exception ; depuis que la création de fiche
+ * en pose un systématiquement, supprimer une fiche en double laissait un
+ * créneau bloqué et un client attendu que plus rien ne rattachait à un
+ * dossier. On les retire donc explicitement, avant la fiche.
+ *
  * Qui a le droit est décidé par la RLS (voir 0019), pas ici : une garde en
  * TypeScript se contourne en appelant l'action directement.
  */
@@ -245,31 +253,36 @@ export async function supprimerFiche(
 
   const supabase = await createClient();
 
-  // Les pièces jointes ne sont pas dans la base mais dans le bucket : la
-  // cascade emporte les lignes, pas les fichiers. On les retire avant.
-  const { data: pieces } = await supabase
-    .from("fiche_pieces_jointes")
-    .select("chemin")
-    .eq("fiche_id", parsed.data.id);
-  const chemins = (pieces ?? []).map((p) => p.chemin).filter(Boolean);
-  if (chemins.length > 0) {
-    await supabase.storage.from("fiches-pieces").remove(chemins);
-  }
-
-  const { data: fiche } = await supabase
-    .from("fiches_contact")
-    .select("photo_fiche_url")
-    .eq("id", parsed.data.id)
-    .single();
-  if (fiche?.photo_fiche_url) {
-    await supabase.storage.from("fiches").remove([fiche.photo_fiche_url]);
-  }
+  /*
+   * On relève d'abord ce qu'il faudra retirer, sans rien détruire.
+   *
+   * Les trois lectures sont indépendantes : les enchaîner ajoutait deux
+   * allers-retours à une action qui en compte déjà plusieurs. Il faut les
+   * faire maintenant — après la suppression, `rendez_vous.fiche_id` est
+   * remis à NULL par la contrainte et plus rien ne relie les créneaux à la
+   * fiche.
+   */
+  const [{ data: pieces }, { data: fiche }, { data: rdv }] = await Promise.all([
+    supabase
+      .from("fiche_pieces_jointes")
+      .select("chemin")
+      .eq("fiche_id", parsed.data.id),
+    supabase
+      .from("fiches_contact")
+      .select("photo_fiche_url")
+      .eq("id", parsed.data.id)
+      .single(),
+    supabase.from("rendez_vous").select("id").eq("fiche_id", parsed.data.id),
+  ]);
 
   /*
+   * La fiche part en premier, et rien d'autre ne bouge tant qu'elle tient.
+   *
    * `count` plutôt que la seule absence d'erreur : la RLS ne refuse pas un
    * DELETE qu'elle interdit, elle le rend sans effet. Sans ce compte, une
    * suppression refusée pour cause de droits repartait en succès, la page se
-   * fermait, et la fiche était toujours là au rafraîchissement.
+   * fermait, et la fiche était toujours là au rafraîchissement — pendant que
+   * ses rendez-vous et ses pièces jointes, eux, avaient bel et bien disparu.
    */
   const { error, count } = await supabase
     .from("fiches_contact")
@@ -277,6 +290,25 @@ export async function supprimerFiche(
     .eq("id", parsed.data.id);
   if (error) return fail(dbError(error));
   if (!count) return fail("db_droits");
+
+  /*
+   * La fiche n'existe plus : on peut nettoyer ce que la cascade ne prend pas.
+   * Les rendez-vous, détachés et non supprimés (`on delete set null`), et les
+   * objets des buckets, que Postgres ne voit pas.
+   */
+  const chemins = (pieces ?? []).map((p) => p.chemin).filter(Boolean);
+  const rdvIds = (rdv ?? []).map((r) => r.id);
+  await Promise.all([
+    chemins.length > 0
+      ? supabase.storage.from("fiches-pieces").remove(chemins)
+      : null,
+    fiche?.photo_fiche_url
+      ? supabase.storage.from("fiches").remove([fiche.photo_fiche_url])
+      : null,
+    rdvIds.length > 0
+      ? supabase.from("rendez_vous").delete().in("id", rdvIds)
+      : null,
+  ]);
 
   revalidatePath("/", "layout");
   return succeed(undefined);

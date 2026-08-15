@@ -50,6 +50,18 @@ const PAS = 30;
 
 const DUREES = [30, 45, 60, 90, 120];
 
+/**
+ * Les créneaux de la journée, calculés une fois pour toutes.
+ *
+ * Ouverture, fermeture et pas sont des constantes : reconstruire les
+ * vingt-quatre valeurs à chaque frappe dans les notes ne changeait rien
+ * qu'une nouvelle liste à comparer pour React.
+ */
+const CRENEAUX: readonly number[] = Array.from(
+  { length: (FERMETURE - OUVERTURE) / PAS },
+  (_, i) => OUVERTURE + i * PAS,
+);
+
 /** Jours proposés d'un coup, sans ouvrir le calendrier. */
 const JOURS_RAPIDES = 7;
 
@@ -149,9 +161,6 @@ export function EtapeRendezVous({
   /** Un créneau de 30 min est pris s'il tombe dans un rendez-vous existant. */
   const estPris = (debut: number) =>
     duJour.some((o) => debut < o.fin && debut + PAS > o.debut);
-
-  const creneaux: number[] = [];
-  for (let m = OUVERTURE; m < FERMETURE; m += PAS) creneaux.push(m);
 
   return (
     <div className="space-y-6">
@@ -270,7 +279,7 @@ export function EtapeRendezVous({
           <div className="space-y-2">
             <Label>{t("fiches.rdv.heure")}</Label>
             <div className="flex flex-wrap gap-1.5">
-              {creneaux.map((m) => {
+              {CRENEAUX.map((m) => {
                 const pris = estPris(m);
                 const choisi = debutChoisi === m;
                 return (

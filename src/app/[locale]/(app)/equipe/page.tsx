@@ -113,9 +113,61 @@ export default async function EquipePage({
    * répertoire est lisible par tous, et sans ce filtre un chef verrait les
    * conseillers des huit autres showrooms, tous à zéro.
    */
-  const since90 = new Date(now);
-  since90.setDate(since90.getDate() - 90);
+  const since90 = new Date(now).setDate(now.getDate() - 90);
 
+  /*
+   * Un seul passage sur les fiches, puis un sur les signatures.
+   *
+   * La version d'origine rebalayait toutes les fiches et toutes les
+   * signatures du mois pour chaque conseiller : avec neuf showrooms, c'est le
+   * même travail refait autant de fois qu'il y a de vendeurs. Ici chaque
+   * ligne est visitée une fois et rangée dans le seau de son conseiller.
+   */
+  interface Cumul {
+    ca: number;
+    recentes: number;
+    recentesSignees: number;
+    devis: number;
+    delaiTotal: number;
+  }
+  const vide = (): Cumul => ({
+    ca: 0,
+    recentes: 0,
+    recentesSignees: 0,
+    devis: 0,
+    delaiTotal: 0,
+  });
+  const cumuls = new Map<string, Cumul>();
+  const cumul = (id: string) => {
+    const trouve = cumuls.get(id);
+    if (trouve) return trouve;
+    const neuf = vide();
+    cumuls.set(id, neuf);
+    return neuf;
+  };
+
+  for (const f of fiches) {
+    const c = cumul(f.conseiller_id);
+    if (new Date(f.created_at).getTime() >= since90) {
+      c.recentes += 1;
+      if (f.stage === "signe") c.recentesSignees += 1;
+    }
+    if (f.date_effective_remise_devis !== null) {
+      c.devis += 1;
+      c.delaiTotal += daysBetween(f.created_at, f.date_effective_remise_devis);
+    }
+  }
+  for (const h of signedThisMonth) {
+    const fiche = ficheById.get(h.fiche_id);
+    if (fiche) cumul(fiche.conseiller_id).ca += fiche.budget_estimatif ?? 0;
+  }
+
+  /*
+   * Le chef de showroom ne voit que son équipe ; la direction, tout le monde.
+   * La RLS a déjà borné `fiches` et `historique`, mais pas `profiles` : le
+   * répertoire est lisible par tous, et sans ce filtre un chef verrait les
+   * conseillers des huit autres showrooms, tous à zéro.
+   */
   const classement: ClassementRow[] = profiles
     .filter(
       (p) =>
@@ -124,45 +176,17 @@ export default async function EquipePage({
           p.point_de_vente_id === profile.point_de_vente_id),
     )
     .map((p) => {
-      const own = fiches.filter((f) => f.conseiller_id === p.id);
-      const ownRecent = own.filter((f) => new Date(f.created_at) >= since90);
-      const ca = signedThisMonth.reduce((sum, h) => {
-        const fiche = ficheById.get(h.fiche_id);
-        return fiche?.conseiller_id === p.id
-          ? sum + (fiche.budget_estimatif ?? 0)
-          : sum;
-      }, 0);
-      const withDevis = own.filter(
-        (f) => f.date_effective_remise_devis !== null,
-      );
-      const delai =
-        withDevis.length > 0
-          ? Math.round(
-              withDevis.reduce(
-                (sum, f) =>
-                  sum +
-                  daysBetween(
-                    f.created_at,
-                    f.date_effective_remise_devis as string,
-                  ),
-                0,
-              ) / withDevis.length,
-            )
-          : null;
+      const c = cumuls.get(p.id) ?? vide();
       return {
         id: p.id,
         nom: p.nom,
         prenom: p.prenom,
-        ca,
+        ca: c.ca,
         conversion:
-          ownRecent.length > 0
-            ? Math.round(
-                (ownRecent.filter((f) => f.stage === "signe").length /
-                  ownRecent.length) *
-                  100,
-              )
+          c.recentes > 0
+            ? Math.round((c.recentesSignees / c.recentes) * 100)
             : 0,
-        delai,
+        delai: c.devis > 0 ? Math.round(c.delaiTotal / c.devis) : null,
       };
     })
     .sort((a, b) => b.ca - a.ca);

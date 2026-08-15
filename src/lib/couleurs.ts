@@ -28,7 +28,21 @@ export interface Teinte {
  * parenthèses. « Bleu (sur commande) » et « bleu » désignent la même teinte,
  * et le catalogue écrit « Crème » ici, « Creme » là.
  */
+/**
+ * Les clés déjà calculées.
+ *
+ * Le nuancier ne compte que trente-cinq noms, mais chaque pastille demande sa
+ * clé à chaque rendu — et un écran de catalogue en affiche une cinquantaine.
+ * La normalisation NFD et son parcours caractère par caractère se refaisaient
+ * donc des centaines de fois pour un ensemble de valeurs qui, lui, ne change
+ * jamais.
+ */
+const CLES = new Map<string, string>();
+
 export function cleCouleur(nom: string): string {
+  const connu = CLES.get(nom);
+  if (connu !== undefined) return connu;
+
   let sortie = "";
   for (const caractere of nom.replace(/\(.*?\)/g, "").normalize("NFD")) {
     const code = caractere.codePointAt(0) ?? 0;
@@ -39,7 +53,9 @@ export function cleCouleur(nom: string): string {
     if (code >= 0x0300 && code <= 0x036f) continue;
     sortie += caractere;
   }
-  return sortie.trim().toLowerCase();
+  const cle = sortie.trim().toLowerCase();
+  CLES.set(nom, cle);
+  return cle;
 }
 
 const TEINTES: Record<string, Teinte> = {

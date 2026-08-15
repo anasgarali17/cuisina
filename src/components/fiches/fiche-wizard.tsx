@@ -375,20 +375,25 @@ export function FicheWizard({
           data: { user },
         } = await supabase.auth.getUser();
         if (user) {
-          for (const p of pieces) {
-            const chemin = `${user.id}/${ficheId}/${Date.now()}-${p.fichier.name}`;
-            const { error } = await supabase.storage
-              .from("fiches-pieces")
-              .upload(chemin, p.fichier, { upsert: false });
-            if (error) continue;
-            await enregistrerPieceJointe({
-              fiche_id: ficheId,
-              chemin,
-              nom_fichier: p.fichier.name,
-              type_mime: p.fichier.type || null,
-              taille_octets: p.fichier.size,
-            });
-          }
+          // Ensemble plutot qu'a la file : cinq photos de chantier faisaient
+          // attendre la somme des cinq envois pour rien.
+          const horodatage = Date.now();
+          await Promise.all(
+            pieces.map(async (p, i) => {
+              const chemin = `${user.id}/${ficheId}/${horodatage}-${i}-${p.fichier.name}`;
+              const { error } = await supabase.storage
+                .from("fiches-pieces")
+                .upload(chemin, p.fichier, { upsert: false });
+              if (error) return;
+              await enregistrerPieceJointe({
+                fiche_id: ficheId,
+                chemin,
+                nom_fichier: p.fichier.name,
+                type_mime: p.fichier.type || null,
+                taille_octets: p.fichier.size,
+              });
+            }),
+          );
         }
       } catch {
         // Best-effort, comme la photo.

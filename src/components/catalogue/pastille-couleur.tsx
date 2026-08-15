@@ -24,7 +24,10 @@ export function PastilleCouleur({
   className?: string;
 }) {
   const teinte = teinteDe(nom);
-  const photo = visuels?.has(imageCouleur(nom)) ? imageCouleur(nom) : null;
+  // `imageCouleur` normalise le nom : l'appeler deux fois refaisait le travail
+  // pour en jeter la moitié.
+  const echantillon = imageCouleur(nom);
+  const photo = visuels?.has(echantillon) ? echantillon : null;
 
   return (
     <span
@@ -46,12 +49,32 @@ export function PastilleCouleur({
 }
 
 /**
+ * Les fonds déjà composés, par teinte et finition.
+ *
+ * Un dégradé de bois enchaîne six mélanges et deux gradients écrits à la
+ * main ; une grille de catalogue affiche cinquante pastilles, et React les
+ * redessine à chaque frappe dans le formulaire. Le résultat ne dépend que de
+ * la teinte et de la finition — deux valeurs figées — donc il se calcule une
+ * fois et se relit ensuite.
+ */
+const FONDS = new Map<string, React.CSSProperties>();
+
+/**
  * Le fond d'une pastille : la teinte, plus ce que la finition lui fait.
  *
  * Tout se joue en dégradés CSS — pas d'image à charger pour trente-cinq
  * pastilles, et le rendu reste net à n'importe quelle taille.
  */
 function fondDe(hex: string, finition: Finition): React.CSSProperties {
+  const cle = `${hex}|${finition}`;
+  const connu = FONDS.get(cle);
+  if (connu) return connu;
+  const calcule = composerFond(hex, finition);
+  FONDS.set(cle, calcule);
+  return calcule;
+}
+
+function composerFond(hex: string, finition: Finition): React.CSSProperties {
   switch (finition) {
     /* Le reflet d'une laque : une bande claire en diagonale. */
     case "brillant":

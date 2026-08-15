@@ -72,25 +72,39 @@ export function PiecesJointesPanel({
         setErreur(messageErreur(t, "unauthenticated"));
         return;
       }
-      for (const fichier of liste) {
-        // Le dossier porte l'uid : c'est ce que la policy du bucket vérifie.
-        const chemin = `${user.id}/${ficheId}/${Date.now()}-${fichier.name}`;
-        const { error } = await supabase.storage
-          .from("fiches-pieces")
-          .upload(chemin, fichier, { upsert: false });
-        if (error) {
-          setErreur(t("fiches.pieces.echecEnvoi", { nom: fichier.name }));
-          continue;
-        }
-        const result = await enregistrerPieceJointe({
-          fiche_id: ficheId,
-          chemin,
-          nom_fichier: fichier.name,
-          type_mime: fichier.type || null,
-          taille_octets: fichier.size,
-        });
-        if (!result.ok) setErreur(messageErreur(t, result.error));
-      }
+      /*
+       * Les fichiers montent ensemble.
+       *
+       * En série, déposer les cinq photos d'un chantier faisait attendre la
+       * somme des cinq envois alors qu'ils ne dépendent pas les uns des
+       * autres. Un échec reste isolé : il se dit, et n'emporte pas les
+       * autres — c'est déjà ce que faisait la boucle, en plus lent.
+       */
+      const horodatage = Date.now();
+      const echecs = await Promise.all(
+        [...liste].map(async (fichier, i) => {
+          // Le dossier porte l'uid : c'est ce que la policy du bucket vérifie.
+          // L'index départage deux fichiers homonymes envoyés dans la même
+          // milliseconde, que `Date.now()` seul aurait fait se recouvrir.
+          const chemin = `${user.id}/${ficheId}/${horodatage}-${i}-${fichier.name}`;
+          const { error } = await supabase.storage
+            .from("fiches-pieces")
+            .upload(chemin, fichier, { upsert: false });
+          if (error) {
+            return t("fiches.pieces.echecEnvoi", { nom: fichier.name });
+          }
+          const result = await enregistrerPieceJointe({
+            fiche_id: ficheId,
+            chemin,
+            nom_fichier: fichier.name,
+            type_mime: fichier.type || null,
+            taille_octets: fichier.size,
+          });
+          return result.ok ? null : messageErreur(t, result.error);
+        }),
+      );
+      const premierEchec = echecs.find((e) => e !== null);
+      if (premierEchec) setErreur(premierEchec);
       router.refresh();
     } finally {
       setEnCours(false);
