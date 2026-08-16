@@ -20,7 +20,9 @@ import {
 } from "@/lib/schemas/fiche";
 import {
   ORIGINES,
+  TYPES_CAISSON_DRESSING,
   type Origine,
+  type TypeCaissonDressing,
   type TypeProjet,
 } from "@/lib/domain";
 import { formatDate } from "@/lib/dates";
@@ -65,6 +67,7 @@ interface Projet {
   nb_cuisines: number;
   nb_dressings: number;
   date_livraison: string;
+  budget_estimatif: number | null;
 }
 
 /**
@@ -91,6 +94,7 @@ function toDraft(
       nb_cuisines: projet.nb_cuisines,
       nb_dressings: projet.nb_dressings,
       date_livraison_souhaitee: projet.date_livraison || null,
+      budget_estimatif: projet.budget_estimatif,
     },
     exigences,
     signature,
@@ -134,6 +138,7 @@ export function FicheWizard({
     nb_cuisines: 0,
     nb_dressings: 0,
     date_livraison: "",
+    budget_estimatif: null,
   });
   const [exigences, setExigences] = useState<Exigences>(EXIGENCES_VIDES);
   const [signature, setSignature] = useState<string | null>(null);
@@ -667,20 +672,35 @@ export function FicheWizard({
               />
             </section>
 
-            <ExigencesStep
-              exigences={exigences}
-              onChange={(e) => {
-                setExigences(e);
-                markDirty();
-              }}
-              photoPreview={photoPreview}
-              photoName={photo?.name ?? null}
-              onPhoto={(file) => {
-                setPhoto(file);
-                if (photoPreview) URL.revokeObjectURL(photoPreview);
-                setPhotoPreview(file ? URL.createObjectURL(file) : null);
-              }}
-            />
+            {typeProjetFiche === "cuisine" ? (
+              <ExigencesStep
+                exigences={exigences}
+                onChange={(e) => {
+                  setExigences(e);
+                  markDirty();
+                }}
+                photoPreview={photoPreview}
+                photoName={photo?.name ?? null}
+                onPhoto={(file) => {
+                  setPhoto(file);
+                  if (photoPreview) URL.revokeObjectURL(photoPreview);
+                  setPhotoPreview(file ? URL.createObjectURL(file) : null);
+                }}
+              />
+            ) : (
+              <DressingStep
+                exigences={exigences}
+                budget={projet.budget_estimatif}
+                onChangeExigences={(e) => {
+                  setExigences(e);
+                  markDirty();
+                }}
+                onChangeBudget={(v) => {
+                  setProjet({ ...projet, budget_estimatif: v });
+                  markDirty();
+                }}
+              />
+            )}
 
             <PiecesJointes
               pieces={pieces}
@@ -817,6 +837,63 @@ function ExigencesStep({
             <span className="text-xs text-muted-foreground">{photoName}</span>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* — Step 4, côté dressing — le pendant de ExigencesStep, pour un projet qui
+     n'a ni façade à finir ni électroménager à choisir : la matière du
+     caisson, le budget et ce que le client veut y ranger. — */
+function DressingStep({
+  exigences,
+  budget,
+  onChangeExigences,
+  onChangeBudget,
+}: {
+  exigences: Exigences;
+  budget: number | null;
+  onChangeExigences: (e: Exigences) => void;
+  onChangeBudget: (v: number | null) => void;
+}) {
+  const t = useTranslations("fiches.exigences");
+  const d = exigences.details_dressing;
+  const set = (patch: Partial<typeof d>) =>
+    onChangeExigences({ ...exigences, details_dressing: { ...d, ...patch } });
+
+  return (
+    <div>
+      <ColumnTitle>{t("detailsDressing")}</ColumnTitle>
+      <OptionRow
+        label={t("typeCaisson")}
+        options={TYPES_CAISSON_DRESSING.map((v) => ({ value: v, label: t(v) }))}
+        value={d.type_caisson}
+        onSelect={(v) => set({ type_caisson: v as TypeCaissonDressing })}
+      />
+      <div className="mb-4 space-y-1.5 sm:max-w-xs">
+        <Label htmlFor="w-budget-dressing">{t("budgetEstimatif")}</Label>
+        <Input
+          id="w-budget-dressing"
+          type="number"
+          min={0}
+          step={100}
+          value={budget ?? ""}
+          onChange={(e) =>
+            onChangeBudget(e.target.value === "" ? null : Number(e.target.value))
+          }
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="w-besoins-dressing">{t("descriptionBesoins")}</Label>
+        <p className="mb-1 text-xs text-muted-foreground">
+          {t("descriptionBesoinsAide")}
+        </p>
+        <Textarea
+          id="w-besoins-dressing"
+          className="min-h-20 text-sm"
+          value={d.description_besoins}
+          onChange={(e) => set({ description_besoins: e.target.value })}
+        />
       </div>
     </div>
   );

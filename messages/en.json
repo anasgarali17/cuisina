@@ -230,7 +230,15 @@
       "ilotCentral": "Central island",
       "autresDetails": "Other details",
       "oui": "Yes",
-      "non": "No"
+      "non": "No",
+      "detailsDressing": "Dressing configuration",
+      "typeCaisson": "Carcass type",
+      "agglomere_standard": "Standard chipboard",
+      "mdf_hydrofuge": "Moisture-resistant MDF",
+      "contreplaque_bouleau": "Birch plywood",
+      "budgetEstimatif": "Estimated budget (DT)",
+      "descriptionBesoins": "Specific needs",
+      "descriptionBesoinsAide": "E.g.: shelves, sliding doors, height, shoe module…"
     },
     "detail": {
       "suivi": "Sales follow-up",
@@ -335,8 +343,13 @@
       "pleinEcran": "Full screen",
       "quitterPleinEcran": "Exit full screen",
       "zoomHint": "Pinch to zoom, two fingers to move around. The hand tool pans with one finger.",
-      "porte": "Door",
-      "fenetre": "Window",
+      "porteSimple": "Door",
+      "porteDouble": "Double door",
+      "coulissante": "Sliding door",
+      "fenetreSimple": "Window",
+      "fenetreDouble": "Double window",
+      "baieVitree": "French window",
+      "nord": "North",
       "sensPorte": "Opening side"
     },
     "tabs": {

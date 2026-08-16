@@ -230,7 +230,15 @@
       "ilotCentral": "Îlot central",
       "autresDetails": "Autres détails",
       "oui": "Oui",
-      "non": "Non"
+      "non": "Non",
+      "detailsDressing": "Configuration Dressing",
+      "typeCaisson": "Type de caisson",
+      "agglomere_standard": "Aggloméré standard",
+      "mdf_hydrofuge": "MDF hydrofuge",
+      "contreplaque_bouleau": "Contreplaqué bouleau",
+      "budgetEstimatif": "Budget estimé (DT)",
+      "descriptionBesoins": "Besoins spécifiques",
+      "descriptionBesoinsAide": "Ex. : étagères, portes coulissantes, hauteur, module chaussures…"
     },
     "detail": {
       "suivi": "Suivi commercial",
@@ -335,8 +343,13 @@
       "pleinEcran": "Plein écran",
       "quitterPleinEcran": "Quitter le plein écran",
       "zoomHint": "Pincez pour zoomer, deux doigts pour déplacer. L'outil main déplace le croquis à un doigt.",
-      "porte": "Porte",
-      "fenetre": "Fenêtre",
+      "porteSimple": "Porte simple",
+      "porteDouble": "Porte double",
+      "coulissante": "Coulissante",
+      "fenetreSimple": "Fenêtre",
+      "fenetreDouble": "Fenêtre double",
+      "baieVitree": "Baie vitrée",
+      "nord": "Nord",
       "sensPorte": "Sens d'ouverture"
     },
     "tabs": {

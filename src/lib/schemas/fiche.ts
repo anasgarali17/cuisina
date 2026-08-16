@@ -5,6 +5,7 @@ import {
   ORIGINES,
   ORIGINE_DETAILS,
   ALL_STAGES,
+  TYPES_CAISSON_DRESSING,
 } from "@/lib/domain";
 
 /* — Step 4 : Exigences Client (stored as jsonb) — */
@@ -38,10 +39,22 @@ export const detailsCuisineSchema = z.object({
   autres_details: z.string().max(500).default(""),
 });
 
+/**
+ * Ce qui manquait côté dressing : la matière du caisson (la façade et ses
+ * coloris sont déjà couverts par `ChoixModele`) et ce que le client cherche à
+ * ranger, en texte libre — un dressing se décrit par son usage, pas par un
+ * formulaire fermé.
+ */
+export const detailsDressingSchema = z.object({
+  type_caisson: z.enum(TYPES_CAISSON_DRESSING).nullable().default(null),
+  description_besoins: z.string().max(500).default(""),
+});
+
 export const exigencesSchema = z.object({
   finition_facade: finitionFacadeSchema.default(finitionFacadeSchema.parse({})),
   electromenager: electromenagerSchema.default(electromenagerSchema.parse({})),
   details_cuisine: detailsCuisineSchema.default(detailsCuisineSchema.parse({})),
+  details_dressing: detailsDressingSchema.default(detailsDressingSchema.parse({})),
 });
 export type Exigences = z.infer<typeof exigencesSchema>;
 
@@ -94,6 +107,7 @@ export const ficheProjetSchema = z.object({
   nb_cuisines: z.coerce.number().int().min(0).max(20).default(0),
   nb_dressings: z.coerce.number().int().min(0).max(20).default(0),
   date_livraison_souhaitee: z.string().date().nullable().default(null),
+  budget_estimatif: z.coerce.number().min(0).max(999_999).nullable().default(null),
 });
 
 /** Full wizard payload — used by the create/update Server Actions. */
@@ -195,12 +209,18 @@ export const croquisShapeSchema = z.discriminatedUnion("type", [
     couleur: z.string().max(20),
   }),
   /**
-   * Porte et fenêtre — les deux ouvertures qu'un relevé doit porter.
+   * Porte et fenêtre — les ouvertures qu'un relevé doit porter.
    *
    * Toutes deux se posent en tirant le long du mur : le segment donne à la
    * fois la position, la largeur et l'orientation, sans poignée à régler
    * ensuite. `sens` fait basculer le battant d'un côté ou de l'autre, parce
    * qu'une porte qui ouvre du mauvais côté change l'implantation des meubles.
+   *
+   * `variante` distingue les usages du même symbole de base : une porte peut
+   * être simple, double (deux vantaux) ou coulissante (pas de débattement) ;
+   * une fenêtre peut être simple, double (un meneau central) ou une baie
+   * vitrée (l'ouverture pleine hauteur). Absente sur un croquis déjà
+   * enregistré, elle vaut « simple » — l'ancien tracé reste ce qu'il était.
    */
   z.object({
     type: z.literal("porte"),
@@ -209,6 +229,7 @@ export const croquisShapeSchema = z.discriminatedUnion("type", [
     x2: z.number(),
     y2: z.number(),
     sens: z.union([z.literal(1), z.literal(-1)]).default(1),
+    variante: z.enum(["simple", "double", "coulissante"]).default("simple"),
     couleur: z.string().max(20),
     epaisseur: z.number().min(1).max(20),
     cote: z.string().max(24).default(""),
@@ -219,9 +240,17 @@ export const croquisShapeSchema = z.discriminatedUnion("type", [
     y1: z.number(),
     x2: z.number(),
     y2: z.number(),
+    variante: z.enum(["simple", "double", "baie"]).default("simple"),
     couleur: z.string().max(20),
     epaisseur: z.number().min(1).max(20),
     cote: z.string().max(24).default(""),
+  }),
+  /** Le nord — un repère posé d'un clic, pas tiré : une orientation, pas une mesure. */
+  z.object({
+    type: z.literal("nord"),
+    x: z.number(),
+    y: z.number(),
+    couleur: z.string().max(20),
   }),
 ]);
 export type CroquisShape = z.infer<typeof croquisShapeSchema>;

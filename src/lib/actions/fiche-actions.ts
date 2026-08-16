@@ -84,6 +84,7 @@ export async function saveFiche(
     nb_cuisines: draft.projet.nb_cuisines ?? 0,
     nb_dressings: draft.projet.nb_dressings ?? 0,
     date_livraison_souhaitee: draft.projet.date_livraison_souhaitee ?? null,
+    budget_estimatif: draft.projet.budget_estimatif ?? null,
     exigences: draft.exigences,
     modele: draft.modele,
     couleurs: draft.couleurs ?? [],

@@ -230,7 +230,15 @@
       "ilotCentral": "جزيرة وسطية",
       "autresDetails": "تفاصيل أخرى",
       "oui": "نعم",
-      "non": "لا"
+      "non": "لا",
+      "detailsDressing": "إعدادات الدريسينغ",
+      "typeCaisson": "نوع الهيكل",
+      "agglomere_standard": "خشب مضغوط عادي",
+      "mdf_hydrofuge": "MDF مقاوم للرطوبة",
+      "contreplaque_bouleau": "خشب أبلكاش البتولا",
+      "budgetEstimatif": "الميزانية التقديرية (DT)",
+      "descriptionBesoins": "احتياجات خاصة",
+      "descriptionBesoinsAide": "مثال: أرفف، أبواب منزلقة، الارتفاع، وحدة أحذية…"
     },
     "detail": {
       "suivi": "المتابعة التجارية",
@@ -335,8 +343,13 @@
       "pleinEcran": "ملء الشاشة",
       "quitterPleinEcran": "الخروج من ملء الشاشة",
       "zoomHint": "اقرص للتكبير، وحرّك بإصبعين. أداة اليد تحرّك الرسم بإصبع واحد.",
-      "porte": "باب",
-      "fenetre": "نافذة",
+      "porteSimple": "باب",
+      "porteDouble": "باب مزدوج",
+      "coulissante": "باب منزلق",
+      "fenetreSimple": "نافذة",
+      "fenetreDouble": "نافذة مزدوجة",
+      "baieVitree": "باب زجاجي",
+      "nord": "الشمال",
       "sensPorte": "جهة الفتح"
     },
     "tabs": {

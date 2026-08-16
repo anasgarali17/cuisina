@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   AppWindow,
+  ArrowLeftRight,
   Check,
+  Columns3,
+  Compass,
+  DoorClosed,
   DoorOpen,
   Eraser,
   FlipHorizontal,
@@ -13,6 +17,7 @@ import {
   Minimize2,
   Minus,
   Pencil,
+  RectangleHorizontal,
   RotateCcw,
   Square,
   Trash2,
@@ -37,11 +42,33 @@ type Tool =
   | "trait"
   | "rectangle"
   | "ligne"
-  | "porte"
-  | "fenetre"
+  | "porte_simple"
+  | "porte_double"
+  | "coulissante"
+  | "fenetre_simple"
+  | "fenetre_double"
+  | "baie_vitree"
+  | "nord"
   | "texte"
   | "gomme"
   | "main";
+
+/**
+ * Chaque bouton du panneau pose un symbole distinct, mais le canevas n'en
+ * connaît que deux familles (`porte`, `fenetre`) déclinées par `variante` —
+ * la géométrie de pose (tirer un segment le long du mur) est la même, seul
+ * le rendu change. `nord` est à part : un repère qu'on pose d'un clic.
+ */
+const TOOL_SHAPE: Partial<
+  Record<Tool, { type: "porte"; variante: "simple" | "double" | "coulissante" } | { type: "fenetre"; variante: "simple" | "double" | "baie" }>
+> = {
+  porte_simple: { type: "porte", variante: "simple" },
+  porte_double: { type: "porte", variante: "double" },
+  coulissante: { type: "porte", variante: "coulissante" },
+  fenetre_simple: { type: "fenetre", variante: "simple" },
+  fenetre_double: { type: "fenetre", variante: "double" },
+  baie_vitree: { type: "fenetre", variante: "baie" },
+};
 
 /** Quick presets — brand colors first, plus a full spectrum picker beside them. */
 const PRESETS = [
@@ -162,6 +189,8 @@ function hits(shape: CroquisShape, px: number, py: number, tol: number): boolean
       return (
         Math.abs(shape.x - px) < 90 + tol && Math.abs(shape.y - py) < 22 + tol
       );
+    case "nord":
+      return Math.hypot(shape.x - px, shape.y - py) < 18 + tol;
   }
 }
 
@@ -215,7 +244,7 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
   for (const s of shapes) {
     ctx.strokeStyle = s.couleur;
     ctx.fillStyle = s.couleur;
-    if (s.type !== "texte") ctx.lineWidth = s.epaisseur;
+    if (s.type !== "texte" && s.type !== "nord") ctx.lineWidth = s.epaisseur;
 
     switch (s.type) {
       case "trait": {
@@ -250,14 +279,15 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
         break;
       }
       case "porte": {
-        // Le symbole normalisé : l'ouverture dans le mur, le battant, et
-        // l'arc de débattement — c'est l'arc qui dit de quel côté ça ouvre.
+        // Le symbole normalisé : l'ouverture dans le mur, un ou deux
+        // battants, et leur arc de débattement — sauf la coulissante, qui
+        // n'a pas de débattement puisqu'elle glisse dans le mur.
         const dx = s.x2 - s.x1;
         const dy = s.y2 - s.y1;
         const largeur = Math.hypot(dx, dy);
         const angle = Math.atan2(dy, dx);
 
-        // Les deux tableaux, épais : ils interrompent le mur.
+        // Les deux tableaux, épais : ils interrompent le mur — commun aux trois.
         ctx.lineWidth = s.epaisseur * 1.6;
         for (const [cx, cy] of [
           [s.x1, s.y1],
@@ -275,38 +305,79 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
           ctx.stroke();
         }
 
-        // Le battant, perpendiculaire au mur depuis le gond.
-        const gondX = s.x1;
-        const gondY = s.y1;
-        const battantAngle = angle - (Math.PI / 2) * s.sens;
-        ctx.lineWidth = s.epaisseur;
-        ctx.beginPath();
-        ctx.moveTo(gondX, gondY);
-        ctx.lineTo(
-          gondX + largeur * Math.cos(battantAngle),
-          gondY + largeur * Math.sin(battantAngle),
-        );
-        ctx.stroke();
+        if (s.variante === "coulissante") {
+          // Un vantail qui glisse dans l'épaisseur du mur : un trait décalé,
+          // une flèche pour le sens — pas d'arc, rien ne débat.
+          const nx = -Math.sin(angle);
+          const ny = Math.cos(angle);
+          const offset = 6 * s.sens;
+          ctx.lineWidth = s.epaisseur * 1.3;
+          ctx.beginPath();
+          ctx.moveTo(s.x1 + nx * offset, s.y1 + ny * offset);
+          ctx.lineTo(s.x2 + nx * offset, s.y2 + ny * offset);
+          ctx.stroke();
 
-        // L'arc, du battant vers le mur.
-        ctx.beginPath();
-        ctx.setLineDash([6, 5]);
-        ctx.lineWidth = Math.max(1, s.epaisseur * 0.7);
-        ctx.arc(
-          gondX,
-          gondY,
-          largeur,
-          Math.min(battantAngle, angle),
-          Math.max(battantAngle, angle),
-        );
-        ctx.stroke();
-        ctx.setLineDash([]);
+          const mx = (s.x1 + s.x2) / 2 + nx * offset;
+          const my = (s.y1 + s.y2) / 2 + ny * offset;
+          const reach = Math.min(largeur / 3, 22);
+          ctx.lineWidth = Math.max(1, s.epaisseur * 0.7);
+          ctx.beginPath();
+          ctx.moveTo(mx - reach * Math.cos(angle), my - reach * Math.sin(angle));
+          ctx.lineTo(mx + reach * Math.cos(angle), my + reach * Math.sin(angle));
+          ctx.lineTo(
+            mx + reach * Math.cos(angle) - 7 * Math.cos(angle - 0.5),
+            my + reach * Math.sin(angle) - 7 * Math.sin(angle - 0.5),
+          );
+          ctx.stroke();
+        } else {
+          // Simple : un battant depuis (x1,y1). Double : deux, hinges aux
+          // deux tableaux, chacun couvrant la moitié de la largeur.
+          const battants =
+            s.variante === "double"
+              ? [
+                  { gondX: s.x1, gondY: s.y1, versAutre: angle, portee: largeur / 2 },
+                  {
+                    gondX: s.x2,
+                    gondY: s.y2,
+                    versAutre: angle + Math.PI,
+                    portee: largeur / 2,
+                  },
+                ]
+              : [{ gondX: s.x1, gondY: s.y1, versAutre: angle, portee: largeur }];
+
+          for (const { gondX, gondY, versAutre, portee } of battants) {
+            const battantAngle = versAutre - (Math.PI / 2) * s.sens;
+            ctx.lineWidth = s.epaisseur;
+            ctx.beginPath();
+            ctx.moveTo(gondX, gondY);
+            ctx.lineTo(
+              gondX + portee * Math.cos(battantAngle),
+              gondY + portee * Math.sin(battantAngle),
+            );
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.setLineDash([6, 5]);
+            ctx.lineWidth = Math.max(1, s.epaisseur * 0.7);
+            ctx.arc(
+              gondX,
+              gondY,
+              portee,
+              Math.min(battantAngle, versAutre),
+              Math.max(battantAngle, versAutre),
+            );
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
 
         drawCote(ctx, s.cote, s.x1, s.y1, s.x2, s.y2, s.couleur);
         break;
       }
       case "fenetre": {
         // Deux traits parallèles entre deux tableaux : le dormant vu en plan.
+        // La baie vitrée n'a pas de tableaux — l'ouverture est pleine largeur.
+        // La double a un meneau central : deux vantaux plutôt qu'un.
         const dx = s.x2 - s.x1;
         const dy = s.y2 - s.y1;
         const angle = Math.atan2(dy, dx);
@@ -314,14 +385,26 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
         const ny = Math.cos(angle);
         const demi = 4;
 
-        ctx.lineWidth = s.epaisseur * 1.6;
-        for (const [cx, cy] of [
-          [s.x1, s.y1],
-          [s.x2, s.y2],
-        ] as const) {
+        if (s.variante !== "baie") {
+          ctx.lineWidth = s.epaisseur * 1.6;
+          for (const [cx, cy] of [
+            [s.x1, s.y1],
+            [s.x2, s.y2],
+          ] as const) {
+            ctx.beginPath();
+            ctx.moveTo(cx - demi * nx, cy - demi * ny);
+            ctx.lineTo(cx + demi * nx, cy + demi * ny);
+            ctx.stroke();
+          }
+        }
+
+        if (s.variante === "double") {
+          const mx = (s.x1 + s.x2) / 2;
+          const my = (s.y1 + s.y2) / 2;
+          ctx.lineWidth = s.epaisseur * 1.6;
           ctx.beginPath();
-          ctx.moveTo(cx - demi * nx, cy - demi * ny);
-          ctx.lineTo(cx + demi * nx, cy + demi * ny);
+          ctx.moveTo(mx - demi * nx, my - demi * ny);
+          ctx.lineTo(mx + demi * nx, my + demi * ny);
           ctx.stroke();
         }
 
@@ -340,6 +423,26 @@ function draw(ctx: CanvasRenderingContext2D, shapes: CroquisShape[]) {
         ctx.font = "600 22px ui-sans-serif, system-ui, sans-serif";
         ctx.fillText(s.contenu, s.x, s.y);
         break;
+      case "nord": {
+        // Un repère d'orientation, pas une mesure : un cercle, une aiguille
+        // qui pointe le haut de la page — le nord du plan, pas de l'écran.
+        const R = 16;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, R, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y - R + 3);
+        ctx.lineTo(s.x - 5, s.y + 4);
+        ctx.lineTo(s.x + 5, s.y + 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.font = "700 11px ui-sans-serif, system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("N", s.x, s.y - R - 4);
+        ctx.textAlign = "start";
+        break;
+      }
     }
   }
 }
@@ -607,6 +710,12 @@ export function CroquisPad({
       return;
     }
 
+    if (tool === "nord") {
+      // Un repère, pas un tracé : il se pose d'un clic, sans qu'on ait à tirer.
+      commit([...shapes, { type: "nord", x: p.x, y: p.y, couleur }]);
+      return;
+    }
+
     drawingRef.current = true;
     startRef.current = p;
     if (tool === "trait") {
@@ -685,29 +794,34 @@ export function CroquisPad({
         epaisseur: 3,
         cote: "",
       });
-    } else if (tool === "porte") {
-      setDraftShape({
-        type: "porte",
-        x1: s.x,
-        y1: s.y,
-        x2: p.x,
-        y2: p.y,
-        sens: sensPorte,
-        couleur,
-        epaisseur: 3,
-        cote: "",
-      });
-    } else if (tool === "fenetre") {
-      setDraftShape({
-        type: "fenetre",
-        x1: s.x,
-        y1: s.y,
-        x2: p.x,
-        y2: p.y,
-        couleur,
-        epaisseur: 3,
-        cote: "",
-      });
+    } else {
+      const cible = TOOL_SHAPE[tool];
+      if (cible?.type === "porte") {
+        setDraftShape({
+          type: "porte",
+          x1: s.x,
+          y1: s.y,
+          x2: p.x,
+          y2: p.y,
+          sens: sensPorte,
+          variante: cible.variante,
+          couleur,
+          epaisseur: 3,
+          cote: "",
+        });
+      } else if (cible?.type === "fenetre") {
+        setDraftShape({
+          type: "fenetre",
+          x1: s.x,
+          y1: s.y,
+          x2: p.x,
+          y2: p.y,
+          variante: cible.variante,
+          couleur,
+          epaisseur: 3,
+          cote: "",
+        });
+      }
     }
   }
 
@@ -768,8 +882,13 @@ export function CroquisPad({
     { id: "trait", icon: Pencil, label: t("fiches.croquis.crayon") },
     { id: "rectangle", icon: Square, label: t("fiches.croquis.rectangle") },
     { id: "ligne", icon: Minus, label: t("fiches.croquis.cote") },
-    { id: "porte", icon: DoorOpen, label: t("fiches.croquis.porte") },
-    { id: "fenetre", icon: AppWindow, label: t("fiches.croquis.fenetre") },
+    { id: "porte_simple", icon: DoorOpen, label: t("fiches.croquis.porteSimple") },
+    { id: "porte_double", icon: DoorClosed, label: t("fiches.croquis.porteDouble") },
+    { id: "coulissante", icon: ArrowLeftRight, label: t("fiches.croquis.coulissante") },
+    { id: "fenetre_simple", icon: AppWindow, label: t("fiches.croquis.fenetreSimple") },
+    { id: "fenetre_double", icon: Columns3, label: t("fiches.croquis.fenetreDouble") },
+    { id: "baie_vitree", icon: RectangleHorizontal, label: t("fiches.croquis.baieVitree") },
+    { id: "nord", icon: Compass, label: t("fiches.croquis.nord") },
     { id: "texte", icon: Type, label: t("fiches.croquis.texte") },
     { id: "gomme", icon: Eraser, label: t("fiches.croquis.gomme") },
     { id: "main", icon: Hand, label: t("fiches.croquis.main") },
@@ -827,7 +946,7 @@ export function CroquisPad({
 
           {/* Le sens d'ouverture ne s'affiche que quand il veut dire quelque
               chose — un bouton de plus en permanence encombrerait la barre. */}
-          {tool === "porte" && (
+          {TOOL_SHAPE[tool]?.type === "porte" && (
             <button
               type="button"
               onClick={() => setSensPorte((s) => (s === 1 ? -1 : 1))}

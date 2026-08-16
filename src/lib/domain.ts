@@ -92,6 +92,15 @@ export type ModeleCuisine = (typeof MODELES_CUISINE)[number];
 export const MODELES_DRESSING = ["room", "coulissant", "ouvrant"] as const;
 export type ModeleDressing = (typeof MODELES_DRESSING)[number];
 
+/** Le caisson du dressing — la matière de la structure, pas de la façade. */
+export const TYPES_CAISSON_DRESSING = [
+  "agglomere_standard",
+  "mdf_hydrofuge",
+  "contreplaque_bouleau",
+  "bois_massif",
+] as const;
+export type TypeCaissonDressing = (typeof TYPES_CAISSON_DRESSING)[number];
+
 export const MOTIFS_PERTE = [
   "prix",
   "delai",
