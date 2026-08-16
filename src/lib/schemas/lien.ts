@@ -49,6 +49,19 @@ export const publicFicheSchema = z.object({
   /** Le showroom choisi par le client, par zone puis par nom. */
   point_de_vente_id: z.string().uuid().nullable().default(null),
   souhaits: souhaitsSchema,
+  /**
+   * Rempli seulement quand le client veut une cuisine ET un dressing : la
+   * cuisine occupe déjà `souhaits`, le dressing voyage à part. Même
+   * convention que la fiche interne — voir `details_dressing` dans
+   * `exigencesSchema`.
+   */
+  souhaits_dressing: z
+    .object({
+      modele: z.string().max(40).nullable().default(null),
+      couleurs: z.array(z.string().max(40)).max(8).default([]),
+    })
+    .nullable()
+    .default(null),
 });
 export type PublicFiche = z.infer<typeof publicFicheSchema>;
 

@@ -6,12 +6,7 @@ import { CheckCircle2, ChefHat, Minus, Phone, Plus, Shirt } from "lucide-react";
 import { submitFichePublique } from "@/lib/actions/lien-actions";
 import { createClient as supabaseNavigateur } from "@/lib/supabase/client";
 import { ficheIdentiteSchema } from "@/lib/schemas/fiche";
-import {
-  ORIGINES,
-  type LienAudience,
-  type Origine,
-  type TypeProjet,
-} from "@/lib/domain";
+import { ORIGINES, type LienAudience, type Origine } from "@/lib/domain";
 import type { ShowroomPublic } from "@/lib/data/queries";
 import { REGION_CODES, type RegionCode } from "@/lib/geo/tunisia-regions";
 import { cn } from "@/lib/utils";
@@ -63,18 +58,20 @@ const PROJET_VIDE: Projet = {
   date_livraison: "",
 };
 
-const STEPS = ["step1", "step2"] as const;
+type Etape = "step1" | "cuisine" | "dressing";
 
 /**
- * La demande client, en deux écrans.
+ * Deux écrans d'ordinaire, trois quand le client veut les deux à la fois.
  *
  * Étape 1 : qui vous êtes, ce que vous voulez faire, et dans quel showroom.
- * Étape 2 : à quoi vous voulez que ça ressemble.
+ * Étape « cuisine » et étape « dressing » : à quoi vous voulez que ça
+ * ressemble — chacune son écran, chacune son croquis, quand les deux sont
+ * demandés ensemble.
  *
- * Deux écrans, pas trois : un formulaire de showroom rempli sur un téléphone,
- * debout, au milieu d'une foire, n'a droit qu'à quelques minutes d'attention.
- * Tout se passe sur cette page — aucun lien ne sort du site, aucune
- * application tierce ne s'ouvre : partir, c'est ne pas revenir.
+ * Un formulaire de showroom rempli sur un téléphone, debout, au milieu d'une
+ * foire, n'a droit qu'à quelques minutes d'attention. Tout se passe sur
+ * cette page — aucun lien ne sort du site, aucune application tierce ne
+ * s'ouvre : partir, c'est ne pas revenir.
  */
 export function PublicFicheForm({
   token,
@@ -98,16 +95,35 @@ export function PublicFicheForm({
   /** Plus de sous-question : le detail reste vide, la colonne l accepte. */
   const origineDetail = null;
   const [projet, setProjet] = useState<Projet>(PROJET_VIDE);
-  const [typeProjet, setTypeProjet] = useState<TypeProjet | null>(null);
   const [zone, setZone] = useState<RegionCode | null>(null);
   const [showroomId, setShowroomId] = useState<string | null>(null);
-  const [souhaits, setSouhaits] = useState<Souhaits>(SOUHAITS_VIDES);
+  /** Un souhait par nature de projet : une cuisine et un dressing ne se
+      dessinent pas sur le même croquis. */
+  const [souhaitsCuisine, setSouhaitsCuisine] = useState<Souhaits>(SOUHAITS_VIDES);
+  const [souhaitsDressing, setSouhaitsDressing] = useState<Souhaits>(SOUHAITS_VIDES);
   /** Etat a part entiere — voir le commentaire dans la fiche interne. */
   const [canalContact, setCanalContact] = useState<CanalPrefere>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
+
+  const cuisineActive = projet.nb_cuisines > 0;
+  const dressingActive = projet.nb_dressings > 0;
+
+  /**
+   * Le parcours suit les compteurs, pas un choix exclusif : cuisine et
+   * dressing ne s'excluent plus l'un l'autre. Une troisième étape n'apparaît
+   * que si le client veut vraiment les deux — le cas courant reste à deux
+   * écrans, comme avant.
+   */
+  const etapes = useMemo<Etape[]>(() => {
+    if (cuisineActive && dressingActive) return ["step1", "cuisine", "dressing"];
+    return ["step1", dressingActive ? "dressing" : "cuisine"];
+  }, [cuisineActive, dressingActive]);
+  /* Recule d'un cran si un compteur remis à zéro fait disparaître l'étape 3. */
+  const stepIdx = Math.min(step, etapes.length - 1);
+  const etape = etapes[stepIdx];
 
   const setId = (patch: Partial<Identite>) =>
     setIdentite((prev) => ({ ...prev, ...patch }));
@@ -133,9 +149,9 @@ export function PublicFicheForm({
     return code ? t(`public.shared.errors.${code}`) : null;
   }
 
-  function validateStep(current: number): boolean {
+  function validateStep(current: Etape): boolean {
     setErrors({});
-    if (current !== 0) return true;
+    if (current !== "step1") return true;
     // Nom et téléphone, rien d'autre. Le reste se complète au showroom.
     const parsed = ficheIdentiteSchema.safeParse(identite);
     if (parsed.success) return true;
@@ -155,13 +171,29 @@ export function PublicFicheForm({
   }
 
   function next() {
-    if (!validateStep(step)) return;
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (!validateStep(etape)) return;
+    setStep(Math.min(stepIdx + 1, etapes.length - 1));
     window.scrollTo({ top: 0 });
   }
 
+  /** Dépose les photos d'un souhait au bucket ; abandon silencieux par fichier. */
+  async function deposerPhotos(souhaits: Souhaits): Promise<string[]> {
+    if (souhaits.photos.length === 0 || !supabaseNavigateur) return [];
+    const supabase = supabaseNavigateur();
+    const resultats = await Promise.all(
+      souhaits.photos.map(async (f, i) => {
+        const chemin = `${token}/${Date.now()}-${i}-${f.name}`;
+        const { error } = await supabase.storage
+          .from("demandes-photos")
+          .upload(chemin, f, { upsert: false });
+        return error ? null : chemin;
+      }),
+    );
+    return resultats.filter((p): p is string => p !== null);
+  }
+
   async function submit() {
-    if (!validateStep(step)) return;
+    if (!validateStep(etape)) return;
     setSubmitting(true);
     setSubmitError(null);
 
@@ -172,20 +204,18 @@ export function PublicFicheForm({
      * demande entière parce qu'une image de 7 Mo n'est pas passée serait un
      * mauvais échange.
      */
-    let photos: string[] = [];
-    if (souhaits.photos.length > 0 && supabaseNavigateur) {
-      const supabase = supabaseNavigateur();
-      const resultats = await Promise.all(
-        souhaits.photos.map(async (f, i) => {
-          const chemin = `${token}/${Date.now()}-${i}-${f.name}`;
-          const { error } = await supabase.storage
-            .from("demandes-photos")
-            .upload(chemin, f, { upsert: false });
-          return error ? null : chemin;
-        }),
-      );
-      photos = resultats.filter((p): p is string => p !== null);
-    }
+    const [photosCuisine, photosDressing] = await Promise.all([
+      cuisineActive ? deposerPhotos(souhaitsCuisine) : Promise.resolve([]),
+      dressingActive ? deposerPhotos(souhaitsDressing) : Promise.resolve([]),
+    ]);
+
+    /*
+     * La cuisine reste la colonne principale — c'est la convention prise côté
+     * fiche interne. Un dressing seul en hérite ; un dressing en plus d'une
+     * cuisine voyage dans les exigences, comme sur la fiche interne.
+     */
+    const primaire = cuisineActive ? souhaitsCuisine : souhaitsDressing;
+    const photos = [...photosCuisine, ...photosDressing].slice(0, 6);
 
     const result = await submitFichePublique({
       token,
@@ -199,14 +229,21 @@ export function PublicFicheForm({
         },
         point_de_vente_id: showroomId,
         souhaits: {
-          type_projet: typeProjet ?? "cuisine",
-          modele: souhaits.modele,
-          facade: souhaits.facade,
-          couleurs: souhaits.couleurs,
-          croquis: souhaits.croquis,
+          type_projet: cuisineActive ? "cuisine" : "dressing",
+          modele: primaire.modele,
+          facade: primaire.facade,
+          couleurs: primaire.couleurs,
+          croquis: primaire.croquis ?? (cuisineActive ? souhaitsDressing.croquis : null),
           photos,
-          commentaire: souhaits.commentaire,
+          commentaire: primaire.commentaire,
         },
+        // Le second projet, quand il y en a un : le modèle et les coloris du
+        // dressing voyagent à part, la cuisine occupant déjà la place
+        // principale — voir soumettre_fiche côté serveur.
+        souhaits_dressing:
+          cuisineActive && dressingActive
+            ? { modele: souhaitsDressing.modele, couleurs: souhaitsDressing.couleurs }
+            : null,
       },
     });
 
@@ -262,8 +299,8 @@ export function PublicFicheForm({
     );
   }
 
-  const isLast = step === STEPS.length - 1;
-  const progress = Math.round(((step + 1) / STEPS.length) * 100);
+  const isLast = stepIdx === etapes.length - 1;
+  const progress = Math.round(((stepIdx + 1) / etapes.length) * 100);
 
   return (
     <div>
@@ -276,17 +313,17 @@ export function PublicFicheForm({
         <Progress value={progress} className="h-2 flex-1" />
         <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
           {t("public.shared.stepOf", {
-            current: step + 1,
-            total: STEPS.length,
+            current: stepIdx + 1,
+            total: etapes.length,
           })}
         </span>
       </div>
       <p className="mt-1.5 text-xs text-muted-foreground">
-        {t(`public.shared.steps.${STEPS[step]}`)}
+        {t(`public.shared.steps.${etape}`)}
       </p>
 
       <Card className="mt-4 p-5 md:p-7">
-        {step === 0 && (
+        {etape === "step1" && (
           <div className="space-y-7">
             {/* — Coordonnées — */}
             <div className="grid gap-4 sm:grid-cols-2">
@@ -413,21 +450,27 @@ export function PublicFicheForm({
               <h2 className="font-display text-lg font-semibold">
                 {t("public.shared.sectionProjet")}
               </h2>
+              {/* Deux cartes indépendantes, pas un choix exclusif : un client
+                  qui veut une cuisine ET un dressing les veut vraiment tous
+                  les deux. Chacune bascule son propre compteur entre 0 et 1 ;
+                  les boutons +/- juste en dessous affinent la quantité. */}
               <div className="grid gap-3 sm:grid-cols-2">
                 {(
                   [
-                    ["cuisine", ChefHat],
-                    ["dressing", Shirt],
+                    ["cuisine", ChefHat, cuisineActive, (actif: boolean) =>
+                      setProjet((p) => ({ ...p, nb_cuisines: actif ? 1 : 0 }))],
+                    ["dressing", Shirt, dressingActive, (actif: boolean) =>
+                      setProjet((p) => ({ ...p, nb_dressings: actif ? 1 : 0 }))],
                   ] as const
-                ).map(([type, Icon]) => (
+                ).map(([type, Icon, actif, toggle]) => (
                   <button
                     key={type}
                     type="button"
-                    onClick={() => setTypeProjet(type)}
-                    aria-pressed={typeProjet === type}
+                    onClick={() => toggle(!actif)}
+                    aria-pressed={actif}
                     className={cn(
                       "flex items-center gap-3 rounded-2xl border p-4 text-start transition-colors",
-                      typeProjet === type
+                      actif
                         ? "border-primary bg-primary/5 ring-2 ring-primary/25"
                         : "border-border hover:bg-secondary/60",
                     )}
@@ -486,11 +529,20 @@ export function PublicFicheForm({
           </div>
         )}
 
-        {step === 1 && (
+        {etape === "cuisine" && (
           <EtapeSouhaits
-            typeProjet={typeProjet ?? "cuisine"}
-            souhaits={souhaits}
-            onChange={setSouhaits}
+            typeProjet="cuisine"
+            souhaits={souhaitsCuisine}
+            onChange={setSouhaitsCuisine}
+            visuels={visuelsSet}
+          />
+        )}
+
+        {etape === "dressing" && (
+          <EtapeSouhaits
+            typeProjet="dressing"
+            souhaits={souhaitsDressing}
+            onChange={setSouhaitsDressing}
             visuels={visuelsSet}
           />
         )}
@@ -506,8 +558,8 @@ export function PublicFicheForm({
         <Button
           type="button"
           variant="secondary"
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-          className={cn(step === 0 && "invisible")}
+          onClick={() => setStep(Math.max(0, stepIdx - 1))}
+          className={cn(stepIdx === 0 && "invisible")}
         >
           {t("public.shared.previous")}
         </Button>

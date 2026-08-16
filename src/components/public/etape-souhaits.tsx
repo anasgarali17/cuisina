@@ -97,25 +97,29 @@ export function EtapeSouhaits({
         />
       </Section>
 
-      {/* — Façade : des cuisines réalisées, pas du vocabulaire — */}
-      <Section
-        titre={t("public.souhaits.facade")}
-        aide={t("public.souhaits.facadeAide")}
-      >
-        <Grille>
-          {FACADES.map((f) => (
-            <Vignette
-              key={f.id}
-              image={visuels.has(f.image) ? f.image : null}
-              libelle={t(`public.souhaits.facades.${f.id}`)}
-              choisi={souhaits.facade === f.id}
-              onClick={() =>
-                set({ facade: souhaits.facade === f.id ? null : f.id })
-              }
-            />
-          ))}
-        </Grille>
-      </Section>
+      {/* — Façade : des cuisines réalisées, pas du vocabulaire.
+            Un dressing n'a pas de « cuisine réalisée » à montrer — la section
+            n'apparaît que côté cuisine. — */}
+      {typeProjet === "cuisine" && (
+        <Section
+          titre={t("public.souhaits.facade")}
+          aide={t("public.souhaits.facadeAide")}
+        >
+          <Grille>
+            {FACADES.map((f) => (
+              <Vignette
+                key={f.id}
+                image={visuels.has(f.image) ? f.image : null}
+                libelle={t(`public.souhaits.facades.${f.id}`)}
+                choisi={souhaits.facade === f.id}
+                onClick={() =>
+                  set({ facade: souhaits.facade === f.id ? null : f.id })
+                }
+              />
+            ))}
+          </Grille>
+        </Section>
+      )}
 
       {/* — Le croquis, replié derrière un bouton.
             La plupart des clients ne dessinent pas ; leur imposer une grande

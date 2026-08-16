@@ -851,7 +851,8 @@
       "stepOf": "الخطوة {current} من {total}",
       "steps": {
         "step1": "بياناتك ومشروعك",
-        "step2": "ما ترغب فيه"
+        "cuisine": "مطبخك",
+        "dressing": "دريسينغك"
       },
       "next": "متابعة",
       "previous": "السابق",

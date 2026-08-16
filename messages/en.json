@@ -851,7 +851,8 @@
       "stepOf": "Step {current} of {total}",
       "steps": {
         "step1": "Your details and your project",
-        "step2": "What you would like"
+        "cuisine": "Your kitchen",
+        "dressing": "Your dressing"
       },
       "next": "Continue",
       "previous": "Back",

@@ -86,11 +86,23 @@ export async function submitFichePublique(
   if (!parsed.success) return fail("validation");
 
   const { token, payload } = parsed.data;
+  // Un dressing demandé en plus de la cuisine voyage dans les exigences —
+  // même convention que la fiche interne, aucune migration nécessaire.
+  const exigences = payload.souhaits_dressing
+    ? {
+        ...EXIGENCES_VIDES,
+        details_dressing: {
+          ...EXIGENCES_VIDES.details_dressing,
+          modele: payload.souhaits_dressing.modele,
+          couleurs: payload.souhaits_dressing.couleurs,
+        },
+      }
+    : EXIGENCES_VIDES;
   const score = computeScoreCompletude({
     identite: payload.identite,
     origine: payload.origine,
     projet: payload.projet,
-    exigences: EXIGENCES_VIDES,
+    exigences,
     // Le formulaire public ne recueille pas de signature : elle se pose au
     // showroom, plan sous les yeux. Le modèle et les coloris, eux, comptent
     // dans la complétude — c'est ce que le client est venu dire.
@@ -116,7 +128,7 @@ export async function submitFichePublique(
       croquis_client: payload.souhaits.croquis,
       photos: payload.souhaits.photos,
       commentaire_client: payload.souhaits.commentaire,
-      exigences: EXIGENCES_VIDES,
+      exigences,
       score_completude: score,
     },
   });
