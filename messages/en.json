@@ -161,6 +161,8 @@
       "step2": "Contact origin",
       "step3": "Project",
       "step4": "Client Requirements",
+      "cuisine": "Kitchen",
+      "dressing": "Dressing",
       "stepOf": "Step {current} of {total}",
       "clientNom": "Client name",
       "telDomicile": "Home phone",

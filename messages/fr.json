@@ -161,6 +161,8 @@
       "step2": "Origine du contact",
       "step3": "Projet",
       "step4": "Exigences Client",
+      "cuisine": "Cuisine",
+      "dressing": "Dressing",
       "stepOf": "Étape {current} sur {total}",
       "clientNom": "Nom du client",
       "telDomicile": "Téléphone domicile",

@@ -161,6 +161,8 @@
       "step2": "مصدر الاتصال",
       "step3": "المشروع",
       "step4": "متطلبات العميل",
+      "cuisine": "مطبخ",
+      "dressing": "دريسينغ",
       "stepOf": "الخطوة {current} من {total}",
       "clientNom": "اسم العميل",
       "telDomicile": "هاتف المنزل",

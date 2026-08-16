@@ -40,14 +40,19 @@ export const detailsCuisineSchema = z.object({
 });
 
 /**
- * Ce qui manquait côté dressing : la matière du caisson (la façade et ses
- * coloris sont déjà couverts par `ChoixModele`) et ce que le client cherche à
- * ranger, en texte libre — un dressing se décrit par son usage, pas par un
- * formulaire fermé.
+ * Ce qui manquait côté dressing : la matière du caisson, ce que le client
+ * cherche à ranger en texte libre — un dressing se décrit par son usage, pas
+ * par un formulaire fermé — et le modèle choisi avec ses coloris.
+ *
+ * Le modèle vit ici et non dans les colonnes `modele`/`couleurs` : celles-ci
+ * portent la cuisine. Un projet peut être les deux à la fois, et deux choix
+ * ne tiennent pas dans une colonne — le jsonb, lui, n'exige pas de migration.
  */
 export const detailsDressingSchema = z.object({
   type_caisson: z.enum(TYPES_CAISSON_DRESSING).nullable().default(null),
   description_besoins: z.string().max(500).default(""),
+  modele: z.string().max(40).nullable().default(null),
+  couleurs: z.array(z.string().max(60)).max(20).default([]),
 });
 
 export const exigencesSchema = z.object({
@@ -301,7 +306,12 @@ export function computeScoreCompletude(payload: FicheDraft): number {
   );
   flags.push(payload.signature != null);
   // Le modèle et au moins un coloris : c'est ce qu'un dossier complet porte.
-  flags.push(payload.modele != null, (payload.couleurs?.length ?? 0) > 0);
+  // Peu importe le côté — cuisine (colonnes) ou dressing (details_dressing).
+  const dd = payload.exigences.details_dressing;
+  flags.push(
+    payload.modele != null || dd.modele != null,
+    (payload.couleurs?.length ?? 0) > 0 || (dd.couleurs?.length ?? 0) > 0,
+  );
   const ex = payload.exigences;
   flags.push(
     ex.finition_facade.type != null,

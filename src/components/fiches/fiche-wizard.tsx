@@ -23,7 +23,6 @@ import {
   TYPES_CAISSON_DRESSING,
   type Origine,
   type TypeCaissonDressing,
-  type TypeProjet,
 } from "@/lib/domain";
 import { formatDate } from "@/lib/dates";
 import { cn, messageErreur } from "@/lib/utils";
@@ -71,35 +70,51 @@ interface Projet {
 }
 
 /**
- * Deux etapes, pas quatre. La FO-COM-02 papier en comptait quatre parce
- * qu elle tenait sur deux feuilles ; un ecran n a pas cette contrainte, et
- * chaque « Continuer » est une occasion d abandonner la saisie.
+ * Deux etapes, pas quatre — et une troisieme seulement quand le projet est
+ * cuisine ET dressing : chaque volet a alors son ecran, dans cet ordre. La
+ * FO-COM-02 papier en comptait quatre parce qu elle tenait sur deux
+ * feuilles ; un ecran n a pas cette contrainte, et chaque « Continuer » est
+ * une occasion d abandonner la saisie.
  */
-const STEPS = ["step1", "step2"] as const;
+type Etape = "step1" | "cuisine" | "dressing";
 
-function toDraft(
-  identite: Identite,
-  origine: Origine | null,
-  origineDetail: string | null,
-  projet: Projet,
-  exigences: Exigences,
-  signature: string | null,
-  modele: string | null,
-  couleurs: string[],
-): FicheDraft {
+interface DraftState {
+  identite: Identite;
+  origine: Origine | null;
+  origineDetail: string | null;
+  projet: Projet;
+  exigences: Exigences;
+  signature: string | null;
+  modele: string | null;
+  couleurs: string[];
+  modeleDressing: string | null;
+  couleursDressing: string[];
+}
+
+function toDraft(s: DraftState): FicheDraft {
   return {
-    identite,
-    origine: { origine, origine_detail: origineDetail },
+    identite: s.identite,
+    origine: { origine: s.origine, origine_detail: s.origineDetail },
     projet: {
-      nb_cuisines: projet.nb_cuisines,
-      nb_dressings: projet.nb_dressings,
-      date_livraison_souhaitee: projet.date_livraison || null,
-      budget_estimatif: projet.budget_estimatif,
+      nb_cuisines: s.projet.nb_cuisines,
+      nb_dressings: s.projet.nb_dressings,
+      date_livraison_souhaitee: s.projet.date_livraison || null,
+      budget_estimatif: s.projet.budget_estimatif,
     },
-    exigences,
-    signature,
-    modele,
-    couleurs,
+    // Le choix dressing voyage dans le jsonb des exigences : un projet peut
+    // etre cuisine ET dressing, et deux modeles ne tiennent pas dans la
+    // colonne `modele` — qui reste celle de la cuisine.
+    exigences: {
+      ...s.exigences,
+      details_dressing: {
+        ...s.exigences.details_dressing,
+        modele: s.modeleDressing,
+        couleurs: s.couleursDressing,
+      },
+    },
+    signature: s.signature,
+    modele: s.modele,
+    couleurs: s.couleurs,
   };
 }
 
@@ -145,6 +160,9 @@ export function FicheWizard({
   const [pieces, setPieces] = useState<PieceJointeLocale[]>([]);
   const [modele, setModele] = useState<string | null>(null);
   const [couleurs, setCouleurs] = useState<string[]>([]);
+  /** Le choix dressing a son propre etat : il coexiste avec la cuisine. */
+  const [modeleDressing, setModeleDressing] = useState<string | null>(null);
+  const [couleursDressing, setCouleursDressing] = useState<string[]>([]);
   /**
    * Le canal choisi est un etat a part entiere, pas une deduction.
    * Le deduire de l e-mail rendait « E-mail » inselectionnable : le champ
@@ -156,12 +174,20 @@ export function FicheWizard({
   /** Un Set ne traverse pas la frontiere serveur/client : on le reconstruit. */
   const visuelsSet = useMemo(() => new Set(visuels), [visuels]);
   /**
-   * Cuisine ou dressing : deduit des compteurs de l etape 3. Une fiche qui
-   * ne porte que des dressings montre le catalogue dressing, pas sept
-   * cuisines dont aucune ne la concerne.
+   * Le parcours suit les compteurs de l etape 1. Un seul volet : deux etapes,
+   * comme avant. Cuisine et dressing a la fois : trois etapes — la cuisine
+   * d abord, le dressing ensuite, chacun avec son catalogue et ses questions.
    */
-  const typeProjetFiche: TypeProjet =
-    projet.nb_dressings > 0 && projet.nb_cuisines === 0 ? "dressing" : "cuisine";
+  const etapes = useMemo<Etape[]>(() => {
+    if (projet.nb_cuisines > 0 && projet.nb_dressings > 0) {
+      return ["step1", "cuisine", "dressing"];
+    }
+    const dressingSeul = projet.nb_dressings > 0 && projet.nb_cuisines === 0;
+    return ["step1", dressingSeul ? "dressing" : "cuisine"];
+  }, [projet.nb_cuisines, projet.nb_dressings]);
+  /* Reculer d un cran si un compteur remis a zero fait disparaitre l etape 3. */
+  const stepIdx = Math.min(step, etapes.length - 1);
+  const etape = etapes[stepIdx];
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -172,7 +198,7 @@ export function FicheWizard({
 
   const savedIdRef = useRef<string | null>(null);
   const dirtyRef = useRef(false);
-  const stateRef = useRef({
+  const stateRef = useRef<DraftState & { pdvChoisi: string | null }>({
     identite,
     origine,
     origineDetail,
@@ -181,6 +207,8 @@ export function FicheWizard({
     signature,
     modele,
     couleurs,
+    modeleDressing,
+    couleursDressing,
     pdvChoisi,
   });
   useEffect(() => {
@@ -193,11 +221,24 @@ export function FicheWizard({
       signature,
       modele,
       couleurs,
+      modeleDressing,
+      couleursDressing,
       pdvChoisi,
     };
-  }, [identite, origine, origineDetail, projet, exigences, signature, modele, couleurs, pdvChoisi]);
+  }, [identite, origine, origineDetail, projet, exigences, signature, modele, couleurs, modeleDressing, couleursDressing, pdvChoisi]);
 
-  const draft = toDraft(identite, origine, origineDetail, projet, exigences, signature, modele, couleurs);
+  const draft = toDraft({
+    identite,
+    origine,
+    origineDetail,
+    projet,
+    exigences,
+    signature,
+    modele,
+    couleurs,
+    modeleDressing,
+    couleursDressing,
+  });
   const score = computeScoreCompletude(draft);
 
   const markDirty = useCallback(() => {
@@ -213,7 +254,7 @@ export function FicheWizard({
       void saveFiche({
         point_de_vente_id: s.pdvChoisi,
         id: savedIdRef.current,
-        draft: toDraft(s.identite, s.origine, s.origineDetail, s.projet, s.exigences, s.signature, s.modele, s.couleurs),
+        draft: toDraft(s),
       }).then((result) => {
         if (result.ok) {
           savedIdRef.current = result.data.id;
@@ -231,37 +272,36 @@ export function FicheWizard({
     return code ? t(`fiches.wizard.errors.${code}`) : null;
   }
 
-  function validateStep(current: number): boolean {
+  function validateStep(current: Etape): boolean {
     setErrors({});
-    if (current === 0) {
-      const parsed = ficheIdentiteSchema.safeParse(identite);
-      if (!parsed.success) {
-        const map: Record<string, string> = {};
-        for (const issue of parsed.error.issues) {
-          const key = String(issue.path[0] ?? "");
-          if (!map[key]) {
-            map[key] =
-              issue.code === "too_small" && key === "client_nom"
-                ? "nom_requis"
-                : issue.code === "too_small" && key === "tel_mobile"
-                  ? "mobile_requis"
-                  : issue.message;
-          }
+    if (current !== "step1") return true;
+    const parsed = ficheIdentiteSchema.safeParse(identite);
+    if (!parsed.success) {
+      const map: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "");
+        if (!map[key]) {
+          map[key] =
+            issue.code === "too_small" && key === "client_nom"
+              ? "nom_requis"
+              : issue.code === "too_small" && key === "tel_mobile"
+                ? "mobile_requis"
+                : issue.message;
         }
-        setErrors(map);
-        return false;
       }
+      setErrors(map);
+      return false;
     }
-    // L'origine n'est plus obligatoire : rien à valider ici tant qu'elle est
-    // laissée vide, et son détail ne se vérifie que si une origine est choisie.
-    if (current === 1 && origine) {
-      const parsed = ficheOrigineSchema.safeParse({
+    // L'origine n'est plus obligatoire : son détail ne se vérifie que si une
+    // origine est choisie.
+    if (origine) {
+      const parsedOrigine = ficheOrigineSchema.safeParse({
         origine,
         origine_detail: origineDetail,
       });
-      if (!parsed.success) {
+      if (!parsedOrigine.success) {
         const map: Record<string, string> = {};
-        for (const issue of parsed.error.issues) {
+        for (const issue of parsedOrigine.error.issues) {
           map[String(issue.path[0] ?? "origine")] = issue.message;
         }
         setErrors(map);
@@ -272,7 +312,7 @@ export function FicheWizard({
   }
 
   async function submit() {
-    if (!validateStep(step)) return;
+    if (!validateStep(etape)) return;
     setSubmitting(true);
     setSubmitError(null);
     const result = await saveFiche({ id: savedIdRef.current, draft, point_de_vente_id: pdvChoisi });
@@ -334,12 +374,12 @@ export function FicheWizard({
   }
 
   function next() {
-    if (!validateStep(step)) return;
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    if (!validateStep(etape)) return;
+    setStep(Math.min(stepIdx + 1, etapes.length - 1));
     window.scrollTo({ top: 0 });
   }
 
-  const isLast = step === STEPS.length - 1;
+  const isLast = stepIdx === etapes.length - 1;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -352,10 +392,10 @@ export function FicheWizard({
             </h1>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {t("fiches.wizard.stepOf", {
-                current: step + 1,
-                total: STEPS.length,
+                current: stepIdx + 1,
+                total: etapes.length,
               })}{" "}
-              · {t(`fiches.wizard.${STEPS[step]}`)}
+              · {t(`fiches.wizard.${etape}`)}
             </p>
           </div>
           <span className="border border-ardoise px-2 py-1 font-mono text-[10px] text-ardoise dark:border-foreground dark:text-foreground">
@@ -387,7 +427,7 @@ export function FicheWizard({
       )}
 
       <Card className="mt-4 p-5 md:p-8">
-        {step === 0 && (
+        {etape === "step1" && (
           <>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
@@ -647,20 +687,20 @@ export function FicheWizard({
           </>
         )}
 
-        {step === 1 && (
+        {etape === "cuisine" && (
           <div className="space-y-6">
             {/* Le modèle d'abord : c'est la première chose qu'on regarde
                 ensemble en showroom, et il commande les coloris. */}
             <section>
               <h2 className="font-display text-lg font-semibold">
-                {t(`catalogue.titre_${typeProjetFiche}`)}
+                {t("catalogue.titre_cuisine")}
               </h2>
               <p className="mb-3 mt-0.5 text-sm text-muted-foreground">
-                {t(`catalogue.aide_${typeProjetFiche}`)}
+                {t("catalogue.aide_cuisine")}
               </p>
               <ChoixModele
                 compact
-                typeProjet={typeProjetFiche}
+                typeProjet="cuisine"
                 modele={modele}
                 couleurs={couleurs}
                 visuels={visuelsSet}
@@ -672,35 +712,87 @@ export function FicheWizard({
               />
             </section>
 
-            {typeProjetFiche === "cuisine" ? (
-              <ExigencesStep
-                exigences={exigences}
-                onChange={(e) => {
-                  setExigences(e);
-                  markDirty();
-                }}
-                photoPreview={photoPreview}
-                photoName={photo?.name ?? null}
-                onPhoto={(file) => {
-                  setPhoto(file);
-                  if (photoPreview) URL.revokeObjectURL(photoPreview);
-                  setPhotoPreview(file ? URL.createObjectURL(file) : null);
-                }}
-              />
-            ) : (
-              <DressingStep
-                exigences={exigences}
-                budget={projet.budget_estimatif}
-                onChangeExigences={(e) => {
-                  setExigences(e);
-                  markDirty();
-                }}
-                onChangeBudget={(v) => {
-                  setProjet({ ...projet, budget_estimatif: v });
-                  markDirty();
-                }}
-              />
+            <ExigencesStep
+              exigences={exigences}
+              onChange={(e) => {
+                setExigences(e);
+                markDirty();
+              }}
+              budget={projet.budget_estimatif}
+              onChangeBudget={(v) => {
+                setProjet({ ...projet, budget_estimatif: v });
+                markDirty();
+              }}
+              photoPreview={photoPreview}
+              photoName={photo?.name ?? null}
+              onPhoto={(file) => {
+                setPhoto(file);
+                if (photoPreview) URL.revokeObjectURL(photoPreview);
+                setPhotoPreview(file ? URL.createObjectURL(file) : null);
+              }}
+            />
+
+            {/* Pièces et signature closent la fiche : quand un dressing suit,
+                elles attendent sa page — on ne signe pas à mi-parcours. */}
+            {isLast && (
+              <>
+                <PiecesJointes
+                  pieces={pieces}
+                  onChange={(next) => {
+                    setPieces(next);
+                    markDirty();
+                  }}
+                />
+                <SignaturePad
+                  value={signature}
+                  onChange={(v) => {
+                    setSignature(v);
+                    markDirty();
+                  }}
+                />
+              </>
             )}
+          </div>
+        )}
+
+        {etape === "dressing" && (
+          <div className="space-y-6">
+            <section>
+              <h2 className="font-display text-lg font-semibold">
+                {t("catalogue.titre_dressing")}
+              </h2>
+              <p className="mb-3 mt-0.5 text-sm text-muted-foreground">
+                {t("catalogue.aide_dressing")}
+              </p>
+              <ChoixModele
+                compact
+                typeProjet="dressing"
+                modele={modeleDressing}
+                couleurs={couleursDressing}
+                visuels={visuelsSet}
+                onChange={(patch) => {
+                  setModeleDressing(patch.modele);
+                  setCouleursDressing(patch.couleurs);
+                  markDirty();
+                }}
+              />
+            </section>
+
+            <DressingStep
+              exigences={exigences}
+              budget={projet.budget_estimatif}
+              /* En parcours mixte, le budget est déjà saisi sur la page
+                 cuisine : le redemander ici ferait douter de la première. */
+              montrerBudget={etapes.length === 2}
+              onChangeExigences={(e) => {
+                setExigences(e);
+                markDirty();
+              }}
+              onChangeBudget={(v) => {
+                setProjet({ ...projet, budget_estimatif: v });
+                markDirty();
+              }}
+            />
 
             <PiecesJointes
               pieces={pieces}
@@ -732,8 +824,8 @@ export function FicheWizard({
         <Button
           type="button"
           variant="secondary"
-          onClick={() => setStep((s) => Math.max(0, s - 1))}
-          className={cn(step === 0 && "invisible")}
+          onClick={() => setStep(Math.max(0, stepIdx - 1))}
+          className={cn(stepIdx === 0 && "invisible")}
         >
           {t("app.previous")}
         </Button>
@@ -759,12 +851,16 @@ export function FicheWizard({
 function ExigencesStep({
   exigences,
   onChange,
+  budget,
+  onChangeBudget,
   onPhoto,
   photoPreview,
   photoName,
 }: {
   exigences: Exigences;
   onChange: (e: Exigences) => void;
+  budget: number | null;
+  onChangeBudget: (v: number | null) => void;
   onPhoto: (file: File | null) => void;
   photoPreview: string | null;
   photoName: string | null;
@@ -776,7 +872,12 @@ function ExigencesStep({
     <>
       <FinitionColumn exigences={exigences} onChange={onChange} />
       <ElectroColumn exigences={exigences} onChange={onChange} />
-      <DetailsColumn exigences={exigences} onChange={onChange} />
+      <DetailsColumn
+        exigences={exigences}
+        onChange={onChange}
+        budget={budget}
+        onChangeBudget={onChangeBudget}
+      />
     </>
   );
 
@@ -806,7 +907,13 @@ function ExigencesStep({
         <AccordionItem value="details">
           <AccordionTrigger>{t("detailsCuisine")}</AccordionTrigger>
           <AccordionContent>
-            <DetailsColumn exigences={exigences} onChange={onChange} noTitle />
+            <DetailsColumn
+              exigences={exigences}
+              onChange={onChange}
+              budget={budget}
+              onChangeBudget={onChangeBudget}
+              noTitle
+            />
           </AccordionContent>
         </AccordionItem>
       </Accordion>
@@ -848,11 +955,14 @@ function ExigencesStep({
 function DressingStep({
   exigences,
   budget,
+  montrerBudget,
   onChangeExigences,
   onChangeBudget,
 }: {
   exigences: Exigences;
   budget: number | null;
+  /** Faux en parcours mixte : le budget est déjà sur la page cuisine. */
+  montrerBudget: boolean;
   onChangeExigences: (e: Exigences) => void;
   onChangeBudget: (v: number | null) => void;
 }) {
@@ -870,19 +980,21 @@ function DressingStep({
         value={d.type_caisson}
         onSelect={(v) => set({ type_caisson: v as TypeCaissonDressing })}
       />
-      <div className="mb-4 space-y-1.5 sm:max-w-xs">
-        <Label htmlFor="w-budget-dressing">{t("budgetEstimatif")}</Label>
-        <Input
-          id="w-budget-dressing"
-          type="number"
-          min={0}
-          step={100}
-          value={budget ?? ""}
-          onChange={(e) =>
-            onChangeBudget(e.target.value === "" ? null : Number(e.target.value))
-          }
-        />
-      </div>
+      {montrerBudget && (
+        <div className="mb-4 space-y-1.5 sm:max-w-xs">
+          <Label htmlFor="w-budget-dressing">{t("budgetEstimatif")}</Label>
+          <Input
+            id="w-budget-dressing"
+            type="number"
+            min={0}
+            step={100}
+            value={budget ?? ""}
+            onChange={(e) =>
+              onChangeBudget(e.target.value === "" ? null : Number(e.target.value))
+            }
+          />
+        </div>
+      )}
       <div className="space-y-1.5">
         <Label htmlFor="w-besoins-dressing">{t("descriptionBesoins")}</Label>
         <p className="mb-1 text-xs text-muted-foreground">
@@ -1128,10 +1240,14 @@ function ElectroColumn({
 function DetailsColumn({
   exigences,
   onChange,
+  budget,
+  onChangeBudget,
   noTitle,
 }: {
   exigences: Exigences;
   onChange: (e: Exigences) => void;
+  budget: number | null;
+  onChangeBudget: (v: number | null) => void;
   noTitle?: boolean;
 }) {
   const t = useTranslations("fiches.exigences");
@@ -1158,6 +1274,19 @@ function DetailsColumn({
   return (
     <div>
       {!noTitle && <ColumnTitle>{t("detailsCuisine")}</ColumnTitle>}
+      <div className="mb-4 space-y-1.5 sm:max-w-xs">
+        <Label htmlFor="w-budget-cuisine">{t("budgetEstimatif")}</Label>
+        <Input
+          id="w-budget-cuisine"
+          type="number"
+          min={0}
+          step={100}
+          value={budget ?? ""}
+          onChange={(e) =>
+            onChangeBudget(e.target.value === "" ? null : Number(e.target.value))
+          }
+        />
+      </div>
       {ouiNon(d.avec_retour, (v) => set({ avec_retour: v }), t("avecRetour"))}
       {ouiNon(d.ilot_central, (v) => set({ ilot_central: v }), t("ilotCentral"))}
       <div className="space-y-1.5">
