@@ -799,7 +799,8 @@
       "hold": "Put back on hold",
       "note": "Annotate",
       "refuse": "Decline",
-      "openFiche": "Open the fiche"
+      "openFiche": "Open the fiche",
+      "supprimer": "Delete {client}’s request"
     },
     "dialog": {
       "assignTo": "Assign to",
@@ -819,7 +820,8 @@
         "prompt": "{client}’s request will not enter the pipeline. It stays readable here.",
         "placeholder": "Out of area, duplicate, not a serious enquiry…"
       }
-    }
+    },
+    "balayerAide": "Swipe to delete"
   },
   "liens": {
     "intro": "One link per place: the showroom poster isn’t the trade-fair stand’s.",
@@ -1149,7 +1151,8 @@
     "unauthenticated": "Your session has expired. Please sign in again.",
     "validation": "Some fields are invalid. Correct them and try again.",
     "not_found": "Record not found.",
-    "point_de_vente_requis": "Choose the showroom this record belongs to."
+    "point_de_vente_requis": "Choose the showroom this record belongs to.",
+    "demande_non_refusee": "Only a refused request can be deleted."
   },
   "production": {
     "title": "Active client",

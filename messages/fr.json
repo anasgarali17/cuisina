@@ -799,7 +799,8 @@
       "hold": "Remettre en attente",
       "note": "Annoter",
       "refuse": "Refuser",
-      "openFiche": "Ouvrir la fiche"
+      "openFiche": "Ouvrir la fiche",
+      "supprimer": "Supprimer la demande de {client}"
     },
     "dialog": {
       "assignTo": "Confier à",
@@ -819,7 +820,8 @@
         "prompt": "La demande de {client} n’entrera pas au pipeline. Elle reste consultable ici.",
         "placeholder": "Hors zone, doublon, demande non sérieuse…"
       }
-    }
+    },
+    "balayerAide": "Balayez pour supprimer"
   },
   "liens": {
     "intro": "Un lien par endroit : l’affiche du showroom n’est pas celle du stand de la foire.",
@@ -1149,7 +1151,8 @@
     "unauthenticated": "Votre session a expiré. Reconnectez-vous.",
     "validation": "Certains champs sont invalides. Corrigez-les puis réessayez.",
     "not_found": "Fiche introuvable.",
-    "point_de_vente_requis": "Choisissez le showroom auquel rattacher cette fiche."
+    "point_de_vente_requis": "Choisissez le showroom auquel rattacher cette fiche.",
+    "demande_non_refusee": "Seule une demande refusée peut être supprimée."
   },
   "production": {
     "title": "Client actif",

@@ -11,7 +11,8 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
-import { decideSubmission } from "@/lib/actions/lien-actions";
+import { decideSubmission, deleteSubmission } from "@/lib/actions/lien-actions";
+import { SwipeSupprimer } from "@/components/fiches/swipe-supprimer";
 import type { FicheSubmissionRow } from "@/lib/database.types";
 import { SUBMISSION_STATUTS, type SubmissionStatut } from "@/lib/domain";
 import { formatDate } from "@/lib/dates";
@@ -83,6 +84,7 @@ export function DemandesPanel({
     statut: SubmissionStatut;
   } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [suppressionId, setSuppressionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const names = useMemo(
@@ -141,6 +143,25 @@ export function DemandesPanel({
           : s,
       ),
     );
+  }
+
+  /**
+   * Efface une demande refusée.
+   *
+   * La ligne quitte la liste seulement une fois la base d'accord : la retirer
+   * d'abord ferait disparaître de l'écran une demande que la RLS a refusé de
+   * supprimer, et elle serait revenue au rafraîchissement suivant.
+   */
+  async function supprimer(submission: FicheSubmissionRow) {
+    setSuppressionId(submission.id);
+    setError(null);
+    const result = await deleteSubmission({ id: submission.id });
+    setSuppressionId(null);
+    if (!result.ok) {
+      setError(messageErreur(t, result.error));
+      return;
+    }
+    setSubmissions((list) => list.filter((s) => s.id !== submission.id));
   }
 
   function toggle(id: string) {
@@ -202,8 +223,19 @@ export function DemandesPanel({
           {visible.map((s) => {
             const isOpen = expanded.has(s.id);
             const busy = busyId === s.id;
+            // Seule une demande refusée s'efface : en attente, elle n'a pas
+            // encore été jugée ; acceptée, elle explique une fiche existante.
+            const effacable = s.statut === "refuse";
             return (
               <li key={s.id}>
+                <SwipeSupprimer
+                  actif={effacable}
+                  enCours={suppressionId === s.id}
+                  libelle={t("demandes.actions.supprimer", {
+                    client: s.client_nom,
+                  })}
+                  onSupprimer={() => void supprimer(s)}
+                >
                 <Card className="overflow-hidden p-0">
                   <div className="p-4 md:p-5">
                     <div className="flex flex-wrap items-center gap-2">
@@ -306,6 +338,14 @@ export function DemandesPanel({
                       </Link>
                     )}
 
+                    {/* Le geste ne se devine pas : une demande refusée dit
+                        qu'elle peut partir, et comment. */}
+                    {effacable && (
+                      <span className="text-xs text-muted-foreground">
+                        {t("demandes.balayerAide")}
+                      </span>
+                    )}
+
                     <button
                       type="button"
                       onClick={() => toggle(s.id)}
@@ -323,6 +363,7 @@ export function DemandesPanel({
                     </button>
                   </div>
                 </Card>
+                </SwipeSupprimer>
               </li>
             );
           })}

@@ -239,6 +239,19 @@ export async function decideSubmission(
 
 const deleteSubmissionSchema = z.object({ id: z.string().uuid() });
 
+/**
+ * Efface définitivement une demande refusée.
+ *
+ * Refusée seulement. Une demande en attente n'a pas encore été jugée, et une
+ * demande acceptée a donné une fiche : l'effacer laisserait un dossier dont
+ * plus rien ne dit d'où il vient. La règle est vérifiée ici et non dans
+ * l'écran — un geste de balayage se déclenche par accident, et une garde qui
+ * ne vit que dans le composant se contourne en appelant l'action.
+ *
+ * La trace disparaît avec la ligne : c'est le sens de la demande. Une
+ * demande refusée ne sert qu'à se souvenir qu'on a dit non ; passé un
+ * moment, ce souvenir encombre la pile.
+ */
 export async function deleteSubmission(
   input: unknown,
 ): Promise<ActionResult<undefined>> {
@@ -246,12 +259,31 @@ export async function deleteSubmission(
   const parsed = deleteSubmissionSchema.safeParse(input);
   if (!parsed.success) return fail("validation");
 
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
   const supabase = await createClient();
-  const { error } = await supabase
+
+  const { data: demande } = await supabase
     .from("fiche_submissions")
-    .delete()
+    .select("statut")
+    .eq("id", parsed.data.id)
+    .single();
+  if (!demande) return fail("not_found");
+  if (demande.statut !== "refuse") return fail("demande_non_refusee");
+
+  /*
+   * `count` plutôt que la seule absence d'erreur : la RLS ne refuse pas un
+   * DELETE qu'elle interdit, elle le rend sans effet — PostgREST répond
+   * « 204 » avec zéro ligne touchée. Sans ce compte, la demande disparaissait
+   * de l'écran et revenait au rafraîchissement.
+   */
+  const { error, count } = await supabase
+    .from("fiche_submissions")
+    .delete({ count: "exact" })
     .eq("id", parsed.data.id);
   if (error) return fail(dbError(error));
+  if (!count) return fail("db_droits");
 
   revalidatePath("/fiches");
   return succeed(undefined);
