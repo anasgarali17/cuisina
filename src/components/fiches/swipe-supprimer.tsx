@@ -60,6 +60,15 @@ export function SwipeSupprimer({
    * balayage franc ne supprimait rien.
    */
   const dxRef = useRef(0);
+  /**
+   * Le décalage au moment où le doigt se pose.
+   *
+   * Un second geste part de là où la carte en est restée, au lieu de repartir
+   * de zéro : sinon, rouvrir une carte déjà découverte la faisait d'abord
+   * claquer en place. C'est aussi ce qui permet de la refermer en la
+   * repoussant dans l'autre sens.
+   */
+  const departDx = useRef(0);
   const [dx, setDx] = useState(0);
   const [ouvert, setOuvert] = useState(false);
   /**
@@ -92,10 +101,21 @@ export function SwipeSupprimer({
 
   function onPointerDown(e: React.PointerEvent) {
     if (!actif || enCours) return;
-    // La souris n'a pas à balayer : elle a le bouton, et capturer ses
-    // déplacements empêcherait de sélectionner le texte de la carte.
-    if (e.pointerType === "mouse") return;
+    /*
+     * La souris balaie aussi.
+     *
+     * Elle en était exclue au motif qu'elle avait le bouton — sauf que le
+     * bouton ne se découvre qu'en balayant, et que l'écran de travail du
+     * showroom est un ordinateur. Le geste n'existait donc que sur
+     * téléphone : « on ne peut pas balayer » était exact partout ailleurs.
+     *
+     * Le seuil de huit pixels sépare le clic du glissement, et la sélection
+     * de texte est neutralisée seulement une fois le geste reconnu — cliquer
+     * dans la carte pour lire un numéro reste possible.
+     */
+    if (e.button !== undefined && e.button > 0) return;
     depart.current = { x: e.clientX, y: e.clientY };
+    departDx.current = dxRef.current;
     horizontal.current = null;
   }
 
@@ -124,8 +144,20 @@ export function SwipeSupprimer({
       setGlisse(true);
     }
 
-    // Seul le balayage vers l'intérieur découvre : l'autre sens referme.
-    const avance = Math.max(0, vers(-deltaX));
+    // À la souris, le glissement sélectionnerait le texte de la carte au lieu
+    // de la pousser. On coupe la sélection une fois le geste reconnu.
+    if (e.cancelable) e.preventDefault();
+
+    /*
+     * On repart du décalage courant : découvrir se poursuit, et repousser
+     * dans l'autre sens referme. Borné à la largeur de la carte — au-delà,
+     * elle quitterait l'écran sans que rien de plus ne se passe.
+     */
+    const largeur = conteneur.current?.offsetWidth ?? 0;
+    const avance = Math.min(
+      largeur || Number.MAX_SAFE_INTEGER,
+      Math.max(0, departDx.current + vers(-deltaX)),
+    );
     dxRef.current = avance;
     setDx(avance);
   }
@@ -210,6 +242,14 @@ export function SwipeSupprimer({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        className={cn(
+          // Le curseur dit que la carte se prend : sur un ordinateur, rien
+          // d'autre n'annonce qu'il y a un geste à faire.
+          actif && !enCours && "cursor-grab active:cursor-grabbing",
+          // Pendant le geste seulement : autrement la carte deviendrait
+          // impossible à sélectionner pour recopier un numéro.
+          glisse && "select-none",
+        )}
         style={{
           transform: `translateX(${rtl ? decalage : -decalage}px)`,
           // Pendant le geste, le doigt commande : aucune animation, sinon la
