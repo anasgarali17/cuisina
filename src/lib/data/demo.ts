@@ -182,6 +182,11 @@ export const demoFiches: FicheRow[] = ficheSeeds.map((s, i) => {
     photos_client: [],
     commentaire_client:
       i % 3 === 0 ? "Souhaite garder l'emplacement actuel de l'évier." : null,
+    // Un projet sur quatre passe par un architecte, et une fiche sur cinq
+    // attend son métrage : de quoi voir les deux états à l'écran.
+    architecte: i % 4 === 0 ? "Cabinet Ben Ayed — Tunis" : null,
+    metrage_demande_le: i % 5 === 0 ? daysAgo(2) : null,
+    metrage_demande_par: i % 5 === 0 ? demoProfiles[0].id : null,
     email: i % 2 === 0 ? `${s.nom.toLowerCase().replace(/[^a-z]+/g, ".")}@gmail.com` : null,
     adresse_complete: `${10 + i} rue des Jasmins, ${s.ville}`,
     code_postal: `${2000 + i * 10}`,

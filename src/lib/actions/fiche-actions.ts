@@ -181,6 +181,115 @@ export async function supprimerPieceJointe(
   return succeed(undefined);
 }
 
+const metrageSchema = z.object({ fiche_id: z.string().uuid() });
+
+/**
+ * Demande de métrage : le conseiller déclare le client prêt pour le relevé.
+ *
+ * Ce n'est pas un changement d'étape — le dossier reste où il est — mais un
+ * marqueur horodaté, doublé d'une tâche pour que quelqu'un planifie
+ * réellement la visite. Sans la tâche, la demande ne serait qu'une date de
+ * plus sur un écran que personne ne relit.
+ *
+ * La tâche va au conseiller de la fiche, pas à celui qui clique : c'est lui
+ * qui connaît le client et son chantier, même quand la direction déclenche
+ * la demande depuis un autre écran.
+ */
+export async function demanderMetrage(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = metrageSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const { fiche_id } = parsed.data;
+  const supabase = await createClient();
+
+  const { data: fiche } = await supabase
+    .from("fiches_contact")
+    .select("id, client_nom, conseiller_id, metrage_demande_le")
+    .eq("id", fiche_id)
+    .single();
+  if (!fiche) return fail("not_found");
+
+  const typedFiche = fiche as Pick<
+    FicheRow,
+    "id" | "client_nom" | "conseiller_id" | "metrage_demande_le"
+  >;
+  // Déjà demandé : on ne réécrit pas la date et on ne crée pas une seconde
+  // tâche. Un double clic ne doit pas produire deux visites à planifier.
+  if (typedFiche.metrage_demande_le) return succeed(undefined);
+
+  const { error } = await supabase
+    .from("fiches_contact")
+    .update({
+      metrage_demande_le: new Date().toISOString(),
+      metrage_demande_par: profile.id,
+    })
+    .eq("id", fiche_id);
+  if (error) return fail(dbError(error));
+
+  // À planifier sous trois jours : au-delà, le client a le temps d'appeler
+  // un concurrent qui, lui, se déplace cette semaine.
+  await supabase.from("taches").insert({
+    titre: `Planifier le métrage — ${typedFiche.client_nom}`,
+    echeance: addDays(new Date(), 3),
+    priorite: "haute" as const,
+    fiche_id,
+    assigne_a: typedFiche.conseiller_id,
+    cree_par: profile.id,
+    auto_generee: true,
+    canal: "appel" as const,
+  });
+
+  revalidatePath(`/fiches/${fiche_id}`);
+  revalidatePath("/taches");
+  revalidatePath("/ma-journee");
+  return succeed(undefined);
+}
+
+/**
+ * Annule une demande de métrage posée par erreur.
+ *
+ * La tâche générée part avec elle : la laisser ouverte ferait planifier une
+ * visite que plus personne n'attend.
+ */
+export async function annulerDemandeMetrage(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = metrageSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const { fiche_id } = parsed.data;
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("fiches_contact")
+    .update({ metrage_demande_le: null, metrage_demande_par: null })
+    .eq("id", fiche_id);
+  if (error) return fail(dbError(error));
+
+  await supabase
+    .from("taches")
+    .delete()
+    .eq("fiche_id", fiche_id)
+    .eq("statut", "a_faire")
+    .eq("auto_generee", true)
+    .like("titre", "Planifier le métrage%");
+
+  revalidatePath(`/fiches/${fiche_id}`);
+  revalidatePath("/taches");
+  revalidatePath("/ma-journee");
+  return succeed(undefined);
+}
+
 /**
  * Moves a fiche through the pipeline and wires the consequences across the
  * app: history, auto-relances (contacté → J+3 · devis envoyé → J+3/J+7),

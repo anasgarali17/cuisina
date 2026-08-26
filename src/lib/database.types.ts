@@ -139,6 +139,15 @@ export interface FicheRow {
   croquis_client: string | null;
   photos_client: string[];
   commentaire_client: string | null;
+  /** Nom de l'architecte du projet, quand il y en a un. Saisie libre. */
+  architecte: string | null;
+  /**
+   * La demande de métrage : quand elle a été faite, et par qui. Nulles
+   * ensemble tant qu'aucune demande n'est en cours — ce n'est pas une étape
+   * du dossier, mais un marqueur posé sur celui-ci.
+   */
+  metrage_demande_le: string | null;
+  metrage_demande_par: string | null;
   conseiller_id: string;
   point_de_vente_id: string;
   client_id: string | null;

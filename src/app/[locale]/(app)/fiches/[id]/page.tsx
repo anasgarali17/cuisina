@@ -7,6 +7,7 @@ import { supabaseConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/dates";
 import { CroquisPad } from "@/components/fiches/croquis-pad";
 import { DetailTabs } from "@/components/fiches/detail-tabs";
+import { MetragePanel } from "@/components/fiches/metrage-panel";
 import { FichePaper } from "@/components/fiches/fiche-paper";
 import { SuiviPanel } from "@/components/fiches/suivi-panel";
 import { ExportPdfButton } from "@/components/fiches/export-pdf-button";
@@ -74,6 +75,16 @@ export default async function FicheDetailPage({
       </div>
 
       <div className="no-print space-y-4">
+        <MetragePanel
+          ficheId={fiche.id}
+          demandeLe={fiche.metrage_demande_le}
+          demandeParNom={
+            fiche.metrage_demande_par
+              ? (names[fiche.metrage_demande_par] ?? null)
+              : null
+          }
+        />
+
         {photoUrl && (
           <Card>
             <CardHeader>

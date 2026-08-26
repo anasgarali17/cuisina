@@ -370,6 +370,14 @@
       "ajouter": "Add",
       "vide": "No documents yet. Plans, site photos, quotes received…",
       "tropGros": "“{nom}” is over 10 MB."
+    },
+    "metrage": {
+      "titre": "Measurement",
+      "aide": "Is the client ready for the on-site survey?",
+      "demander": "Request measurement",
+      "enAttente": "Measurement requested — to be scheduled",
+      "demandeLe": "Requested on {date}",
+      "annuler": "Cancel the request"
     }
   },
   "canaux": {

@@ -370,6 +370,14 @@
       "ajouter": "Ajouter",
       "vide": "Aucun document. Plans, photos de chantier, devis reçus…",
       "tropGros": "« {nom} » dépasse 10 Mo."
+    },
+    "metrage": {
+      "titre": "Métrage",
+      "aide": "Le client est prêt pour le relevé sur place ?",
+      "demander": "Demander le métrage",
+      "enAttente": "Métrage demandé — à planifier",
+      "demandeLe": "Demandé le {date}",
+      "annuler": "Annuler la demande"
     }
   },
   "canaux": {
