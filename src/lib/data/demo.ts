@@ -1,6 +1,7 @@
 import type {
   ClientActifRow,
   ClientRow,
+  EvenementPersonnelRow,
   FicheHistoriqueRow,
   FicheRelanceRow,
   FicheRow,
@@ -147,8 +148,8 @@ const ficheSeeds: FicheSeed[] = [
   { nom: "Leïla Kammoun", ville: "Monastir", stage: "conception_devis", budget: 29000, cuisines: 1, dressings: 1, conseiller: 5, age: 14, score: 74, origine: "site_web", devisPrevu: 1 },
   { nom: "Nizar Ben Ayed", ville: "Sfax", stage: "conception_devis", budget: 61000, cuisines: 2, dressings: 1, conseiller: 6, age: 25, score: 95, origine: "bouche_a_oreille", origineDetail: "prospection", devisPrevu: -8, devisEffectif: -7 },
   { nom: "Rania Masmoudi", ville: "Sfax", stage: "conception_devis", budget: 33500, cuisines: 1, dressings: 0, conseiller: 6, age: 16, score: 82, origine: "publicite", origineDetail: "tiktok", devisPrevu: -6, devisEffectif: -6 },
-  { nom: "Khaled Gargouri", ville: "Djerba", stage: "cloture", budget: 48500, cuisines: 1, dressings: 2, conseiller: 6, age: 30, score: 88, origine: "foire", devisPrevu: -12, devisEffectif: -11 },
-  { nom: "Sonia Mejri", ville: "Tunis", stage: "cloture", budget: 38000, cuisines: 1, dressings: 1, conseiller: 0, age: 28, score: 92, origine: "site_web", devisPrevu: -10, devisEffectif: -9 },
+  { nom: "Khaled Gargouri", ville: "Djerba", stage: "rdv_showroom", budget: 48500, cuisines: 1, dressings: 2, conseiller: 6, age: 30, score: 88, origine: "foire", devisPrevu: -12, devisEffectif: -11 },
+  { nom: "Sonia Mejri", ville: "Tunis", stage: "rdv_showroom", budget: 38000, cuisines: 1, dressings: 1, conseiller: 0, age: 28, score: 92, origine: "site_web", devisPrevu: -10, devisEffectif: -9 },
   { nom: "Walid Chatti", ville: "La Marsa", stage: "signe", budget: 54000, cuisines: 1, dressings: 1, conseiller: 0, age: 40, score: 100, origine: "bouche_a_oreille", origineDetail: "ami", devisPrevu: -30, devisEffectif: -28 },
   { nom: "Amel Dridi", ville: "Gammarth", stage: "signe", budget: 47000, cuisines: 1, dressings: 0, conseiller: 1, age: 35, score: 96, origine: "publicite", origineDetail: "instagram", devisPrevu: -25, devisEffectif: -24 },
   { nom: "Bassem Ayari", ville: "Sousse", stage: "releve_definitif", budget: 25500, cuisines: 1, dressings: 0, conseiller: 4, age: 20, score: 90, origine: "foire", devisPrevu: -14, devisEffectif: -12 },
@@ -360,7 +361,7 @@ export const demoClientsActifs: ClientActifRow[] = demoFiches
   }));
 
 export const demoRelances: FicheRelanceRow[] = demoFiches
-  .filter((f) => ["releve_preliminaire", "conception_devis", "cloture"].includes(f.stage))
+  .filter((f) => ["releve_preliminaire", "conception_devis", "rdv_showroom"].includes(f.stage))
   .flatMap((f, i) => {
     const count = (i % 2) + 1;
     return Array.from({ length: count }, (_, n) => ({
@@ -759,3 +760,40 @@ export const demoEnvois: MessageEnvoyeRow[] = demoFiches
       created_at: daysAgo(2 + i, 10),
     };
   });
+
+/**
+ * Quelques rendez-vous personnels, pour que l'agenda de la direction ne
+ * s'ouvre pas sur un écran vide en démonstration.
+ */
+export const demoEvenementsPersonnels: EvenementPersonnelRow[] = [
+  {
+    id: "00000000-0000-4000-8000-000000000901",
+    proprietaire_id: demoProfiles[demoProfiles.length - 1].id,
+    titre: "Comité de direction",
+    debut: daysAhead(1, 9),
+    fin: daysAhead(1, 11),
+    notes: "Revue des objectifs par showroom",
+    created_at: daysAgo(3),
+    updated_at: daysAgo(3),
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000902",
+    proprietaire_id: demoProfiles[demoProfiles.length - 1].id,
+    titre: "Rendez-vous banque",
+    debut: daysAhead(3, 14),
+    fin: daysAhead(3, 15),
+    notes: null,
+    created_at: daysAgo(2),
+    updated_at: daysAgo(2),
+  },
+  {
+    id: "00000000-0000-4000-8000-000000000903",
+    proprietaire_id: demoProfiles[demoProfiles.length - 1].id,
+    titre: "Visite fournisseur — Sfax",
+    debut: daysAgo(4, 10),
+    fin: daysAgo(4, 16),
+    notes: "Négociation des délais caissons",
+    created_at: daysAgo(10),
+    updated_at: daysAgo(10),
+  },
+];

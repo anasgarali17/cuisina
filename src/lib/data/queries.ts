@@ -5,6 +5,7 @@ import { supabaseConfigured } from "@/lib/env";
 import type {
   ClientActifRow,
   ClientRow,
+  EvenementPersonnelRow,
   FicheHistoriqueRow,
   FicheLienRow,
   FicheRelanceRow,
@@ -27,6 +28,7 @@ import {
   demoClients,
   demoClientsActifs,
   demoEnvois,
+  demoEvenementsPersonnels,
   demoFiches,
   demoFournisseurs,
   demoHistorique,
@@ -480,5 +482,41 @@ export const listRelancesForFiches = cache(
     const wanted = new Set(ficheIds);
     const { relances } = await getSnapshot();
     return relances.filter((r) => wanted.has(r.fiche_id));
+  },
+);
+
+/**
+ * L'agenda personnel de l'utilisateur connecté.
+ *
+ * Hors du snapshot à dessein : celui-ci est partagé par tous les écrans,
+ * alors que ces lignes ne regardent qu'une personne. La RLS filtre déjà sur
+ * le propriétaire — la requête n'a donc pas à le citer, et ne pourrait de
+ * toute façon pas en lire d'autres.
+ */
+export const listEvenementsPersonnels = cache(
+  async (): Promise<EvenementPersonnelRow[]> => {
+    if (!supabaseConfigured()) return demoEvenementsPersonnels;
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("evenements_personnels")
+      .select("*")
+      .order("debut", { ascending: true })
+      .limit(200);
+    if (error || !data) return [];
+    return data as EvenementPersonnelRow[];
+  },
+);
+
+/**
+ * Les changements d'étape récents, tels que le snapshot les porte (90 jours).
+ *
+ * Sert au calcul des indicateurs de la direction : un devis émis ou une
+ * commande confirmée se lisent comme des transitions, pas comme des états.
+ */
+export const listHistoriqueRecent = cache(
+  async (): Promise<FicheHistoriqueRow[]> => {
+    if (!supabaseConfigured()) return demoHistorique;
+    const { historique } = await getSnapshot();
+    return historique;
   },
 );

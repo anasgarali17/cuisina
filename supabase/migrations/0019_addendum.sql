@@ -8,10 +8,7 @@
 --   1. Demande de métrage      → fiches_contact.metrage_demande_le / _par
 --   2. Architecte du projet    → fiches_contact.architecte
 --   3. Agenda personnel        → table evenements_personnels
---
--- Le retrait de l'étape « Clôturé » ne figure pas ici : il déplace des
--- dossiers existants, ce qui demande une décision et non une migration
--- automatique. Il fera l'objet de son propre fichier.
+--   4. Retrait de « Clôturé »  → les dossiers concernés reviennent au RDV
 
 /* ============================================================
    1. Demande de métrage
@@ -121,7 +118,28 @@ end
 $trg$;
 
 /* ============================================================
-   4. Le snapshot rattrape les nouvelles colonnes
+   4. Retrait de l'étape « Clôturé »
+   ============================================================
+
+   L'étape disparaît du parcours, mais pas de l'enum : `fiche_historique`
+   garde la trace des dossiers qui y sont passés, et un historique dont on
+   ne sait plus lire les valeurs ne vaut plus rien. Reconstruire le type
+   pour économiser une valeur inutilisée coûterait bien plus que de la
+   laisser dormir.
+
+   Les dossiers qui s'y trouvent reviennent au « RDV showroom », l'étape
+   qui la précédait. Reculer d'un cran plutôt que d'avancer vers « Signé » :
+   une signature déclenche la création du client et alimente le chiffre
+   d'affaires. Marquer signé ce qui ne l'est pas fausserait les compteurs de
+   la direction, et se rattraperait mal. Un dossier rendu à l'étape
+   précédente, lui, se rattrape d'un glissement sur le tableau. */
+
+update fiches_contact
+   set stage = 'rdv_showroom'
+ where stage = 'cloture';
+
+/* ============================================================
+   5. Le snapshot rattrape les nouvelles colonnes
    ============================================================
 
    « app_snapshot » nomme ses colonnes une à une (voir 0008) : une colonne

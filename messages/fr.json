@@ -55,7 +55,8 @@
     "messages": "Messages WhatsApp",
     "parametres": "Paramètres",
     "etatDossier": "État du dossier",
-    "clientsActifs": "Client actif"
+    "clientsActifs": "Client actif",
+    "direction": "Direction"
   },
   "login": {
     "title": "Connexion",
@@ -196,7 +197,9 @@
       },
       "telBureau": "Téléphone bureau",
       "whatsapp": "Joignable sur WhatsApp",
-      "pdvChoisir": "Choisir un showroom…"
+      "pdvChoisir": "Choisir un showroom…",
+      "architecte": "Architecte du projet",
+      "architectePlaceholder": "Nom du cabinet ou de l’architecte"
     },
     "exigences": {
       "finitionFacade": "Finition Façade",
@@ -311,7 +314,8 @@
       "contact": "contact",
       "confirmation": "Date de confirmation et signature du contrat",
       "remarques": "Remarques et suggestions client",
-      "slogan": "Notre Passion est d'aménager votre Cuisine avec notre savoir faire et Contribuer à votre bien être"
+      "slogan": "Notre Passion est d'aménager votre Cuisine avec notre savoir faire et Contribuer à votre bien être",
+      "architecte": "Architecte"
     },
     "table": {
       "exportList": "Télécharger la liste",
@@ -1166,5 +1170,37 @@
     "emailLabel": "Votre adresse e-mail",
     "whatsappRepris": "Nous utiliserons le {numero}.",
     "mobileDabord": "Saisissez d abord un téléphone mobile."
+  },
+  "direction": {
+    "title": "Direction",
+    "subtitle": "Vos chiffres et votre agenda — visibles de vous seul.",
+    "devis": "Devis émis",
+    "devisCourt": "Devis",
+    "commandes": "Bons de commande confirmés",
+    "commandesCourt": "BC",
+    "parConseiller": "Par conseiller",
+    "parShowroom": "Par showroom",
+    "colonneNom": "Nom",
+    "vide": "Rien sur cette période.",
+    "note": "Un devis est compté au passage en « Conception devis », un bon de commande au passage en « Signé ». Historique disponible sur 90 jours.",
+    "periodes": {
+      "mois": "Ce mois-ci",
+      "j30": "30 jours",
+      "j90": "90 jours"
+    },
+    "agenda": {
+      "titre": "Mon agenda",
+      "prive": "Privé — vous seul y avez accès",
+      "ajouter": "Ajouter",
+      "vide": "Aucun rendez-vous personnel.",
+      "passes": "Passés",
+      "nouveau": "Nouveau rendez-vous",
+      "modifier": "Modifier le rendez-vous",
+      "champTitre": "Intitulé",
+      "titrePlaceholder": "Comité de direction, rendez-vous banque…",
+      "debut": "Début",
+      "fin": "Fin",
+      "notes": "Notes"
+    }
   }
 }

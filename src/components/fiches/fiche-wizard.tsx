@@ -60,6 +60,7 @@ interface Identite {
   email: string;
   adresse_complete: string;
   ville: string;
+  architecte: string;
 }
 
 interface Projet {
@@ -145,6 +146,7 @@ export function FicheWizard({
     email: "",
     adresse_complete: "",
     ville: "",
+    architecte: "",
   });
   const [origine, setOrigine] = useState<Origine | null>(null);
   /** Plus de sous-question : le detail reste vide, la colonne l accepte. */
@@ -533,6 +535,23 @@ export function FicheWizard({
                 value={identite.ville}
                 onChange={(e) => {
                   setIdentite({ ...identite, ville: e.target.value });
+                  markDirty();
+                }}
+              />
+            </div>
+            {/* L'architecte, quand le client en a un : c'est lui qui tranche
+                les finitions, et le savoir avant le rendez-vous change la
+                conversation. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="w-architecte">
+                {t("fiches.wizard.architecte")}
+              </Label>
+              <Input
+                id="w-architecte"
+                value={identite.architecte}
+                placeholder={t("fiches.wizard.architectePlaceholder")}
+                onChange={(e) => {
+                  setIdentite({ ...identite, architecte: e.target.value });
                   markDirty();
                 }}
               />

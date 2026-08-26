@@ -176,6 +176,10 @@ export async function FichePaper({
             <L>{p("ville")}:</L>
             <Dotted>{fiche.ville}</Dotted>
           </Row>
+          <Row>
+            <L>{p("architecte")} :</L>
+            <Dotted>{fiche.architecte}</Dotted>
+          </Row>
         </div>
       </div>
 

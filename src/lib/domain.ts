@@ -4,20 +4,24 @@
  * L'état du dossier — le parcours commercial tel qu'il se déroule réellement
  * chez CUISINA, du lead au dossier transmis à la production.
  *
- * « Clôturé » précède « Signé » à dessein : il marque la fin de la phase
- * commerciale (le client a tranché), la signature venant ensuite formaliser
- * l'accord. Le relevé définitif ne se fait qu'une fois signé — mesurer avant
- * revient à mesurer deux fois.
+ * Sept étapes depuis l'addendum : « Clôturé » a été retiré. Il s'intercalait
+ * entre le rendez-vous et la signature pour dire « le client a tranché »,
+ * mais rien ne s'y décidait que la signature ne dise mieux — une étape que
+ * personne ne peut distinguer de la suivante finit remplie au hasard.
  *
- * Un dossier qui atteint `dossier_envoye` bascule automatiquement dans le
- * suivi de production — voir `ETAPES_PRODUCTION`.
+ * Le relevé définitif ne se fait qu'une fois signé — mesurer avant revient à
+ * mesurer deux fois. Un dossier qui atteint `dossier_envoye` bascule
+ * automatiquement dans le suivi de production — voir `ETAPES_PRODUCTION`.
+ *
+ * La valeur `cloture` reste dans l'enum Postgres et dans les traductions :
+ * l'historique des dossiers la cite, et une étape retirée du parcours doit
+ * rester lisible dans le passé qu'elle a écrit.
  */
 export const STAGES = [
   "nouveau_lead",
   "releve_preliminaire",
   "conception_devis",
   "rdv_showroom",
-  "cloture",
   "signe",
   "releve_definitif",
   "dossier_envoye",

@@ -18,7 +18,6 @@ export const STAGE_CHIP: Record<StageOrPerdu, string> = {
   releve_preliminaire: "bg-stone-100 text-stone-700 border-stone-200",
   conception_devis: "bg-sky-50 text-sky-700 border-sky-200",
   rdv_showroom: "bg-sky-50 text-sky-700 border-sky-200",
-  cloture: "bg-amber-50 text-amber-700 border-amber-200",
   signe: "bg-emerald-50 text-emerald-700 border-emerald-200",
   releve_definitif: "bg-emerald-50 text-emerald-700 border-emerald-200",
   dossier_envoye: "bg-emerald-100 text-emerald-800 border-emerald-300",

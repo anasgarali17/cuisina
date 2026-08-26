@@ -90,6 +90,12 @@ export const ficheIdentiteSchema = z.object({
   email: z.union([z.literal(""), z.string().email("email_invalide")]).default(""),
   adresse_complete: z.string().max(300).default(""),
   ville: z.string().max(80).default(""),
+  /**
+   * L'architecte du projet, quand il y en a un. Facultatif comme le reste :
+   * la plupart des chantiers n'en ont pas, et en exiger un ferait inventer
+   * une réponse.
+   */
+  architecte: z.string().max(120).default(""),
 });
 
 export const ficheOrigineSchema = z

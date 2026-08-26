@@ -79,6 +79,7 @@ export async function saveFiche(
     email: draft.identite.email || null,
     adresse_complete: draft.identite.adresse_complete ?? null,
     ville: draft.identite.ville ?? null,
+    architecte: draft.identite.architecte || null,
     origine: draft.origine.origine,
     origine_detail: draft.origine.origine_detail,
     nb_cuisines: draft.projet.nb_cuisines ?? 0,

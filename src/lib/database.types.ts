@@ -299,6 +299,23 @@ export interface TacheRow {
   created_at: string;
 }
 
+/**
+ * Un rendez-vous personnel : celui qui ne concerne que son propriétaire.
+ *
+ * Distinct de `RendezVousRow` à dessein — pas de fiche, pas de client, pas de
+ * point de vente. La RLS de la table ne laisse voir que ses propres lignes.
+ */
+export interface EvenementPersonnelRow {
+  id: string;
+  proprietaire_id: string;
+  titre: string;
+  debut: string;
+  fin: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface RendezVousRow {
   id: string;
   titre: string;

@@ -5,6 +5,7 @@ import {
   Coins,
   Factory,
   FileText,
+  Gauge,
   MessageCircleMore,
   MessageSquareText,
   PackageCheck,
@@ -54,7 +55,18 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   {
     key: "pilotage",
-    items: [{ key: "maJournee", href: "/ma-journee", icon: Sun, ready: true }],
+    items: [
+      { key: "maJournee", href: "/ma-journee", icon: Sun, ready: true },
+      // Les chiffres de la direction et son agenda personnel : hors du
+      // tableau de bord commun, qui appartient à tout le monde.
+      {
+        key: "direction",
+        href: "/direction",
+        icon: Gauge,
+        ready: true,
+        roles: DIRECTION,
+      },
+    ],
   },
   {
     key: "commercial",

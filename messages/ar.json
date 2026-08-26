@@ -55,7 +55,8 @@
     "messages": "رسائل واتساب",
     "parametres": "الإعدادات",
     "etatDossier": "حالة الملف",
-    "clientsActifs": "عميل نشط"
+    "clientsActifs": "عميل نشط",
+    "direction": "الإدارة"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -196,7 +197,9 @@
       },
       "telBureau": "هاتف المكتب",
       "whatsapp": "متاح على واتساب",
-      "pdvChoisir": "اختر صالة عرض…"
+      "pdvChoisir": "اختر صالة عرض…",
+      "architecte": "مهندس المشروع",
+      "architectePlaceholder": "اسم المكتب أو المهندس"
     },
     "exigences": {
       "finitionFacade": "تشطيب الواجهة",
@@ -311,7 +314,8 @@
       "contact": "contact",
       "confirmation": "Date de confirmation et signature du contrat",
       "remarques": "Remarques et suggestions client",
-      "slogan": "Notre Passion est d'aménager votre Cuisine avec notre savoir faire et Contribuer à votre bien être"
+      "slogan": "Notre Passion est d'aménager votre Cuisine avec notre savoir faire et Contribuer à votre bien être",
+      "architecte": "Architecte"
     },
     "table": {
       "exportList": "تنزيل القائمة الكاملة",
@@ -1166,5 +1170,37 @@
     "emailLabel": "بريدك الإلكتروني",
     "whatsappRepris": "سنستعمل الرقم {numero}.",
     "mobileDabord": "أدخل رقم الهاتف الجوال أولاً."
+  },
+  "direction": {
+    "title": "الإدارة",
+    "subtitle": "أرقامك وجدولك — مرئية لك وحدك.",
+    "devis": "عروض الأسعار الصادرة",
+    "devisCourt": "عروض",
+    "commandes": "أوامر الشراء المؤكدة",
+    "commandesCourt": "أوامر",
+    "parConseiller": "حسب المستشار",
+    "parShowroom": "حسب المعرض",
+    "colonneNom": "الاسم",
+    "vide": "لا شيء في هذه الفترة.",
+    "note": "يُحتسب عرض السعر عند الانتقال إلى «تصميم وعرض سعر»، وأمر الشراء عند الانتقال إلى «موقّع». السجل متاح لمدة 90 يومًا.",
+    "periodes": {
+      "mois": "هذا الشهر",
+      "j30": "30 يومًا",
+      "j90": "90 يومًا"
+    },
+    "agenda": {
+      "titre": "جدولي",
+      "prive": "خاص — أنت وحدك تراه",
+      "ajouter": "إضافة",
+      "vide": "لا مواعيد شخصية.",
+      "passes": "سابقة",
+      "nouveau": "موعد جديد",
+      "modifier": "تعديل الموعد",
+      "champTitre": "العنوان",
+      "titrePlaceholder": "اجتماع الإدارة، موعد البنك…",
+      "debut": "البداية",
+      "fin": "النهاية",
+      "notes": "ملاحظات"
+    }
   }
 }

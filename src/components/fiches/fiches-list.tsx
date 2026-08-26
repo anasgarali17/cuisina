@@ -62,7 +62,6 @@ export function stageBadgeVariant(stage: StageOrPerdu): StageBadgeVariant {
     case "perdu":
       return "rouge";
     case "conception_devis":
-    case "cloture":
       return "chene";
     case "nouveau_lead":
     case "releve_preliminaire":

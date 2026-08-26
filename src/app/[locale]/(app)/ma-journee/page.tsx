@@ -60,14 +60,12 @@ const MID_STAGES = new Set([
   "releve_preliminaire",
   "conception_devis",
   "rdv_showroom",
-  "cloture",
 ]);
 
 const ENCOURS_STAGES = new Set([
   "releve_preliminaire",
   "conception_devis",
   "rdv_showroom",
-  "cloture",
 ]);
 
 export default async function MaJourneePage({

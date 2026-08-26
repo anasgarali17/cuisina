@@ -55,7 +55,8 @@
     "messages": "WhatsApp Messages",
     "parametres": "Settings",
     "etatDossier": "File status",
-    "clientsActifs": "Active client"
+    "clientsActifs": "Active client",
+    "direction": "Leadership"
   },
   "login": {
     "title": "Sign in",
@@ -196,7 +197,9 @@
       },
       "telBureau": "Office phone",
       "whatsapp": "Reachable on WhatsApp",
-      "pdvChoisir": "Choose a showroom…"
+      "pdvChoisir": "Choose a showroom…",
+      "architecte": "Project architect",
+      "architectePlaceholder": "Firm or architect name"
     },
     "exigences": {
       "finitionFacade": "Front Finish",
@@ -311,7 +314,8 @@
       "contact": "contact",
       "confirmation": "Date de confirmation et signature du contrat",
       "remarques": "Remarques et suggestions client",
-      "slogan": "Notre Passion est d'aménager votre Cuisine avec notre savoir faire et Contribuer à votre bien être"
+      "slogan": "Notre Passion est d'aménager votre Cuisine avec notre savoir faire et Contribuer à votre bien être",
+      "architecte": "Architecte"
     },
     "table": {
       "exportList": "Download full list",
@@ -1166,5 +1170,37 @@
     "emailLabel": "Your email address",
     "whatsappRepris": "We will use {numero}.",
     "mobileDabord": "Enter a mobile number first."
+  },
+  "direction": {
+    "title": "Leadership",
+    "subtitle": "Your figures and your diary — visible to you alone.",
+    "devis": "Quotes issued",
+    "devisCourt": "Quotes",
+    "commandes": "Confirmed purchase orders",
+    "commandesCourt": "POs",
+    "parConseiller": "By advisor",
+    "parShowroom": "By showroom",
+    "colonneNom": "Name",
+    "vide": "Nothing in this period.",
+    "note": "A quote is counted when a file reaches “Design & quote”, a purchase order when it reaches “Signed”. History covers 90 days.",
+    "periodes": {
+      "mois": "This month",
+      "j30": "30 days",
+      "j90": "90 days"
+    },
+    "agenda": {
+      "titre": "My diary",
+      "prive": "Private — only you can see it",
+      "ajouter": "Add",
+      "vide": "No personal appointments.",
+      "passes": "Past",
+      "nouveau": "New appointment",
+      "modifier": "Edit appointment",
+      "champTitre": "Title",
+      "titrePlaceholder": "Board meeting, bank appointment…",
+      "debut": "Start",
+      "fin": "End",
+      "notes": "Notes"
+    }
   }
 }
