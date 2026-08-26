@@ -502,6 +502,36 @@ export async function updateSuivi(
   return succeed(undefined);
 }
 
+/**
+ * L'architecte du projet, modifiable directement sur la fiche existante.
+ *
+ * Il se decouvre souvent apres le premier contact — le client mentionne son
+ * cabinet au deuxieme rendez-vous — donc le figer a la creation ne suffit
+ * pas. Action a part plutot qu'un champ de plus dans `updateSuivi` : le
+ * panneau de suivi exige ses trois dates, que la ligne du papier n'a pas.
+ */
+const architecteSchema = z.object({
+  fiche_id: z.string().uuid(),
+  architecte: z.string().max(120).default(""),
+});
+
+export async function majArchitecte(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = architecteSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("fiches_contact")
+    .update({ architecte: parsed.data.architecte.trim() || null })
+    .eq("id", parsed.data.fiche_id);
+  if (error) return fail(dbError(error));
+  revalidatePath(`/fiches/${parsed.data.fiche_id}`);
+  return succeed(undefined);
+}
+
 const relanceSchema = z.object({
   fiche_id: z.string().uuid(),
   canal: z.enum(CANAUX),

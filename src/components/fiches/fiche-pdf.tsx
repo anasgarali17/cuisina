@@ -227,6 +227,7 @@ export function buildFichePdfDoc({
                 {fiche.ville ?? ""}
               </Text>
             </View>
+            <Line label={g("architecte")} value={fiche.architecte} />
           </View>
         </View>
 

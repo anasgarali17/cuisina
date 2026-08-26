@@ -3,6 +3,7 @@ import { exigencesSchema, EXIGENCES_VIDES } from "@/lib/schemas/fiche";
 import { formatDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import type { FicheRelanceRow, FicheRow } from "@/lib/database.types";
+import { ArchitecteInline } from "@/components/fiches/architecte-inline";
 
 /* — building blocks of the paper — */
 
@@ -178,7 +179,8 @@ export async function FichePaper({
           </Row>
           <Row>
             <L>{p("architecte")} :</L>
-            <Dotted>{fiche.architecte}</Dotted>
+            {/* Seule ligne saisissable du papier — voir ArchitecteInline. */}
+            <ArchitecteInline ficheId={fiche.id} valeur={fiche.architecte} />
           </Row>
         </div>
       </div>

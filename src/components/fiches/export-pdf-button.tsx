@@ -18,6 +18,7 @@ const PAPER_KEYS = [
   "email",
   "cp",
   "ville",
+  "architecte",
   "adresse",
   "typeProjet",
   "nombre",
