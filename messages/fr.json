@@ -45,10 +45,7 @@
     "taches": "Mes Tâches",
     "sequences": "Activation automatique",
     "modeles": "Textes des messages",
-    "flux": "Flux & Marges",
     "reglements": "Règlements & Encaissements",
-    "rayonnement": "Rayonnement",
-    "commissions": "Commissions & Rémunérations",
     "equipe": "Conseillers & Points de Vente",
     "configuration": "Configuration Atelier",
     "plus": "Plus",
@@ -75,21 +72,9 @@
       "title": "Devis & Factures",
       "description": "Génération et numérotation des devis et factures, directement depuis la fiche contact, avec suivi des versions."
     },
-    "flux": {
-      "title": "Flux & Marges",
-      "description": "Marges par projet, par showroom et par conseiller — la lecture financière du pipeline."
-    },
     "reglements": {
       "title": "Règlements & Encaissements",
       "description": "Acomptes, échéances et encaissements, rapprochés automatiquement des commandes."
-    },
-    "rayonnement": {
-      "title": "Rayonnement",
-      "description": "D'où viennent vos clients : origines, villes, campagnes. La carte de la notoriété Cuisina."
-    },
-    "commissions": {
-      "title": "Commissions & Rémunérations",
-      "description": "Le calcul des commissions conseillers, transparent et vérifiable, adossé au CA signé."
     },
     "configuration": {
       "title": "Configuration Atelier",

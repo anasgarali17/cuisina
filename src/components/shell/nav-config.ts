@@ -2,21 +2,18 @@ import {
   CalendarClock,
   CalendarDays,
   ClipboardList,
-  Coins,
   Factory,
   FileText,
   Gauge,
   MessageCircleMore,
   MessageSquareText,
   PackageCheck,
-  Radar,
   Settings,
   SquareCheck,
   SquareKanban,
   Store,
   Sun,
   ToggleRight,
-  TrendingUp,
   UserCog,
   Users,
   Wallet,
@@ -130,24 +127,9 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "administration",
     items: [
-      { key: "flux", href: "/flux", icon: TrendingUp, ready: false, roles: DIRECTION },
       // Règlements & encaissements : ouvert au commercial, mais seulement
       // quand la passerelle Sage existe — voir `sageConfigured()`.
       { key: "reglements", href: "/reglements", icon: Wallet, ready: false },
-      {
-        key: "rayonnement",
-        href: "/rayonnement",
-        icon: Radar,
-        ready: false,
-        roles: DIRECTION,
-      },
-      {
-        key: "commissions",
-        href: "/commissions",
-        icon: Coins,
-        ready: false,
-        roles: DIRECTION,
-      },
       { key: "equipe", href: "/equipe", icon: Store, ready: true, roles: ENCADREMENT },
       {
         key: "configuration",

@@ -45,10 +45,7 @@
     "taches": "My Tasks",
     "sequences": "Automation switches",
     "modeles": "Message texts",
-    "flux": "Flows & Margins",
     "reglements": "Payments & Collections",
-    "rayonnement": "Reach",
-    "commissions": "Commissions & Compensation",
     "equipe": "Conseillers & Points of Sale",
     "configuration": "Workshop Settings",
     "plus": "More",
@@ -75,21 +72,9 @@
       "title": "Devis & Invoices",
       "description": "Generate and number Devis and invoices straight from the Fiche Contact, with version tracking."
     },
-    "flux": {
-      "title": "Flows & Margins",
-      "description": "Margins by project, by Showroom and by Conseiller — the financial read on the pipeline."
-    },
     "reglements": {
       "title": "Payments & Collections",
       "description": "Deposits, instalments and collections, automatically matched to orders."
-    },
-    "rayonnement": {
-      "title": "Reach",
-      "description": "Where your clients come from: sources, cities, campaigns. The map of Cuisina's renown."
-    },
-    "commissions": {
-      "title": "Commissions & Compensation",
-      "description": "Conseiller commission calculations — transparent, verifiable, anchored to signed revenue."
     },
     "configuration": {
       "title": "Workshop Settings",
