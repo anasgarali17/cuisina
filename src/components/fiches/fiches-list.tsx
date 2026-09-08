@@ -41,6 +41,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ShowroomPicker,
+  TOUS_LES_SHOWROOMS,
+} from "@/components/shell/showroom-picker";
 
 const ALL = "__all__";
 
@@ -263,6 +267,17 @@ export function FichesList({
     });
   }, [fiches, query, stageFilter, conseillerFilter, pdvFilter]);
 
+  /* Le nombre de fiches par showroom, affiché en pastille dans le sélecteur :
+     on choisit mieux quand on voit où il y a du travail. Le total répond à
+     l'entrée « Tous les showrooms ». */
+  const fichesParPdv = useMemo(() => {
+    const compte: Record<string, number> = { [TOUS_LES_SHOWROOMS]: fiches.length };
+    for (const f of fiches) {
+      compte[f.point_de_vente_id] = (compte[f.point_de_vente_id] ?? 0) + 1;
+    }
+    return compte;
+  }, [fiches]);
+
   const byStage = useMemo(() => {
     const map = new Map<StageOrPerdu, FicheRow[]>();
     for (const stage of ALL_STAGES) map.set(stage, []);
@@ -435,13 +450,18 @@ export function FichesList({
           }))}
           allLabel={t("pipeline.filters.all")}
         />
-        <FilterPill
-          label={t("pipeline.filters.pointDeVente")}
-          value={pdvFilter}
-          onChange={setPdvFilter}
-          options={pdvs.map((p) => ({ value: p.id, label: p.nom }))}
-          allLabel={t("pipeline.filters.all")}
-        />
+        {/* Le showroom se choisit dans un vrai sélecteur — on tape le nom de
+            la ville et on valide. Un profil borné à son point de vente n'a
+            rien à filtrer : il ne voit pas le champ. */}
+        {pdvs.length > 1 && (
+          <ShowroomPicker
+            showrooms={pdvs}
+            value={pdvFilter === ALL ? TOUS_LES_SHOWROOMS : pdvFilter}
+            onChange={(id) => setPdvFilter(id === TOUS_LES_SHOWROOMS ? ALL : id)}
+            autoriseTous
+            compteurs={fichesParPdv}
+          />
+        )}
         <span className="rounded-full border border-border px-3 py-1 font-mono text-xs text-muted-foreground">
           {t("fiches.count", { count: filtered.length })}
         </span>

@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { MOBILE_TABS, navPourRole } from "@/components/shell/nav-config";
+import { navPourRole, tabsPourRole } from "@/components/shell/nav-config";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ export function BottomTabs({ role }: { role: Role }) {
 
   return (
     <nav className="no-print glass-strong fixed inset-x-0 bottom-0 z-40 flex border-t border-border pb-[env(safe-area-inset-bottom)] md:hidden">
-      {MOBILE_TABS.map((tab) => {
+      {tabsPourRole(role).map((tab) => {
         const active =
           pathname === tab.href || pathname.startsWith(`${tab.href}/`);
         const Icon = tab.icon;

@@ -1134,6 +1134,13 @@
     },
     "deplacer": "Move"
   },
+  "showroomPicker": {
+    "label": "Showroom",
+    "chercher": "Search a showroom…",
+    "tous": "All showrooms",
+    "aucun": "No showroom",
+    "vide": "No matching showroom."
+  },
   "acces": {
     "refuseTitre": "Restricted section",
     "refuseTexte": "Your role does not give access to this section. If you think this is a mistake, ask your manager to check your permissions.",

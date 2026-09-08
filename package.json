@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "acces": "tsx scripts/provision-acces.ts",
+    "acces:appliquer": "tsx scripts/provision-acces.ts --appliquer"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

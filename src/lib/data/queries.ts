@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/env";
+import { showroomsVisibles } from "@/lib/acces";
 import type {
   ClientActifRow,
   ClientRow,
@@ -128,6 +129,19 @@ export const listPdvs = cache(async (): Promise<PointDeVenteRow[]> => {
   if (!supabaseConfigured()) return demoPdvs;
   return (await getSnapshot()).pdvs;
 });
+
+/**
+ * Les showrooms tels que ce profil a le droit de les voir.
+ *
+ * `listPdvs` reste la donnée référentielle brute — la RLS l'ouvre à tout le
+ * monde, parce qu'un nom de showroom n'est pas un secret. Ce qui est réservé,
+ * c'est de *travailler* ailleurs que chez soi : les écrans passent donc par
+ * ici, et seul l'administrateur en ressort avec les neuf.
+ */
+export const listPdvsVisibles = cache(
+  async (profile: ProfileRow): Promise<PointDeVenteRow[]> =>
+    showroomsVisibles(profile, await listPdvs()),
+);
 
 /**
  * Donnée référentielle, comme les points de vente : la même liste pour tout

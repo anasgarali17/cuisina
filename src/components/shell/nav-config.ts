@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { sageConfigured } from "@/lib/env";
+import { ADMIN, DIRECTION, ENCADREMENT } from "@/lib/acces";
 import type { Role } from "@/lib/domain";
 
 export interface NavItem {
@@ -38,11 +39,6 @@ export interface NavItem {
    */
   roles?: readonly Role[];
 }
-
-/** Direction et administrateurs — tout leur est ouvert. */
-const DIRECTION: readonly Role[] = ["direction", "admin"];
-/** Y compris le chef de showroom, que la RLS borne déjà à son point de vente. */
-const ENCADREMENT: readonly Role[] = ["chef_showroom", "direction", "admin"];
 
 export interface NavGroup {
   key: "pilotage" | "commercial" | "organisation" | "automatisation" | "administration";
@@ -130,7 +126,10 @@ export const NAV_GROUPS: NavGroup[] = [
       // Règlements & encaissements : ouvert au commercial, mais seulement
       // quand la passerelle Sage existe — voir `sageConfigured()`.
       { key: "reglements", href: "/reglements", icon: Wallet, ready: false },
-      { key: "equipe", href: "/equipe", icon: Store, ready: true, roles: ENCADREMENT },
+      // Le réseau au complet — les neuf showrooms, leurs équipes, leurs
+      // chiffres. Réservé à l'administrateur : lui seul regarde ailleurs que
+      // chez lui.
+      { key: "equipe", href: "/equipe", icon: Store, ready: true, roles: ADMIN },
       {
         key: "configuration",
         href: "/configuration",
@@ -159,13 +158,30 @@ export function navPourRole(role: Role): NavGroup[] {
   })).filter((group) => group.items.length > 0);
 }
 
-/** Les deux périmètres, exportés pour les gardes de page. */
-export { DIRECTION, ENCADREMENT };
+/** Les périmètres, réexportés pour les gardes de page déjà écrites. */
+export { ADMIN, DIRECTION, ENCADREMENT };
 
 /** Mobile bottom tabs: Ma Journée · Fiches · État du dossier · Clients · Plus. */
-export const MOBILE_TABS = [
-  { key: "maJournee", href: "/ma-journee", icon: Sun },
-  { key: "fiches", href: "/fiches", icon: ClipboardList },
-  { key: "etatDossier", href: "/etat-dossier", icon: SquareKanban },
-  { key: "clients", href: "/clients", icon: Users },
-] as const;
+export const MOBILE_TABS: readonly NavItem[] = [
+  { key: "maJournee", href: "/ma-journee", icon: Sun, ready: true },
+  { key: "fiches", href: "/fiches", icon: ClipboardList, ready: true },
+  { key: "etatDossier", href: "/etat-dossier", icon: SquareKanban, ready: true },
+  {
+    key: "clients",
+    href: "/clients",
+    icon: Users,
+    ready: true,
+    roles: ENCADREMENT,
+  },
+  // Le commercial n'a pas le fichier client ; on lui rend l'onglet plutôt que
+  // de le laisser vide — un raccourci qui mène à « Section réservée » est pire
+  // que pas de raccourci.
+  { key: "taches", href: "/taches", icon: SquareCheck, ready: true },
+];
+
+/** Les onglets du bas, tels qu'un rôle les voit — quatre au plus. */
+export function tabsPourRole(role: Role): NavItem[] {
+  return MOBILE_TABS.filter(
+    (tab) => !tab.roles || tab.roles.includes(role),
+  ).slice(0, 4);
+}

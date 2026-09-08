@@ -36,5 +36,10 @@ export const getCurrentProfile = cache(async (): Promise<ProfileRow | null> => {
     .select("*")
     .eq("id", user.id)
     .single();
+
+  // Un compte désactivé a bien une session — il s'est connecté — mais plus de
+  // profil utilisable. On le traite comme absent : la mise en page renvoie
+  // alors vers l'écran de connexion, plutôt que d'ouvrir une coquille vide.
+  if (!profile || !profile.actif) return null;
   return profile;
 });

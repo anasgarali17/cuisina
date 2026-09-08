@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { getCurrentProfile } from "@/lib/auth";
 import {
   listFiches,
-  listPdvs,
+  listPdvsVisibles,
   listProfiles,
   listTaches,
 } from "@/lib/data/queries";
@@ -20,7 +20,7 @@ export default async function EtatDossierPage() {
   const [fiches, profiles, pdvs, taches] = await Promise.all([
     listFiches(profile),
     listProfiles(),
-    listPdvs(),
+    listPdvsVisibles(profile),
     listTaches(profile),
   ]);
 

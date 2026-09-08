@@ -1134,6 +1134,13 @@
     },
     "deplacer": "Déplacer"
   },
+  "showroomPicker": {
+    "label": "Showroom",
+    "chercher": "Chercher un showroom…",
+    "tous": "Tous les showrooms",
+    "aucun": "Aucun showroom",
+    "vide": "Aucun showroom ne correspond."
+  },
   "acces": {
     "refuseTitre": "Section réservée",
     "refuseTexte": "Votre rôle ne donne pas accès à cette section. Si vous pensez qu'il s'agit d'une erreur, demandez à votre responsable de vérifier vos droits.",

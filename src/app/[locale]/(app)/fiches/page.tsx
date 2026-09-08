@@ -6,7 +6,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import {
   listFiches,
   listLiens,
-  listPdvs,
+  listPdvsVisibles,
   listProfiles,
   listSubmissions,
 } from "@/lib/data/queries";
@@ -36,7 +36,7 @@ export default async function FichesPage() {
     await Promise.all([
       listFiches(profile),
       listProfiles(),
-      listPdvs(),
+      listPdvsVisibles(profile),
       listSubmissions(),
       listLiens(),
       currentOrigin(),

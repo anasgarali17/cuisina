@@ -1,5 +1,6 @@
 import { profilAutorise } from "@/lib/garde";
 import { ENCADREMENT } from "@/components/shell/nav-config";
+import { showroomsVisibles } from "@/lib/acces";
 import { AccesRefuse } from "@/components/shell/acces-refuse";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -36,15 +37,21 @@ export default async function ShowroomDetailPage({
   const since90 = new Date();
   since90.setDate(since90.getDate() - 90);
 
-  const [pdvs, profiles, fiches, historique] = await Promise.all([
+  const [tousPdvs, profiles, fiches, historique] = await Promise.all([
     listPdvs(),
     listProfiles(),
     listFiches(profile),
     listHistoriqueSince(profile, monthStart.toISOString()),
   ]);
 
+  /* On cherche l'adresse tapée dans les seuls showrooms ouverts à ce profil :
+     un chef de showroom qui devine l'identifiant du voisin tombe sur
+     « Section réservée », pas sur les chiffres du voisin. */
+  const pdvs = showroomsVisibles(profile, tousPdvs);
   const pdv = pdvs.find((p) => p.id === id);
-  if (!pdv) notFound();
+  if (!pdv) {
+    return tousPdvs.some((p) => p.id === id) ? <AccesRefuse /> : notFound();
+  }
 
   const own = fiches.filter((f) => f.point_de_vente_id === pdv.id);
   const team = profiles.filter((p) => p.point_de_vente_id === pdv.id);

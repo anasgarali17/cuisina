@@ -2,7 +2,11 @@ import { profilAutorise } from "@/lib/garde";
 import { ENCADREMENT } from "@/components/shell/nav-config";
 import { AccesRefuse } from "@/components/shell/acces-refuse";
 import { getTranslations } from "next-intl/server";
-import { listClients, listFiches, listPdvs } from "@/lib/data/queries";
+import {
+  listClients,
+  listFiches,
+  listPdvsVisibles,
+} from "@/lib/data/queries";
 import { STAGES_HORS_FUNNEL, scoreClient } from "@/lib/domain";
 import { daysSince } from "@/lib/dates";
 import { PageHeader } from "@/components/shell/page-header";
@@ -21,7 +25,7 @@ export default async function ClientsPage() {
   const [clients, fiches, pdvs] = await Promise.all([
     listClients(profile),
     listFiches(profile),
-    listPdvs(),
+    listPdvsVisibles(profile),
   ]);
 
   /**

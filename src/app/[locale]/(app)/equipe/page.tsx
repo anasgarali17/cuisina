@@ -1,5 +1,6 @@
 import { profilAutorise } from "@/lib/garde";
-import { ENCADREMENT } from "@/components/shell/nav-config";
+import { ADMIN } from "@/components/shell/nav-config";
+import { showroomsVisibles } from "@/lib/acces";
 import { AccesRefuse } from "@/components/shell/acces-refuse";
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
@@ -19,14 +20,14 @@ import { PdvCard } from "@/components/equipe/pdv-card";
 export default async function EquipePage() {
   const [t, profile] = await Promise.all([
     getTranslations(),
-    profilAutorise(ENCADREMENT),
+    profilAutorise(ADMIN),
   ]);
   if (!profile) return <AccesRefuse />;
 
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [pdvs, profiles, fiches, historique, clients, fournisseurs] =
+  const [tousPdvs, profiles, fiches, historique, clients, fournisseurs] =
     await Promise.all([
       listPdvs(),
       listProfiles(),
@@ -35,6 +36,11 @@ export default async function EquipePage() {
       listClients(profile),
       listFournisseurs(),
     ]);
+
+  /* Le garde ci-dessus ne laisse passer que l'administrateur, qui les a tous.
+     On repasse quand même par le périmètre : le jour où la page s'ouvrira à
+     un autre rôle, la carte se bornera d'elle-même. */
+  const pdvs = showroomsVisibles(profile, tousPdvs);
 
   const ficheById = new Map(fiches.map((f) => [f.id, f]));
   const signedThisMonth = historique.filter((h) => h.stage_to === "signe");

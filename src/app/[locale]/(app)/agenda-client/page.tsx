@@ -1,7 +1,7 @@
 import { getCurrentProfile } from "@/lib/auth";
 import {
   listFiches,
-  listPdvs,
+  listPdvsVisibles,
   listProfiles,
   listRdv,
   listTaches,
@@ -17,7 +17,7 @@ export default async function AgendaClientPage() {
     listTaches(profile),
     listFiches(profile),
     listProfiles(),
-    listPdvs(),
+    listPdvsVisibles(profile),
   ]);
 
   return (
