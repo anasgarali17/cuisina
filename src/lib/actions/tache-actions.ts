@@ -8,6 +8,20 @@ import { getCurrentProfile } from "@/lib/auth";
 import { PRIORITES } from "@/lib/domain";
 import { type ActionResult, dbError, fail, succeed } from "./result";
 
+/**
+ * Les tâches se lisent depuis `app_snapshot`, que plusieurs écrans partagent :
+ * le tableau de bord, le tableau des tâches, les agendas, l'espace personnel.
+ * Nommer les routes une par une revenait à oublier la suivante — c'est ce qui
+ * est arrivé à `/mon-espace`, qui gardait des tâches périmées jusqu'au
+ * rafraîchissement manuel.
+ *
+ * On invalide donc la mise en page : tout écran qui lit l'instantané repart
+ * d'une lecture fraîche, y compris ceux qui n'existent pas encore.
+ */
+function revaliderTaches(): void {
+  revalidatePath("/", "layout");
+}
+
 const toggleSchema = z.object({
   id: z.string().uuid(),
   done: z.boolean(),
@@ -26,10 +40,9 @@ export async function toggleTache(
     .update({ statut: parsed.data.done ? "fait" : "a_faire" })
     .eq("id", parsed.data.id);
   if (error) return fail(dbError(error));
-  // The caller already flipped the checkbox optimistically; only the views
-  // that count tasks need to re-render.
-  revalidatePath("/taches");
-  revalidatePath("/ma-journee");
+  // The caller already flipped the checkbox optimistically; the revalidation
+  // is what keeps every *other* screen in step.
+  revaliderTaches();
   return succeed(undefined);
 }
 
@@ -63,8 +76,7 @@ export async function createTache(
     cree_par: profile.id,
   });
   if (error) return fail(dbError(error));
-  revalidatePath("/taches");
-  revalidatePath("/ma-journee");
+  revaliderTaches();
   return succeed(undefined);
 }
 
@@ -87,8 +99,7 @@ export async function updateTacheEcheance(
     .update({ echeance: parsed.data.echeance })
     .eq("id", parsed.data.id);
   if (error) return fail(dbError(error));
-  revalidatePath("/taches");
-  revalidatePath("/ma-journee");
+  revaliderTaches();
   return succeed(undefined);
 }
 

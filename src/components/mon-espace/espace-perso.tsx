@@ -147,10 +147,36 @@ export function EspacePerso({
   const [actif, setActif] = useState<AgendaEvent | null>(null);
   const [pending, startTransition] = useTransition();
 
-  /* Les lignes locales : le glisser-déposer doit répondre tout de suite, et
-     `router.refresh()` n'arrive qu'après l'aller-retour serveur. */
-  const [lignesPerso, setLignesPerso] = useState(evenements);
-  const [lignesTaches, setLignesTaches] = useState(taches);
+  /*
+   * L'optimisme, sans la dérive.
+   *
+   * Un glisser-déposer doit répondre avant l'aller-retour serveur, d'où une
+   * copie locale. Mais garder cette copie comme unique source la fige : les
+   * tâches créées ailleurs — depuis une fiche, depuis le tableau — n'arrivaient
+   * jamais, parce que `useState(props)` ne lit ses props qu'au premier rendu.
+   *
+   * On ne retient donc que la retouche en cours, effacée dès que le serveur a
+   * répondu. Entre-temps elle se superpose aux lignes fraîches ; après, ce sont
+   * les props qui font foi, et tout ce qui vient d'ailleurs apparaît seul.
+   */
+  const [retouchePerso, setRetouchePerso] = useState<
+    Map<string, EvenementPersonnelRow | null>
+  >(() => new Map());
+  const [retoucheTaches, setRetoucheTaches] = useState<Map<string, TacheRow>>(
+    () => new Map(),
+  );
+
+  const lignesPerso = useMemo(() => {
+    if (retouchePerso.size === 0) return evenements;
+    return evenements
+      .map((ligne) => (retouchePerso.has(ligne.id) ? retouchePerso.get(ligne.id) : ligne))
+      .filter((ligne): ligne is EvenementPersonnelRow => ligne != null);
+  }, [evenements, retouchePerso]);
+
+  const lignesTaches = useMemo(() => {
+    if (retoucheTaches.size === 0) return taches;
+    return taches.map((ligne) => retoucheTaches.get(ligne.id) ?? ligne);
+  }, [taches, retoucheTaches]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
@@ -251,13 +277,19 @@ export function EspacePerso({
 
   function supprimer(id: string) {
     setErreur(null);
+    // `null` = ligne retirée le temps que le serveur confirme.
+    setRetouchePerso((r) => new Map(r).set(id, null));
     startTransition(async () => {
       const result = await supprimerEvenementPerso({ id });
       if (result.ok) {
         setBrouillon(null);
-        setLignesPerso((lignes) => lignes.filter((e) => e.id !== id));
         router.refresh();
       } else {
+        setRetouchePerso((r) => {
+          const suivant = new Map(r);
+          suivant.delete(id);
+          return suivant;
+        });
         setErreur(messageErreur(t, result.error));
       }
     });
@@ -279,47 +311,54 @@ export function EspacePerso({
     // Seul le privé se déplace d'ici — voir le commentaire de tête.
     if (porte.kind !== "perso") return;
 
-    const avant = lignesPerso;
-    setLignesPerso((lignes) =>
-      lignes.map((ligne) => {
-        if (ligne.id !== porte.id) return ligne;
-        const debut = new Date(ligne.debut);
-        const duree = new Date(ligne.fin).getTime() - debut.getTime();
-        const [annee, mois, jourDuMois] = jour.split("-").map(Number);
-        const nouveau = new Date(debut);
-        nouveau.setFullYear(annee!, mois! - 1, jourDuMois!);
-        return {
-          ...ligne,
-          debut: nouveau.toISOString(),
-          fin: new Date(nouveau.getTime() + duree).toISOString(),
-        };
+    const ligne = lignesPerso.find((e) => e.id === porte.id);
+    if (!ligne) return;
+
+    const debut = new Date(ligne.debut);
+    const duree = new Date(ligne.fin).getTime() - debut.getTime();
+    const [annee, mois, jourDuMois] = jour.split("-").map(Number);
+    if (!annee || !mois || !jourDuMois) return;
+    const nouveau = new Date(debut);
+    nouveau.setFullYear(annee, mois - 1, jourDuMois);
+
+    setRetouchePerso((r) =>
+      new Map(r).set(porte.id, {
+        ...ligne,
+        debut: nouveau.toISOString(),
+        fin: new Date(nouveau.getTime() + duree).toISOString(),
       }),
     );
 
     startTransition(async () => {
       const result = await deplacerEvenementPerso({ id: porte.id, jour });
-      if (result.ok) router.refresh();
-      else {
-        setLignesPerso(avant);
-        setErreur(messageErreur(t, result.error));
-      }
+      if (!result.ok) setErreur(messageErreur(t, result.error));
+      // La retouche s'efface dans les deux cas : le serveur a tranché, et
+      // c'est sa version — déplacée ou non — que la page doit montrer.
+      setRetouchePerso((r) => {
+        const suivant = new Map(r);
+        suivant.delete(porte.id);
+        return suivant;
+      });
+      router.refresh();
     });
   }
 
   function basculerTache(tache: TacheRow, fait: boolean) {
-    const avant = lignesTaches;
-    setLignesTaches((lignes) =>
-      lignes.map((l) =>
-        l.id === tache.id ? { ...l, statut: fait ? "fait" : "a_faire" } : l,
-      ),
+    setRetoucheTaches((r) =>
+      new Map(r).set(tache.id, {
+        ...tache,
+        statut: fait ? "fait" : "a_faire",
+      }),
     );
     startTransition(async () => {
       const result = await toggleTache({ id: tache.id, done: fait });
-      if (result.ok) router.refresh();
-      else {
-        setLignesTaches(avant);
-        setErreur(messageErreur(t, result.error));
-      }
+      if (!result.ok) setErreur(messageErreur(t, result.error));
+      setRetoucheTaches((r) => {
+        const suivant = new Map(r);
+        suivant.delete(tache.id);
+        return suivant;
+      });
+      router.refresh();
     });
   }
 

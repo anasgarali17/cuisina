@@ -249,6 +249,7 @@ export async function demanderMetrage(
   revalidatePath(`/fiches/${fiche_id}`);
   revalidatePath("/taches");
   revalidatePath("/ma-journee");
+  revalidatePath("/mon-espace");
   return succeed(undefined);
 }
 
@@ -288,6 +289,7 @@ export async function annulerDemandeMetrage(
   revalidatePath(`/fiches/${fiche_id}`);
   revalidatePath("/taches");
   revalidatePath("/ma-journee");
+  revalidatePath("/mon-espace");
   return succeed(undefined);
 }
 
@@ -473,6 +475,7 @@ export async function changeStage(
   revalidatePath("/fiches");
   revalidatePath("/ma-journee");
   revalidatePath("/taches");
+  revalidatePath("/mon-espace");
   revalidatePath(`/fiches/${fiche_id}`);
   // « Dossier envoyé » ouvre la fiche de production : c'est le trigger Postgres
   // qui la crée, mais la page doit la voir apparaître.
@@ -614,6 +617,7 @@ export async function logRelance(
 
   revalidatePath("/taches");
   revalidatePath("/ma-journee");
+  revalidatePath("/mon-espace");
   revalidatePath(`/fiches/${fiche_id}`);
   return succeed({ numero });
 }

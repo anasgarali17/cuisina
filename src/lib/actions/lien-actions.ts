@@ -246,6 +246,7 @@ export async function decideSubmission(
   revalidatePath("/etat-dossier");
   revalidatePath("/taches");
   revalidatePath("/ma-journee");
+  revalidatePath("/mon-espace");
   return succeed({ fiche_id: ficheId });
 }
 
