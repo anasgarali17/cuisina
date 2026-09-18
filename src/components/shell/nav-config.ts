@@ -1,6 +1,7 @@
 import {
   CalendarClock,
   CalendarDays,
+  CalendarHeart,
   ClipboardList,
   Factory,
   FileText,
@@ -20,7 +21,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { sageConfigured } from "@/lib/env";
-import { ADMIN, DIRECTION, ENCADREMENT } from "@/lib/acces";
+import { ADMIN, DIRECTION, ENCADREMENT, aUnEspacePersonnel } from "@/lib/acces";
 import type { Role } from "@/lib/domain";
 
 export interface NavItem {
@@ -59,6 +60,10 @@ export const NAV_GROUPS: NavGroup[] = [
         ready: true,
         roles: DIRECTION,
       },
+      // L'espace personnel : la seule entrée qui ne dépende pas du rôle mais
+      // de la personne. `navPourRole` la retire pour tout le monde sauf ceux
+      // que `aUnEspacePersonnel` désigne.
+      { key: "monEspace", href: "/mon-espace", icon: CalendarHeart, ready: true },
     ],
   },
   {
@@ -147,12 +152,17 @@ export const NAV_GROUPS: NavGroup[] = [
  *
  * Un groupe qui se vide disparaît : mieux vaut pas de titre du tout qu'un
  * titre « Administration » suivi de rien.
+ *
+ * L'e-mail n'entre en jeu que pour l'espace personnel, qui n'appartient pas à
+ * un rôle mais à quelqu'un. Omis, l'entrée disparaît — une porte ne s'ouvre
+ * pas sur une donnée manquante.
  */
-export function navPourRole(role: Role): NavGroup[] {
+export function navPourRole(role: Role, email?: string | null): NavGroup[] {
   return NAV_GROUPS.map((group) => ({
     ...group,
     items: group.items.filter((item) => {
       if (item.key === "reglements" && !sageConfigured()) return false;
+      if (item.key === "monEspace") return aUnEspacePersonnel(email);
       return !item.roles || item.roles.includes(role);
     }),
   })).filter((group) => group.items.length > 0);

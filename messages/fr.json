@@ -53,7 +53,8 @@
     "parametres": "Paramètres",
     "etatDossier": "État du dossier",
     "clientsActifs": "Client actif",
-    "direction": "Direction"
+    "direction": "Direction",
+    "monEspace": "Mon espace"
   },
   "login": {
     "title": "Connexion",
@@ -1140,6 +1141,33 @@
     "tous": "Tous les showrooms",
     "aucun": "Aucun showroom",
     "vide": "Aucun showroom ne correspond."
+  },
+  "monEspace": {
+    "titre": "L'espace de {prenom}",
+    "sousTitre": "Votre agenda et vos tâches, à vous seul",
+    "prive": "Privé — vous seul y avez accès, pas même les autres administrateurs",
+    "ajouter": "Nouvel événement",
+    "aujourdhui": "Aujourd'hui",
+    "precedent": "Période précédente",
+    "suivant": "Période suivante",
+    "vue": "Affichage",
+    "legendePrive": "Événement privé",
+    "legendeTache": "Tâche",
+    "journeeVide": "Rien de prévu ce jour.",
+    "mesTaches": "Mes tâches",
+    "aucuneTache": "Aucune tâche en cours.",
+    "nouveau": "Nouvel événement",
+    "modifier": "Modifier l'événement",
+    "champTitre": "Titre",
+    "titrePlaceholder": "Déjeuner, rendez-vous médical…",
+    "debut": "Début",
+    "fin": "Fin",
+    "notes": "Notes",
+    "qrTitre": "Ouvrir sur mon téléphone",
+    "qrTexte": "Scannez ce code pour ouvrir votre espace sur mobile. Vous devrez être connecté.",
+    "qrAlt": "QR code vers votre espace personnel",
+    "qrCopier": "Copier le lien",
+    "qrCopie": "Lien copié"
   },
   "acces": {
     "refuseTitre": "Section réservée",

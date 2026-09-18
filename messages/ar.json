@@ -53,7 +53,8 @@
     "parametres": "الإعدادات",
     "etatDossier": "حالة الملف",
     "clientsActifs": "عميل نشط",
-    "direction": "الإدارة"
+    "direction": "الإدارة",
+    "monEspace": "مساحتي"
   },
   "login": {
     "title": "تسجيل الدخول",
@@ -1140,6 +1141,33 @@
     "tous": "كل صالات العرض",
     "aucun": "لا توجد صالة عرض",
     "vide": "لا توجد صالة عرض مطابقة."
+  },
+  "monEspace": {
+    "titre": "مساحة {prenom}",
+    "sousTitre": "أجندتك ومهامك، لك وحدك",
+    "prive": "خاص — أنت وحدك تطّلع عليه، ولا حتى بقية المسؤولين",
+    "ajouter": "حدث جديد",
+    "aujourdhui": "اليوم",
+    "precedent": "الفترة السابقة",
+    "suivant": "الفترة التالية",
+    "vue": "العرض",
+    "legendePrive": "حدث خاص",
+    "legendeTache": "مهمة",
+    "journeeVide": "لا شيء مبرمج في هذا اليوم.",
+    "mesTaches": "مهامي",
+    "aucuneTache": "لا توجد مهام جارية.",
+    "nouveau": "حدث جديد",
+    "modifier": "تعديل الحدث",
+    "champTitre": "العنوان",
+    "titrePlaceholder": "غداء، موعد طبي…",
+    "debut": "البداية",
+    "fin": "النهاية",
+    "notes": "ملاحظات",
+    "qrTitre": "الفتح على هاتفي",
+    "qrTexte": "امسح هذا الرمز لفتح مساحتك على الهاتف. يجب أن تكون متصلاً.",
+    "qrAlt": "رمز QR نحو مساحتك الشخصية",
+    "qrCopier": "نسخ الرابط",
+    "qrCopie": "تم نسخ الرابط"
   },
   "acces": {
     "refuseTitre": "قسم محجوز",

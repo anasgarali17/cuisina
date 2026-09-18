@@ -9,11 +9,18 @@ import { signOut } from "@/lib/actions/auth-actions";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/domain";
 
-export function NavRail({ role }: { role: Role }) {
+export function NavRail({
+  role,
+  email,
+}: {
+  role: Role;
+  /** Sert à l'espace personnel seul — voir `navPourRole`. */
+  email?: string | null;
+}) {
   const t = useTranslations("nav");
   const tApp = useTranslations("app");
   const pathname = usePathname();
-  const groupes = navPourRole(role);
+  const groupes = navPourRole(role, email);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);

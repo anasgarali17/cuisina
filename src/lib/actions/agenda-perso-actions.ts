@@ -70,7 +70,65 @@ export async function enregistrerEvenementPerso(
   if (error || !data) return fail(dbError(error));
 
   revalidatePath("/direction");
+  revalidatePath("/mon-espace");
   return succeed({ id: data.id });
+}
+
+/**
+ * Déplacer un événement d'un jour à l'autre, sans toucher à l'heure.
+ *
+ * C'est ce que fait un glisser-déposer sur la grille : on change le jour, on
+ * garde le créneau. La durée suit, pour qu'un rendez-vous d'une heure reste
+ * d'une heure après le déplacement.
+ */
+const deplacementSchema = z.object({
+  id: z.string().uuid(),
+  /** Le jour d'arrivée, « 2026-09-18 ». */
+  jour: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "validation"),
+});
+
+export async function deplacerEvenementPerso(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = deplacementSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const supabase = await createClient();
+
+  // On relit la ligne pour conserver l'heure et la durée : le client n'envoie
+  // que le jour, et recalculer à partir de ce qu'il aurait pu envoyer d'autre
+  // reviendrait à lui faire confiance sur des données qu'il ne possède pas.
+  const { data: actuel, error: lecture } = await supabase
+    .from("evenements_personnels")
+    .select("debut, fin")
+    .eq("id", parsed.data.id)
+    .single();
+  if (lecture || !actuel) return fail(dbError(lecture));
+
+  const debut = new Date(actuel.debut);
+  const duree = new Date(actuel.fin).getTime() - debut.getTime();
+
+  const [annee, mois, jour] = parsed.data.jour.split("-").map(Number);
+  if (!annee || !mois || !jour) return fail("validation");
+  const nouveauDebut = new Date(debut);
+  nouveauDebut.setFullYear(annee, mois - 1, jour);
+
+  const { error } = await supabase
+    .from("evenements_personnels")
+    .update({
+      debut: nouveauDebut.toISOString(),
+      fin: new Date(nouveauDebut.getTime() + duree).toISOString(),
+    })
+    .eq("id", parsed.data.id);
+  if (error) return fail(dbError(error));
+
+  revalidatePath("/direction");
+  revalidatePath("/mon-espace");
+  return succeed(undefined);
 }
 
 export async function supprimerEvenementPerso(
@@ -91,5 +149,6 @@ export async function supprimerEvenementPerso(
   if (error) return fail(dbError(error));
 
   revalidatePath("/direction");
+  revalidatePath("/mon-espace");
   return succeed(undefined);
 }

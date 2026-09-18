@@ -53,7 +53,8 @@
     "parametres": "Settings",
     "etatDossier": "File status",
     "clientsActifs": "Active client",
-    "direction": "Leadership"
+    "direction": "Leadership",
+    "monEspace": "My space"
   },
   "login": {
     "title": "Sign in",
@@ -1140,6 +1141,33 @@
     "tous": "All showrooms",
     "aucun": "No showroom",
     "vide": "No matching showroom."
+  },
+  "monEspace": {
+    "titre": "{prenom}'s space",
+    "sousTitre": "Your calendar and your tasks, yours alone",
+    "prive": "Private — only you can see this, not even other administrators",
+    "ajouter": "New event",
+    "aujourdhui": "Today",
+    "precedent": "Previous period",
+    "suivant": "Next period",
+    "vue": "View",
+    "legendePrive": "Private event",
+    "legendeTache": "Task",
+    "journeeVide": "Nothing scheduled that day.",
+    "mesTaches": "My tasks",
+    "aucuneTache": "No open tasks.",
+    "nouveau": "New event",
+    "modifier": "Edit event",
+    "champTitre": "Title",
+    "titrePlaceholder": "Lunch, doctor's appointment…",
+    "debut": "Start",
+    "fin": "End",
+    "notes": "Notes",
+    "qrTitre": "Open on my phone",
+    "qrTexte": "Scan this code to open your space on mobile. You'll need to be signed in.",
+    "qrAlt": "QR code to your personal space",
+    "qrCopier": "Copy link",
+    "qrCopie": "Link copied"
   },
   "acces": {
     "refuseTitre": "Restricted section",

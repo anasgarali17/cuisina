@@ -1,5 +1,9 @@
 import type { RdvType } from "@/lib/domain";
-import type { RendezVousRow, TacheRow } from "@/lib/database.types";
+import type {
+  EvenementPersonnelRow,
+  RendezVousRow,
+  TacheRow,
+} from "@/lib/database.types";
 import { tzDay } from "@/lib/tz";
 
 /**
@@ -9,9 +13,9 @@ import { tzDay } from "@/lib/tz";
  */
 export interface AgendaEvent {
   id: string;
-  kind: "rdv" | "tache";
-  /** `rdv` events keep their type; tasks are their own visual family. */
-  category: RdvType | "tache";
+  kind: "rdv" | "tache" | "perso";
+  /** `rdv` events keep their type; tasks and personal events are their own. */
+  category: RdvType | "tache" | "perso";
   title: string;
   /** Local calendar day, `yyyy-MM-dd` — the key every view groups by. */
   day: string;
@@ -41,6 +45,7 @@ export const EVENT_CATEGORIES = [
   "pose",
   "interne",
   "tache",
+  "perso",
 ] as const;
 export type EventCategory = (typeof EVENT_CATEGORIES)[number];
 
@@ -88,6 +93,14 @@ export const CATEGORY_STYLES: Record<EventCategory, CategoryStyle> = {
     dot: "bg-stone-500",
     block: "bg-stone-200 text-stone-900 border-stone-400 dark:bg-stone-400/25 dark:text-stone-100 dark:border-stone-400/40",
   },
+  // Le privé prend le violet : aucune autre catégorie ne s'en approche, et sur
+  // une grille où tout le reste appartient à l'entreprise, ce qui n'appartient
+  // qu'à soi doit se distinguer d'un coup d'œil.
+  perso: {
+    chip: "bg-violet-100 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200",
+    dot: "bg-violet-500",
+    block: "bg-violet-100 text-violet-900 border-violet-300 dark:bg-violet-500/25 dark:text-violet-100 dark:border-violet-400/40",
+  },
 };
 
 export function toEvent(rdv: RendezVousRow): AgendaEvent {
@@ -132,6 +145,35 @@ export function tacheToEvent(tache: TacheRow): AgendaEvent | null {
     notes: tache.description,
     done: tache.statut === "fait",
     priorite: tache.priorite,
+  };
+}
+
+/**
+ * Un événement personnel sur la grille.
+ *
+ * Il porte une heure réelle, comme un rendez-vous, mais aucun rattachement :
+ * ni fiche, ni client, ni showroom. `ownerId` reste renseigné pour que les
+ * filtres par personne continuent de fonctionner sans cas particulier.
+ */
+export function persoToEvent(evenement: EvenementPersonnelRow): AgendaEvent {
+  const start = new Date(evenement.debut);
+  return {
+    id: evenement.id,
+    kind: "perso",
+    category: "perso",
+    title: evenement.titre,
+    day: tzDay(start),
+    start,
+    end: new Date(evenement.fin),
+    allDay: false,
+    ownerId: evenement.proprietaire_id,
+    pdvId: null,
+    ficheId: null,
+    clientId: null,
+    lieu: null,
+    notes: evenement.notes,
+    done: false,
+    priorite: null,
   };
 }
 
