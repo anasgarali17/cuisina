@@ -14,11 +14,18 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.goto(pathToFileURL(html).href, { waitUntil: "load" });
 
-// The page box is a fixed height and clips: check before trusting the render.
+// The page box has a fixed height: measure the last item against its inner
+// edge rather than scrollHeight, which plateaus and hides an overflow.
 const fit = await page.evaluate(() => {
-  const el = document.querySelector(".page");
-  return { scroll: el.scrollHeight, client: el.clientHeight };
+  const box = document.querySelector(".page");
+  const r = box.getBoundingClientRect();
+  const limit = r.bottom - parseFloat(getComputedStyle(box).paddingBottom);
+  const last = [...box.querySelectorAll("li")]
+    .map((e) => e.getBoundingClientRect().bottom)
+    .reduce((a, b) => Math.max(a, b), 0);
+  return { last: Math.round(last), limit: Math.round(limit) };
 });
+
 await page.pdf({
   path: out,
   format: "A4",
@@ -29,10 +36,10 @@ await browser.close();
 
 const bytes = fs.readFileSync(out);
 const pageCount = (bytes.toString("latin1").match(/\/Type\s*\/Page[^s]/g) ?? []).length;
-console.log(`pages: ${pageCount}  fit: ${fit.scroll}/${fit.client}  size: ${(bytes.length / 1024).toFixed(1)} KB`);
+console.log(`pages: ${pageCount}  content ends: ${fit.last}/${fit.limit}`);
 console.log(`written: ${out}`);
 
-if (pageCount !== 1 || fit.scroll > fit.client) {
+if (pageCount !== 1 || fit.last > fit.limit) {
   console.error("CONTENT OVERFLOWS ONE PAGE — trim a-faire-v3.html");
   process.exit(1);
 }
