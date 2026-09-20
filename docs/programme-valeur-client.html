@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>CUISINA — Programme Valeur Client</title>
+    <style>
+      @page { size: A4; margin: 0; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        background: #ffffff;
+        color: #111111;
+        font-family: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page {
+        width: 210mm;
+        height: 297mm;
+        overflow: hidden;
+        padding: 14mm 16mm 12mm;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+
+      /* — Bandeau de tete, repris sur chaque page — */
+      .runner {
+        display: flex;
+        justify-content: space-between;
+        font-size: 6.8pt;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #555;
+        border-bottom: 0.5pt solid #ccc;
+        padding-bottom: 2mm;
+        margin-bottom: 6mm;
+      }
+
+      .eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 2mm;
+        font-size: 7pt;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 2mm;
+      }
+      .eyebrow::before {
+        content: "";
+        width: 2.6mm;
+        height: 2.6mm;
+        background: var(--axe, #111);
+      }
+
+      h1 { font-size: 26pt; font-weight: 800; letter-spacing: -0.01em; line-height: 1.05; }
+      h2 {
+        font-size: 19pt; font-weight: 800; letter-spacing: -0.01em;
+        padding-bottom: 2.5mm; border-bottom: 2.2pt solid var(--axe, #111);
+      }
+      h3 { font-size: 9.5pt; font-weight: 800; margin-bottom: 1.5mm; }
+      .sub { font-size: 10pt; line-height: 1.5; margin-top: 3mm; color: #333; }
+      p, li { font-size: 8.4pt; line-height: 1.5; }
+
+      .kicker {
+        font-size: 7.5pt; font-weight: 800; text-transform: uppercase;
+        letter-spacing: 0.14em; margin: 6mm 0 2mm;
+      }
+
+      /* — Encadre « En clair » — */
+      .clair {
+        border: 0.8pt solid #ddd;
+        border-left: 2.5pt solid var(--axe, #111);
+        padding: 4mm 4.5mm;
+        margin-top: 4mm;
+      }
+      .clair .t {
+        font-size: 7pt; font-weight: 800; letter-spacing: 0.16em;
+        text-transform: uppercase; margin-bottom: 2.5mm;
+      }
+      .clair ul { margin-top: 1.5mm; }
+      .clair li { margin-bottom: 1.6mm; }
+      .note { margin-top: 3mm; font-size: 8.2pt; line-height: 1.5; }
+
+      ul { list-style: none; }
+      ul li { position: relative; padding-left: 4mm; }
+      ul li::before { content: "•"; position: absolute; left: 0; font-weight: 800; }
+
+      table { width: 100%; border-collapse: collapse; margin-top: 2mm; }
+      th, td {
+        text-align: left; font-size: 7.9pt; line-height: 1.42;
+        padding: 2mm 2.5mm 2mm 0; border-bottom: 0.4pt solid #ddd;
+        vertical-align: top;
+      }
+      th {
+        font-size: 6.8pt; font-weight: 800; text-transform: uppercase;
+        letter-spacing: 0.09em; border-bottom: 1pt solid #111; color: #111;
+      }
+      td.n { width: 6mm; font-weight: 800; font-variant-numeric: tabular-nums; }
+      td.k { font-weight: 700; width: 34mm; padding-right: 3mm; }
+
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; margin-top: 3mm; }
+      .card { border: 0.8pt solid #ddd; padding: 3.5mm 4mm; }
+      .card .h {
+        display: flex; align-items: center; gap: 2mm;
+        font-size: 8.2pt; font-weight: 800; margin-bottom: 2mm;
+      }
+      .card .h::before {
+        content: ""; width: 2.2mm; height: 2.2mm; background: var(--axe, #111);
+      }
+      .card li { font-size: 7.8pt; line-height: 1.45; margin-bottom: 1.3mm; }
+
+      /* — Sommaire et paliers, page 1 — */
+      .toc { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 6mm; margin-top: 2mm; }
+      .toc div {
+        font-size: 8.2pt; font-weight: 700;
+        border-bottom: 0.4pt solid #ddd; padding-bottom: 1.4mm;
+      }
+      .assets { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; margin-top: 3mm; }
+
+      /* — Carte du programme, page 2 — */
+      .legend { display: flex; gap: 6mm; justify-content: center; margin: 4mm 0 5mm; }
+      .legend span { font-size: 7.2pt; display: flex; align-items: center; gap: 1.6mm; }
+      .dot { width: 2.4mm; height: 2.4mm; border-radius: 50%; display: inline-block; }
+      .axe-row { display: flex; align-items: center; gap: 3mm; margin-bottom: 3.5mm; }
+      .axe-num {
+        width: 11mm; height: 11mm; flex: 0 0 11mm; border-radius: 50%;
+        border: 1.4pt solid var(--c); color: var(--c);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 11pt; font-weight: 800;
+      }
+      .axe-lab { width: 30mm; flex: 0 0 30mm; }
+      .axe-lab .a { font-size: 8pt; font-weight: 800; }
+      .axe-lab .b { font-size: 7pt; color: #555; }
+      .bubbles { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 2.5mm; flex: 1; }
+      .bub {
+        border: 0.5pt solid #ddd; border-radius: 6mm;
+        padding: 1.3mm 3mm; font-size: 7.2pt;
+        display: flex; align-items: center; gap: 1.8mm;
+      }
+      .goal {
+        margin-top: 2mm; text-align: center; border: 1pt solid #111;
+        padding: 2.5mm; font-size: 8.5pt; font-weight: 800;
+      }
+
+      footer {
+        margin-top: auto; padding-top: 3mm; border-top: 0.5pt solid #ccc;
+        display: flex; justify-content: space-between;
+        font-size: 6.8pt; color: #555;
+      }
+    </style>
+  </head>
+  <body>
+
+  <!-- ====================== PAGE 1 ====================== -->
+  <div class="page">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">CUISINA</div>
+    <h1>Programme Valeur Client</h1>
+    <p class="sub">
+      Idées et pistes pour transformer chaque cuisine livrée en relation
+      durable, et faire de CUISINA la référence du marché tunisien.
+    </p>
+
+    <div class="kicker">Sommaire</div>
+    <div class="toc">
+      <div>1. Point de départ et les quatre paliers</div>
+      <div>2. Axe A · Valoriser les cuisines installées</div>
+      <div>3. Axe B · Le parc comme moteur commercial</div>
+      <div>4. Axe C · Le Cercle des prescripteurs</div>
+      <div>5. Axe D · Programmes, communauté et marque</div>
+      <div>6. Axe E · Outils digitaux côté client</div>
+    </div>
+
+    <h2 style="margin-top:7mm">1. Point de départ</h2>
+    <p class="sub">
+      CUISINA n'a pas à se faire connaître : la maison équipe des cuisines
+      depuis 2003. Ce qui reste à exploiter, ce sont les clients déjà servis.
+    </p>
+
+    <div class="assets">
+      <div class="card">
+        <div class="h">Les cuisines installées</div>
+        <p style="font-size:7.8pt">
+          Vingt-trois ans de poses. Les charnières et coulisses Blum ont une
+          durée de vie, les plans de travail se rayent, les crédences se
+          démodent, et une famille qui s'agrandit refait sa buanderie avant sa
+          cuisine.
+        </p>
+      </div>
+      <div class="card">
+        <div class="h">Les prescripteurs</div>
+        <p style="font-size:7.8pt">
+          Architectes, décorateurs, promoteurs et entrepreneurs — le CRM les
+          enregistre déjà comme origine de contact. Ils reviennent chantier
+          après chantier, et une recommandation vaut dix publicités.
+        </p>
+      </div>
+      <div class="card">
+        <div class="h">L'outil de production</div>
+        <p style="font-size:7.8pt">
+          10 000 m² certifiés ISO 9001, en Tunisie. Ce que les importateurs
+          attendent des semaines, CUISINA le fabrique — un délai maîtrisé est
+          un argument que personne d'autre ne peut tenir.
+        </p>
+      </div>
+    </div>
+
+    <div class="kicker">Les quatre paliers de croissance</div>
+    <table>
+      <tr><th style="width:26mm">Palier</th><th>Ce que CUISINA vend</th><th>Forme du revenu</th><th style="width:24mm">Axes</th></tr>
+      <tr>
+        <td class="k">1. Projets</td>
+        <td>Une cuisine, une fois (aujourd'hui)</td>
+        <td>Marge unique sur le mobilier et la pose</td>
+        <td>B et E</td>
+      </tr>
+      <tr>
+        <td class="k">2. Résultats</td>
+        <td>Une cuisine livrée à la date promise, sans reprise</td>
+        <td>Meilleur taux de signature, paniers plus grands, recommandations</td>
+        <td>D et E</td>
+      </tr>
+      <tr>
+        <td class="k">3. Continuité</td>
+        <td>Une cuisine qui tient dans la durée</td>
+        <td>Entretien, pièces, rénovation de façades, pièces complémentaires</td>
+        <td>A</td>
+      </tr>
+      <tr>
+        <td class="k">4. Réseau</td>
+        <td>Le passage obligé des prescripteurs</td>
+        <td>Prescription, projets promoteurs, volume récurrent</td>
+        <td>C</td>
+      </tr>
+    </table>
+
+    <p class="note">
+      <strong>Principe directeur :</strong> chaque cuisine posée devient un
+      parc à entretenir, une référence à visiter et une donnée exploitable. Un
+      concurrent peut copier un modèle ou un prix ; il ne peut pas copier
+      vingt-trois ans de cuisines installées.
+    </p>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>1 / 8</span></footer>
+  </div>
+
+  <!-- ====================== PAGE 2 — CARTE ====================== -->
+  <div class="page">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">Carte du programme</div>
+    <h2>Les cinq axes en un coup d'œil</h2>
+    <p class="sub">
+      Chaque cercle est un axe, chaque bulle une action concrète. La couleur du
+      point indique la nature de la valeur créée.
+    </p>
+
+    <div class="legend">
+      <span><i class="dot" style="background:#1a7f4b"></i> Revenu récurrent</span>
+      <span><i class="dot" style="background:#1d4ed8"></i> Acquisition de clients</span>
+      <span><i class="dot" style="background:#b91c1c"></i> Fidélisation et image</span>
+    </div>
+
+    <div class="axe-row" style="--c:#1a7f4b">
+      <div class="axe-num">1</div>
+      <div class="axe-lab"><div class="a">Axe A</div><div class="b">Cuisines installées</div></div>
+      <div class="bubbles">
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Visite de contrôle à 2 ans</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Stock de pièces Blum local</div>
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Contrat entretien par région</div>
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Relooking de façades</div>
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Extension buanderie et dressing</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Rénovation plan de travail</div>
+      </div>
+    </div>
+
+    <div class="axe-row" style="--c:#1d4ed8">
+      <div class="axe-num">2</div>
+      <div class="axe-lab"><div class="a">Axe B</div><div class="b">Moteur commercial</div></div>
+      <div class="bubbles">
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Cuisines-témoins chez l'habitant</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Appels de référence</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Baromètre de la cuisine</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Une cuisine, une histoire</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Paiement en plusieurs fois</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Garantie date de pose</div>
+      </div>
+    </div>
+
+    <div class="axe-row" style="--c:#b91c1c">
+      <div class="axe-num">3</div>
+      <div class="axe-lab"><div class="a">Axe C</div><div class="b">Cercle des prescripteurs</div></div>
+      <div class="bubbles">
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Club architectes et décorateurs</div>
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Offre promoteurs multi-lots</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Commission de prescription</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Bibliothèque BIM et plans</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Prix CUISINA du projet</div>
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Visites d'usine prescripteurs</div>
+      </div>
+    </div>
+
+    <div class="axe-row" style="--c:#b91c1c">
+      <div class="axe-num">4</div>
+      <div class="axe-lab"><div class="a">Axe D</div><div class="b">Programmes et marque</div></div>
+      <div class="bubbles">
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Statut Client Fondateur</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Parrainage client</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Carnet d'entretien de cuisine</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Ateliers cuisine en showroom</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Transparence sur les délais</div>
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Boutique accessoires</div>
+      </div>
+    </div>
+
+    <div class="axe-row" style="--c:#1d4ed8">
+      <div class="axe-num">5</div>
+      <div class="axe-lab"><div class="a">Axe E</div><div class="b">Outils digitaux</div></div>
+      <div class="bubbles">
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Configurateur « Ma cuisine »</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> Portail « Mon projet »</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Recherche par photo</div>
+        <div class="bub"><i class="dot" style="background:#b91c1c"></i> QR code sous l'évier</div>
+        <div class="bub"><i class="dot" style="background:#1d4ed8"></i> Devis Bon / Mieux / Meilleur</div>
+        <div class="bub"><i class="dot" style="background:#1a7f4b"></i> Simulateur de financement</div>
+      </div>
+    </div>
+
+    <div class="goal">Objectif · devenir la référence du marché tunisien</div>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>2 / 8</span></footer>
+  </div>
+
+  <!-- ====================== PAGE 3 — AXE A ====================== -->
+  <div class="page" style="--axe:#1a7f4b">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">Axe A</div>
+    <h2>Valoriser les cuisines installées</h2>
+    <p class="sub">
+      Les cuisines déjà posées sont la source de revenu la plus rapide et la
+      moins coûteuse : le client existe, la confiance existe, le besoin
+      reviendra de toute façon.
+    </p>
+
+    <div class="clair">
+      <div class="t">En clair</div>
+      <p>
+        Aujourd'hui, la relation s'arrête à la pose. Cet axe dit l'inverse :
+        une cuisine vit quinze ans, elle aura besoin de service pendant tout ce
+        temps, et c'est CUISINA qui doit le rendre.
+      </p>
+      <ul>
+        <li><strong>Visite de contrôle à 2 ans :</strong> un poseur repasse, règle les charnières et les coulisses, contrôle les joints et les étanchéités autour de l'évier, et laisse un rapport. C'est la porte d'entrée de tout le reste.</li>
+        <li><strong>Contrat d'entretien par région :</strong> une tournée à date fixe autour de chaque showroom, payée à l'année. Le client a une cuisine qui ne grince pas, CUISINA un revenu récurrent.</li>
+        <li><strong>Stock de pièces local :</strong> charnières, coulisses, vérins, poignées, joints, filtres de hotte. Une pièce remplacée en 48 heures au lieu d'une commande qui met six semaines.</li>
+        <li><strong>Relooking de façades :</strong> les caissons tiennent, les façades se démodent. Changer les seules façades et poignées, c'est une cuisine neuve à un tiers du prix — et un chantier d'une journée.</li>
+        <li><strong>Rénovation du plan de travail :</strong> le plan est ce qui se dégrade en premier. Le remplacer par du grès cérame ou du quartz, sur des caissons existants, se vend en deux visites.</li>
+        <li><strong>Extension buanderie, dressing, coin café :</strong> le client a déjà la cuisine ; la maison, elle, n'est pas finie. Ce sont les gammes que CUISINA fabrique déjà.</li>
+      </ul>
+      <p class="note">
+        <strong>Exemple concret.</strong> Une cuisine posée il y a trois ans
+        reçoit sa visite. Le poseur trouve deux coulisses fatiguées et un joint
+        d'évier à refaire : réglé en 48 heures grâce au stock local. Le client
+        demande au passage un devis pour la buanderie, et repart avec le
+        catalogue des façades. Une visite d'entretien a produit deux affaires.
+      </p>
+      <p class="note">
+        <strong>Pourquoi c'est important.</strong> C'est le revenu le moins
+        cher qui existe : aucun coût d'acquisition, aucune mise en concurrence.
+        Cela fait passer CUISINA de fournisseur ponctuel à fournisseur de toute
+        la vie du logement.
+      </p>
+    </div>
+
+    <table>
+      <tr><th class="n">#</th><th>Idée</th><th>Valeur pour le client</th><th>Valeur pour CUISINA</th></tr>
+      <tr>
+        <td class="n">1</td>
+        <td class="k">Visite de contrôle à 2 ans</td>
+        <td>Un passage technique, un rapport écrit, et les réglages faits avant que la gêne devienne une panne.</td>
+        <td>Point d'entrée naturel vers les pièces, l'entretien et la rénovation.</td>
+      </tr>
+      <tr>
+        <td class="n">2</td>
+        <td class="k">Contrat d'entretien par région</td>
+        <td>Une tournée à date fixe autour de son showroom, un tarif annuel connu d'avance.</td>
+        <td>Revenu récurrent. Neuf showrooms rendent le maillage possible.</td>
+      </tr>
+      <tr>
+        <td class="n">3</td>
+        <td class="k">Stock de pièces local</td>
+        <td>Charnières, coulisses, vérins et poignées disponibles sous 48 heures.</td>
+        <td>L'avantage le plus difficile à copier pour un importateur.</td>
+      </tr>
+      <tr>
+        <td class="n">4</td>
+        <td class="k">Relooking de façades</td>
+        <td>Une cuisine qui a l'air neuve sans tout casser, en une journée de chantier.</td>
+        <td>Marge élevée, cycle court, et l'usine tourne sur des séries connues.</td>
+      </tr>
+      <tr>
+        <td class="n">5</td>
+        <td class="k">Rénovation du plan de travail</td>
+        <td>Un plan neuf en grès cérame ou quartz sur les caissons existants.</td>
+        <td>Une gamme déjà au catalogue, vendue sans nouveau client à trouver.</td>
+      </tr>
+      <tr>
+        <td class="n">6</td>
+        <td class="k">Extension buanderie et dressing</td>
+        <td>Finir la maison avec la même main et le même style.</td>
+        <td>Deuxième et troisième vente sur un client déjà convaincu.</td>
+      </tr>
+    </table>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>3 / 8</span></footer>
+  </div>
+
+  <!-- ====================== PAGE 4 — AXE B ====================== -->
+  <div class="page" style="--axe:#1d4ed8">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">Axe B</div>
+    <h2>Le parc comme moteur commercial</h2>
+    <p class="sub">
+      Rien ne convainc un client plus vite qu'une cuisine vécue et le
+      propriétaire qui s'en sert tous les jours.
+    </p>
+
+    <div class="clair">
+      <div class="t">En clair</div>
+      <p>
+        Les cuisines déjà posées sont les meilleurs vendeurs de la maison : cet
+        axe les utilise pour gagner les suivantes.
+      </p>
+      <ul>
+        <li><strong>Cuisines-témoins chez l'habitant :</strong> le showroom montre une cuisine neuve et vide ; un client veut voir une cuisine qui a servi trois ans. Des clients volontaires reçoivent les prospects de leur quartier, et gagnent un avoir entretien à chaque visite.</li>
+        <li><strong>Appels de référence :</strong> une courte liste de clients qui acceptent un appel de dix minutes avant la signature. Rien ne lève une objection plus vite.</li>
+        <li><strong>Baromètre de la cuisine tunisienne :</strong> une fois par an, un document public tiré des données réelles — prix au mètre linéaire, délai moyen, modèles les plus choisis, coloris de l'année, erreurs les plus fréquentes. Gratuit, il fait de CUISINA l'autorité du marché.</li>
+        <li><strong>« Une cuisine, une histoire » :</strong> une vidéo courte par cuisine remarquable et une carte des réalisations par ville. Un an de contenu, et chaque prospect y trouve un projet qui ressemble au sien.</li>
+        <li><strong>Paiement en plusieurs fois :</strong> un accord-cadre avec une banque ou un organisme de crédit, négocié sur l'historique des dossiers. Le budget est la première cause d'abandon — c'est là qu'il faut agir.</li>
+        <li><strong>Garantie de date de pose :</strong> une date engagée, avec un avoir en cas de retard. Possible parce que l'usine est à Nabeul et que le CRM mesure déjà les délais réels.</li>
+      </ul>
+      <p class="note">
+        <strong>Exemple concret.</strong> Un prospect de Sousse remplit le
+        configurateur, visite une cuisine posée à dix minutes de chez lui,
+        appelle son propriétaire, lit le baromètre, puis obtient un accord de
+        financement. Quand il entre en showroom, la décision est déjà prise et
+        le rendez-vous ne sert plus qu'à choisir les coloris.
+      </p>
+      <p class="note">
+        <strong>Pourquoi c'est important.</strong> L'axe A tire du revenu des
+        cuisines livrées ; l'axe B amène les suivantes au coût d'acquisition le
+        plus bas possible. Ensemble, ils font tout le modèle.
+      </p>
+    </div>
+
+    <table>
+      <tr><th class="n">#</th><th>Idée</th><th>Valeur pour le prospect</th><th>Mise en place</th></tr>
+      <tr>
+        <td class="n">1</td>
+        <td class="k">Cuisines-témoins chez l'habitant</td>
+        <td>Voir et toucher une cuisine qui a vécu, et parler à qui l'utilise.</td>
+        <td>Sélectionner des hôtes autour de chaque showroom, fixer l'avoir par visite.</td>
+      </tr>
+      <tr>
+        <td class="n">2</td>
+        <td class="k">Appels de référence</td>
+        <td>Dix minutes avec un client du même type de projet avant de signer.</td>
+        <td>Liste de volontaires, un avantage par appel effectué.</td>
+      </tr>
+      <tr>
+        <td class="n">3</td>
+        <td class="k">Baromètre de la cuisine</td>
+        <td>Des chiffres réels : prix au mètre linéaire, délais, modèles et coloris de l'année.</td>
+        <td>Un document public par an, construit sur les données du CRM.</td>
+      </tr>
+      <tr>
+        <td class="n">4</td>
+        <td class="k">Une cuisine, une histoire</td>
+        <td>Une carte des réalisations par ville, et un projet proche du sien.</td>
+        <td>Un tournage court par cuisine, publication hebdomadaire.</td>
+      </tr>
+      <tr>
+        <td class="n">5</td>
+        <td class="k">Paiement en plusieurs fois</td>
+        <td>Une réponse rapide, et un projet qui rentre enfin dans le budget.</td>
+        <td>Négociation appuyée sur les dossiers déjà financés.</td>
+      </tr>
+      <tr>
+        <td class="n">6</td>
+        <td class="k">Garantie de date de pose</td>
+        <td>Une date engagée, avec un avoir si CUISINA est en retard.</td>
+        <td>Calculer le délai réel par le CRM, fixer la marge de sécurité.</td>
+      </tr>
+    </table>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>4 / 8</span></footer>
+  </div>
+
+  <!-- ====================== PAGE 5 — AXE C ====================== -->
+  <div class="page" style="--axe:#b91c1c">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">Axe C</div>
+    <h2>Le Cercle des prescripteurs</h2>
+    <p class="sub">
+      Un architecte ne commande pas une cuisine : il en commande une par
+      chantier, pendant toute sa carrière.
+    </p>
+
+    <div class="clair">
+      <div class="t">En clair</div>
+      <p>
+        Le CRM enregistre déjà l'architecte sur la fiche et le distingue comme
+        origine de contact. Cet axe transforme cette donnée en programme.
+      </p>
+      <ul>
+        <li><strong>Club architectes et décorateurs :</strong> un interlocuteur dédié, les nouveautés en avant-première, un tarif professionnel clair, et les plans techniques fournis sans avoir à les redemander.</li>
+        <li><strong>Bibliothèque de plans et blocs :</strong> les caissons, hauteurs et encombrements CUISINA en DWG et en blocs BIM, téléchargeables. Un architecte dessine avec ce qu'il a sous la main — autant que ce soit vos dimensions.</li>
+        <li><strong>Commission de prescription :</strong> une règle écrite, un pourcentage connu d'avance, versé quand le chantier est signé. La zone grise actuelle rend tout le monde mal à l'aise.</li>
+        <li><strong>Offre promoteurs multi-lots :</strong> vingt appartements, trois configurations types, un prix au lot et un calendrier de pose calé sur celui du chantier. L'usine adore les séries.</li>
+        <li><strong>Visites d'usine :</strong> faire venir les prescripteurs à Nabeul. Voir découper, plaquer et monter vaut tous les argumentaires — et l'ISO 9001 se raconte mal sur une plaquette.</li>
+        <li><strong>Prix CUISINA du projet de l'année :</strong> un jury, une soirée, une publication. Les architectes concourent, et la marque devient celle qu'on cite.</li>
+      </ul>
+      <p class="note">
+        <strong>Exemple concret.</strong> Un architecte télécharge les blocs
+        CUISINA pour son projet, dessine directement aux bonnes dimensions,
+        envoie le client en showroom avec son plan, et touche sa commission à
+        la signature. Le dossier arrive en conception sans reprise de cotes :
+        le devis sort en deux jours au lieu de huit.
+      </p>
+      <p class="note">
+        <strong>Pourquoi c'est important.</strong> Un prescripteur fidèle vaut
+        plusieurs clients par an, tous les ans, sans coût d'acquisition. C'est
+        le palier qui fait de CUISINA un passage obligé plutôt qu'un
+        fournisseur consulté.
+      </p>
+    </div>
+
+    <table>
+      <tr><th class="n">#</th><th>Idée</th><th>Valeur pour le prescripteur</th><th>Valeur pour CUISINA</th></tr>
+      <tr>
+        <td class="n">1</td>
+        <td class="k">Club architectes et décorateurs</td>
+        <td>Un interlocuteur dédié, les nouveautés en avant-première, un tarif professionnel clair.</td>
+        <td>Fidélisation d'une source de leads qui ne se tarit pas.</td>
+      </tr>
+      <tr>
+        <td class="n">2</td>
+        <td class="k">Bibliothèque de plans et blocs</td>
+        <td>Dessiner directement aux dimensions réelles, sans redemander les cotes.</td>
+        <td>Des projets pensés CUISINA dès le premier trait, et moins de reprises.</td>
+      </tr>
+      <tr>
+        <td class="n">3</td>
+        <td class="k">Commission de prescription</td>
+        <td>Une règle écrite et un pourcentage connu d'avance.</td>
+        <td>Sort la prescription de la zone grise et la rend pilotable.</td>
+      </tr>
+      <tr>
+        <td class="n">4</td>
+        <td class="k">Offre promoteurs multi-lots</td>
+        <td>Un prix au lot, des configurations types, un calendrier calé sur le chantier.</td>
+        <td>Des séries pour l'usine et un carnet de commandes prévisible.</td>
+      </tr>
+      <tr>
+        <td class="n">5</td>
+        <td class="k">Visites d'usine</td>
+        <td>Voir fabriquer ce qu'on prescrit, et pouvoir en répondre au client.</td>
+        <td>L'ISO 9001 et les 10 000 m² deviennent un argument vécu.</td>
+      </tr>
+      <tr>
+        <td class="n">6</td>
+        <td class="k">Prix CUISINA du projet</td>
+        <td>De la visibilité et une reconnaissance entre pairs.</td>
+        <td>Image de leader, contenu, et une soirée qui réunit le marché.</td>
+      </tr>
+    </table>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>5 / 8</span></footer>
+  </div>
+
+  <!-- ====================== PAGE 6 — AXE D ====================== -->
+  <div class="page" style="--axe:#b91c1c">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">Axe D</div>
+    <h2>Programmes, communauté et marque</h2>
+    <p class="sub">
+      Les avantages, contenus et garanties qui rendent l'offre désirable avant,
+      pendant et après le projet.
+    </p>
+
+    <div class="clair">
+      <div class="t">En clair</div>
+      <p>
+        Tout ce qui fait choisir CUISINA avant même de comparer les prix, et
+        qui transforme chaque cliente en ambassadrice.
+      </p>
+      <ul>
+        <li><strong>Statut Client Fondateur :</strong> pour les clients historiques — remise à vie sur les pièces, priorité de pose, une visite d'entretien offerte par an.</li>
+        <li><strong>Parrainage :</strong> un client qui en amène un autre gagne un avoir entretien ou un accessoire ; le filleul, un avantage à la signature.</li>
+        <li><strong>Carnet d'entretien :</strong> remis à la pose, il dit comment nettoyer un laqué, un mat et un grès cérame sans les abîmer. Il évite les réclamations et se garde dans le tiroir pendant dix ans.</li>
+        <li><strong>Ateliers en showroom :</strong> rangement, organisation des tiroirs, entretien des plans, cuisine avec un chef local. Le showroom se remplit hors rendez-vous commerciaux.</li>
+        <li><strong>Transparence sur les délais :</strong> publier le délai moyen réel, mois après mois. Dans un marché où personne ne tient ses dates, l'annoncer honnêtement est un argument.</li>
+        <li><strong>Boutique accessoires :</strong> organisateurs de tiroirs, poubelles de tri, égouttoirs, produits d'entretien adaptés. Petits paniers, marge correcte, et un prétexte de contact tous les six mois.</li>
+      </ul>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="h">D1 · Statut Client Fondateur</div>
+        <ul>
+          <li>Remise à vie sur les pièces et la rénovation.</li>
+          <li>Priorité de pose sur les périodes chargées.</li>
+          <li>Une visite d'entretien offerte par an.</li>
+          <li>Accès aux nouveaux modèles avant le catalogue public.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="h">D2 · Communauté</div>
+        <ul>
+          <li>Concours « la plus belle cuisine CUISINA de l'année ».</li>
+          <li>Avant / après de rénovations, en vidéo courte.</li>
+          <li>Journal de chantier : du relevé à la pose en time-lapse.</li>
+          <li>Portes ouvertes usine, une fois par trimestre.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="h">D3 · Transparence</div>
+        <ul>
+          <li>Délai moyen réel publié chaque mois.</li>
+          <li>Taux de poses sans reprise, affiché.</li>
+          <li>Ce qui a pris du retard, et pourquoi.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="h">D4 · Parrainage et fidélité</div>
+        <ul>
+          <li>Un filleul signé = un avoir entretien pour le parrain.</li>
+          <li>Points de fidélité sur les pièces et accessoires.</li>
+          <li>Avantage croissant à la deuxième et troisième commande.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="h">D5 · Contenu et marque</div>
+        <ul>
+          <li>« Cuisine du mois » avec le mot de la propriétaire.</li>
+          <li>Coloris de l'année tiré des choix réels du CRM.</li>
+          <li>Chaque réalisation mise en avant, avec accord du client.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="h">D6 · Garanties qui vendent</div>
+        <ul>
+          <li>Garantie de date de pose, avec avoir en cas de retard.</li>
+          <li>Garantie étendue sur la quincaillerie.</li>
+          <li>Reprise gratuite des réglages la première année.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>Pourquoi c'est important.</strong> Une cuisine s'achète deux fois
+      dans une vie : la marque doit rester présente entre les deux. Ces
+      programmes coûtent peu et entretiennent le lien pendant les années où
+      rien ne se vend.
+    </p>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>6 / 8</span></footer>
+  </div>
+
+  <!-- ====================== PAGE 7 — AXE E ====================== -->
+  <div class="page" style="--axe:#1d4ed8">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">Axe E</div>
+    <h2>Outils digitaux côté client</h2>
+    <p class="sub">
+      Des outils que le client utilise lui-même, avant, pendant et après le
+      projet. Aucun outil interne ici : uniquement ce qui crée de la valeur
+      visible pour lui.
+    </p>
+
+    <div class="clair">
+      <div class="t">En clair</div>
+      <p>
+        Le CRM sait déjà faire une partie de ce travail — formulaire public,
+        QR codes, croquis, catalogue avec coloris. Cet axe le retourne vers le
+        client.
+      </p>
+      <ul>
+        <li><strong>Configurateur « Ma cuisine » :</strong> forme de la pièce, dimensions, budget, style, et en quelques minutes un modèle conseillé, un aperçu et une fourchette de prix crédible.</li>
+        <li><strong>Recherche par photo :</strong> le client envoie une capture Pinterest ou Instagram, et l'outil propose le modèle et le coloris CUISINA les plus proches. C'est exactement ainsi que les clients arrivent aujourd'hui.</li>
+        <li><strong>Devis Bon / Mieux / Meilleur :</strong> trois niveaux sur la même implantation. Le client arbitre lui-même au lieu de négocier une remise.</li>
+        <li><strong>Portail « Mon projet » :</strong> où en est le dossier — étude, fabrication, pose — la date prévue, les documents à fournir, une notification WhatsApp à chaque étape franchie.</li>
+        <li><strong>QR code sous l'évier :</strong> un autocollant dans le meuble. Un scan donne la référence exacte des façades, coloris et quincaillerie de cette cuisine, les conseils d'entretien, et un bouton pour demander un passage.</li>
+        <li><strong>Simulateur de financement :</strong> montant, apport, durée, mensualité. Le budget se traite au moment où l'envie est là.</li>
+      </ul>
+      <p class="note">
+        <strong>Exemple concret.</strong> Une cliente envoie une photo trouvée
+        sur Instagram, obtient le modèle équivalent et une fourchette de prix,
+        compare trois niveaux de devis, puis suit sa fabrication depuis son
+        téléphone. Trois ans plus tard, elle scanne le QR sous l'évier pour
+        commander la bonne poignée du premier coup.
+      </p>
+      <p class="note">
+        <strong>Pourquoi c'est important.</strong> Plus de prospects déjà
+        qualifiés, moins d'allers-retours pour les conseillers, et une
+        expérience qu'aucun concurrent local ne propose.
+      </p>
+    </div>
+
+    <table>
+      <tr><th class="n">#</th><th>Outil</th><th>Ce que le client obtient</th><th style="width:24mm">Moment</th></tr>
+      <tr><td class="n">1</td><td class="k">Configurateur « Ma cuisine »</td><td>Un modèle conseillé, un aperçu et une fourchette de prix en quelques minutes.</td><td>Avant le devis</td></tr>
+      <tr><td class="n">2</td><td class="k">Recherche par photo</td><td>Le modèle et le coloris CUISINA les plus proches d'une image trouvée en ligne.</td><td>Inspiration</td></tr>
+      <tr><td class="n">3</td><td class="k">Devis Bon / Mieux / Meilleur</td><td>Trois niveaux de prix sur la même implantation, à arbitrer soi-même.</td><td>Devis</td></tr>
+      <tr><td class="n">4</td><td class="k">Portail « Mon projet »</td><td>L'avancement en direct, la date prévue, une notification à chaque étape.</td><td>Pendant</td></tr>
+      <tr><td class="n">5</td><td class="k">QR code sous l'évier</td><td>Les références exactes de sa cuisine, l'entretien, et la demande de passage.</td><td>Après la pose</td></tr>
+      <tr><td class="n">6</td><td class="k">Simulateur de financement</td><td>Mensualité estimée selon l'apport et la durée.</td><td>Décision</td></tr>
+      <tr><td class="n">7</td><td class="k">Plan 2D aux vraies cotes</td><td>L'implantation avec les dégagements réels, exportable pour l'architecte.</td><td>Conception</td></tr>
+      <tr><td class="n">8</td><td class="k">Visite 3D partageable</td><td>Sa cuisine en 3D, partageable par lien avec son conjoint ou son architecte.</td><td>Conception</td></tr>
+    </table>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>7 / 8</span></footer>
+  </div>
+
+  <!-- ====================== PAGE 8 — SUITE ====================== -->
+  <div class="page">
+    <div class="runner">
+      <span>CUISINA · Programme Valeur Client</span>
+      <span>Septembre 2026 · Document de travail</span>
+    </div>
+
+    <div class="eyebrow">Mise en œuvre</div>
+    <h2>Par où commencer</h2>
+    <p class="sub">
+      Les cinq axes ne se lancent pas ensemble. Ceux qui rapportent le plus
+      vite sont ceux qui s'appuient sur ce qui existe déjà.
+    </p>
+
+    <div class="kicker">Ce qui peut démarrer sans rien construire</div>
+    <table>
+      <tr><th class="n">#</th><th>Action</th><th>Ce qu'il faut</th><th style="width:26mm">Axe</th></tr>
+      <tr><td class="n">1</td><td class="k">Visite de contrôle à 2 ans</td><td>Une liste de cuisines posées et un poseur une semaine par mois.</td><td>A · Continuité</td></tr>
+      <tr><td class="n">2</td><td class="k">Carnet d'entretien</td><td>Quatre pages à écrire et à imprimer.</td><td>D · Marque</td></tr>
+      <tr><td class="n">3</td><td class="k">Appels de référence</td><td>Une dizaine de clients volontaires par région.</td><td>B · Acquisition</td></tr>
+      <tr><td class="n">4</td><td class="k">Commission de prescription</td><td>Une règle écrite et validée par la direction.</td><td>C · Réseau</td></tr>
+      <tr><td class="n">5</td><td class="k">QR code sous l'évier</td><td>Le CRM génère déjà des QR codes et connaît la fiche.</td><td>E · Digital</td></tr>
+    </table>
+
+    <div class="kicker">Ce qui demande une décision d'abord</div>
+    <table>
+      <tr><th>Sujet</th><th>La question à trancher</th></tr>
+      <tr><td class="k">Stock de pièces local</td><td>Combien immobiliser, et sur quelles références — à décider à partir des pannes réellement constatées.</td></tr>
+      <tr><td class="k">Contrat d'entretien</td><td>Prix annuel, périmètre, et qui le vend : le conseiller ou un poseur.</td></tr>
+      <tr><td class="k">Paiement en plusieurs fois</td><td>Quel partenaire, et qui porte le risque.</td></tr>
+      <tr><td class="k">Garantie de date de pose</td><td>Le délai réel doit d'abord être mesuré sur plusieurs mois de CRM.</td></tr>
+      <tr><td class="k">Offre promoteurs</td><td>Capacité de l'usine à absorber des séries sans décaler les particuliers.</td></tr>
+    </table>
+
+    <div class="kicker">Ce que le CRM apporte déjà</div>
+    <div class="grid2">
+      <div class="card">
+        <div class="h">Les données sont là</div>
+        <ul>
+          <li>Historique des fiches, des étapes et des délais réels.</li>
+          <li>Modèles et coloris choisis, projet par projet.</li>
+          <li>Architecte et origine du contact sur chaque fiche.</li>
+          <li>Score client et chiffre d'affaires cumulé.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="h">Ce qu'il resterait à ajouter</div>
+        <ul>
+          <li>Une date de pose, pour déclencher la visite à 2 ans.</li>
+          <li>Un type de contact « entretien », distinct de la vente.</li>
+          <li>Le suivi des pièces commandées par cuisine.</li>
+          <li>La commission due à un prescripteur.</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="note">
+      <strong>Un mot sur l'ordre.</strong> L'axe A finance les autres : il se
+      vend à des clients acquis, sans budget marketing. Les axes B et C
+      demandent du temps avant de rapporter, mais ce sont eux qui changent la
+      position de CUISINA sur le marché. Commencer par A, préparer C pendant ce
+      temps.
+    </p>
+
+    <footer><span>CUISINA · Programme Valeur Client</span><span>8 / 8</span></footer>
+  </div>
+
+  </body>
+</html>
