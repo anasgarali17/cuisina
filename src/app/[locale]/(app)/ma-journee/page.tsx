@@ -11,6 +11,8 @@ import { getCurrentProfile } from "@/lib/auth";
 import {
   listClients,
   listFiches,
+  listClientActifHistorique,
+  listClientsActifs,
   listHistoriqueSince,
   listProfiles,
   listRdv,
@@ -31,6 +33,19 @@ import {
 } from "@/components/dashboard/activity-chart";
 import { PipelineCounters } from "@/components/dashboard/pipeline-counters";
 import { Echeances, type EcheanceItem } from "@/components/dashboard/echeances";
+import {
+  AlertesChrono,
+  type AlerteChrono,
+} from "@/components/dashboard/alertes-chrono";
+import {
+  chronoDe,
+  depuisQuandEtape,
+  depuisQuandStage,
+  SEUIL_ETAPE,
+  maintenantServeur,
+  SEUIL_STAGE,
+  stageChronometre,
+} from "@/lib/chrono";
 import {
   InsightsPanel,
   type Insight,
@@ -83,15 +98,25 @@ export default async function MaJourneePage({
   const since90 = new Date();
   since90.setDate(since90.getDate() - 90);
 
-  const [fiches, taches, rdv, profiles, historique, clients] =
-    await Promise.all([
-      listFiches(profile),
-      listTaches(profile),
-      listRdv(profile),
-      listProfiles(),
-      listHistoriqueSince(profile, since90.toISOString()),
-      listClients(profile),
-    ]);
+  const [
+    fiches,
+    taches,
+    rdv,
+    profiles,
+    historique,
+    clients,
+    dossiersProduction,
+    historiqueProduction,
+  ] = await Promise.all([
+    listFiches(profile),
+    listTaches(profile),
+    listRdv(profile),
+    listProfiles(),
+    listHistoriqueSince(profile, since90.toISOString()),
+    listClients(profile),
+    listClientsActifs(profile),
+    listClientActifHistorique(),
+  ]);
 
   const activeFiches = fiches.filter(
     (f) => f.stage !== "signe" && f.stage !== "perdu",
@@ -226,6 +251,63 @@ export default async function MaJourneePage({
   ]
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 6);
+
+  /*
+   * — Alertes chrono —
+   *
+   * Les deux tableaux portent chacun leur compteur, mais il faut les ouvrir
+   * pour le voir. Le matin, on ouvre le tableau de bord : ce qui a dépassé
+   * son délai doit s'y trouver, commercial et production mêlés.
+   *
+   * Le tri se fait sur le dépassement et non sur les jours bruts : trois
+   * semaines en production est normal, trois jours sur un nouveau lead ne
+   * l'est pas, et c'est ce dernier qu'il faut rappeler d'abord.
+   */
+  const maintenant = maintenantServeur();
+  const alertesChrono: AlerteChrono[] = [];
+
+  for (const fiche of activeFiches) {
+    if (!stageChronometre(fiche.stage)) continue;
+    const chrono = chronoDe(
+      depuisQuandStage(fiche, historique),
+      SEUIL_STAGE[fiche.stage],
+      maintenant,
+    );
+    if (chrono.niveau === "ok") continue;
+    alertesChrono.push({
+      origine: "fiche",
+      id: fiche.id,
+      client: fiche.client_nom,
+      reference: fiche.reference,
+      etape: t(`stages.${fiche.stage}`),
+      jours: chrono.jours,
+      seuil: chrono.seuil,
+      niveau: chrono.niveau,
+    });
+  }
+
+  for (const dossier of dossiersProduction) {
+    const chrono = chronoDe(
+      depuisQuandEtape(dossier, historiqueProduction),
+      SEUIL_ETAPE[dossier.etape],
+      maintenant,
+    );
+    if (chrono.niveau === "ok") continue;
+    alertesChrono.push({
+      origine: "production",
+      id: dossier.id,
+      client: dossier.client_nom,
+      reference: dossier.reference,
+      etape: t(`production.etapes.${dossier.etape}`),
+      jours: chrono.jours,
+      seuil: chrono.seuil,
+      niveau: chrono.niveau,
+    });
+  }
+
+  alertesChrono.sort(
+    (a, b) => b.jours - b.seuil - (a.jours - a.seuil) || b.jours - a.jours,
+  );
 
   /* — Insights — */
   const lastRelanceByFiche = new Map<string, string>();
@@ -535,6 +617,10 @@ export default async function MaJourneePage({
       label: t("dashboard.views.courbe"),
       content: (
         <div className="space-y-4">
+          {/* Les dossiers qui traînent, avant les signaux : un délai dépassé
+              se rattrape par un appel, pas par une analyse. */}
+          <AlertesChrono alertes={alertesChrono} />
+
           <InsightsPanel insights={insights.slice(0, 8)} alerte />
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

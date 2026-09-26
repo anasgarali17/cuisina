@@ -1253,5 +1253,18 @@
       "fin": "Fin",
       "notes": "Notes"
     }
+  },
+  "chrono": {
+    "jours": "{n} j",
+    "infobulle": {
+      "ok": "{jours} j dans cette étape (seuil : {seuil} j)",
+      "attention": "{jours} j dans cette étape — le seuil est à {seuil} j",
+      "retard": "{jours} j dans cette étape, au-delà des {seuil} j attendus"
+    },
+    "alertes": {
+      "titre": "Dossiers qui traînent",
+      "ligne": "{etape} — au-delà de {seuil} j, il faut relancer",
+      "reste": "et {n} autre(s)"
+    }
   }
 }

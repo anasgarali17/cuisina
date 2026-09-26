@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/env";
 import { showroomsVisibles } from "@/lib/acces";
 import type {
+  ClientActifHistoriqueRow,
   ClientActifRow,
   ClientRow,
   EvenementPersonnelRow,
@@ -462,6 +463,26 @@ export const listClientsActifs = cache(
       budget_estimatif: fiches_contact?.budget_estimatif ?? null,
       ville: fiches_contact?.ville ?? null,
     }));
+  },
+);
+
+/**
+ * L'historique des étapes de production, pour le chrono.
+ *
+ * `clients_actifs.updated_at` ne suffit pas : une remarque ajoutée au dossier
+ * le remet à jour sans que l'étape ait bougé, et le compteur repartirait à
+ * zéro sur une note de rien du tout. L'historique, lui, ne bouge qu'au
+ * changement d'étape.
+ */
+export const listClientActifHistorique = cache(
+  async (): Promise<ClientActifHistoriqueRow[]> => {
+    if (!supabaseConfigured()) return [];
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("client_actif_historique")
+      .select("*")
+      .order("created_at", { ascending: false });
+    return data ?? [];
   },
 );
 

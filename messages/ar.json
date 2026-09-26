@@ -1253,5 +1253,18 @@
       "fin": "النهاية",
       "notes": "ملاحظات"
     }
+  },
+  "chrono": {
+    "jours": "{n} ي",
+    "infobulle": {
+      "ok": "{jours} يوم في هذه المرحلة (الحد: {seuil} يوم)",
+      "attention": "{jours} يوم في هذه المرحلة — الحد {seuil} يوم",
+      "retard": "{jours} يوم في هذه المرحلة، تجاوز الحد {seuil} يوم"
+    },
+    "alertes": {
+      "titre": "ملفات متأخرة",
+      "ligne": "{etape} — بعد {seuil} يوم، حان وقت المتابعة",
+      "reste": "و{n} أخرى"
+    }
   }
 }

@@ -20,6 +20,8 @@ import { changeEtapeProduction } from "@/lib/actions/client-actif-actions";
 import { ETAPES_PRODUCTION, type EtapeProduction } from "@/lib/domain";
 import type { ClientActifDetail } from "@/lib/data/queries";
 import { cn, formatDT, messageErreur } from "@/lib/utils";
+import type { Chrono } from "@/lib/chrono";
+import { ChronoBadge } from "@/components/ui/chrono-badge";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -39,8 +41,11 @@ import { Button } from "@/components/ui/button";
  */
 export function ProductionBoard({
   dossiers: initial,
+  chronos,
 }: {
   dossiers: ClientActifDetail[];
+  /** Temps passé dans l étape courante, calculé au serveur. */
+  chronos: Record<string, Chrono>;
 }) {
   const t = useTranslations();
   const [dossiers, setDossiers] = useState(initial);
@@ -111,6 +116,7 @@ export function ProductionBoard({
                 key={etape}
                 etape={etape}
                 dossiers={parEtape.get(etape) ?? []}
+                chronos={chronos}
                 onDeplacer={deplacer}
               />
             ))}
@@ -118,7 +124,9 @@ export function ProductionBoard({
         </div>
 
         <DragOverlay dropAnimation={null}>
-          {actif ? <Carte dossier={actif} overlay /> : null}
+          {actif ? (
+            <Carte dossier={actif} chrono={chronos[actif.id]} overlay />
+          ) : null}
         </DragOverlay>
       </DndContext>
     </div>
@@ -127,11 +135,14 @@ export function ProductionBoard({
 
 function Colonne({
   etape,
+  chronos,
   dossiers,
   onDeplacer,
 }: {
   etape: EtapeProduction;
   dossiers: ClientActifDetail[];
+  /** Temps passé dans l étape courante, calculé au serveur. */
+  chronos: Record<string, Chrono>;
   onDeplacer: (id: string, etape: EtapeProduction) => void;
 }) {
   const t = useTranslations();
@@ -161,7 +172,12 @@ function Colonne({
           </p>
         ) : (
           dossiers.map((d) => (
-            <Carte key={d.id} dossier={d} onDeplacer={onDeplacer} />
+            <Carte
+              key={d.id}
+              dossier={d}
+              chrono={chronos[d.id]}
+              onDeplacer={onDeplacer}
+            />
           ))
         )}
       </div>
@@ -171,10 +187,12 @@ function Colonne({
 
 function Carte({
   dossier,
+  chrono,
   overlay = false,
   onDeplacer,
 }: {
   dossier: ClientActifDetail;
+  chrono?: Chrono;
   overlay?: boolean;
   onDeplacer?: (id: string, etape: EtapeProduction) => void;
 }) {
@@ -203,6 +221,7 @@ function Carte({
           {dossier.reference}
         </p>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {chrono && <ChronoBadge chrono={chrono} />}
           {dossier.ville && <Badge variant="outline">{dossier.ville}</Badge>}
           {dossier.budget_estimatif !== null && (
             <Badge variant="outline">{formatDT(dossier.budget_estimatif)}</Badge>

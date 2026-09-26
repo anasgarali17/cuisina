@@ -33,6 +33,8 @@ import {
 import { FicheInfoDialog } from "@/components/pipeline/fiche-info-dialog";
 import type { FicheRow, PointDeVenteRow, ProfileRow } from "@/lib/database.types";
 import { cn, formatDT, initials, messageErreur } from "@/lib/utils";
+import type { Chrono } from "@/lib/chrono";
+import { ChronoBadge } from "@/components/ui/chrono-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,12 +85,21 @@ export function KanbanBoard({
   profiles,
   pdvs,
   overdueFicheIds,
+  chronos,
   role,
 }: {
   fiches: FicheRow[];
   profiles: ProfileRow[];
   pdvs: PointDeVenteRow[];
   overdueFicheIds: string[];
+  /**
+   * Temps passé dans l'étape courante, calculé au serveur.
+   *
+   * Au serveur et non ici : `Date.now()` pendant le rendu donnerait l'heure
+   * du serveur au premier passage et celle du navigateur ensuite, et React
+   * jetterait l'arbre à l'hydratation pour un jour d'écart.
+   */
+  chronos: Record<string, Chrono>;
   role: Role;
 }) {
   const t = useTranslations();
@@ -352,6 +363,7 @@ export function KanbanBoard({
               fiches={byStage.get(stage) ?? []}
               profileById={profileById}
               overdue={overdue}
+              chronos={chronos}
               onMove={requestMove}
               onOpen={openCard}
               refCallback={(el) => {
@@ -370,6 +382,7 @@ export function KanbanBoard({
             fiches={byStage.get("en_pause") ?? []}
             profileById={profileById}
             overdue={overdue}
+            chronos={chronos}
             onMove={requestMove}
             onOpen={openCard}
           />
@@ -380,6 +393,7 @@ export function KanbanBoard({
             fiches={byStage.get("perdu") ?? []}
             profileById={profileById}
             overdue={overdue}
+            chronos={chronos}
             onMove={requestMove}
             onOpen={openCard}
           />
@@ -391,6 +405,7 @@ export function KanbanBoard({
               fiche={activeFiche}
               profileById={profileById}
               overdue={overdue}
+              chrono={chronos[activeFiche.id]}
               onMove={() => undefined}
               onOpen={() => undefined}
               overlay
@@ -465,6 +480,7 @@ function KanbanColumn({
   fiches,
   profileById,
   overdue,
+  chronos,
   onMove,
   onOpen,
   refCallback,
@@ -473,6 +489,7 @@ function KanbanColumn({
   fiches: FicheRow[];
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
+  chronos: Record<string, Chrono>;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
   onOpen: (fiche: FicheRow) => void;
   refCallback: (el: HTMLDivElement | null) => void;
@@ -517,6 +534,7 @@ function KanbanColumn({
               fiche={f}
               profileById={profileById}
               overdue={overdue}
+              chrono={chronos[f.id]}
               onMove={onMove}
               onOpen={onOpen}
             />
@@ -535,6 +553,7 @@ function OutOfFunnelLane({
   fiches,
   profileById,
   overdue,
+  chronos,
   onMove,
   onOpen,
 }: {
@@ -544,6 +563,7 @@ function OutOfFunnelLane({
   fiches: FicheRow[];
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
+  chronos: Record<string, Chrono>;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
   onOpen: (fiche: FicheRow) => void;
 }) {
@@ -581,6 +601,7 @@ function OutOfFunnelLane({
               fiche={f}
               profileById={profileById}
               overdue={overdue}
+              chrono={chronos[f.id]}
               onMove={onMove}
               onOpen={onOpen}
             />
@@ -595,6 +616,7 @@ function DraggableFicheCard(props: {
   fiche: FicheRow;
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
+  chrono?: Chrono;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
   onOpen: (fiche: FicheRow) => void;
 }) {
@@ -617,6 +639,7 @@ function FicheCard({
   fiche,
   profileById,
   overdue,
+  chrono,
   onMove,
   onOpen,
   overlay,
@@ -624,6 +647,8 @@ function FicheCard({
   fiche: FicheRow;
   profileById: Map<string, ProfileRow>;
   overdue: Set<string>;
+  /** Absent pour « perdu » et « en pause » : ces étapes ne se comptent pas. */
+  chrono?: Chrono;
   onMove: (ficheId: string, stage: StageOrPerdu) => void;
   onOpen: (fiche: FicheRow) => void;
   overlay?: boolean;
@@ -738,6 +763,7 @@ function FicheCard({
           {formatDT(fiche.budget_estimatif)}
         </span>
         <span className="flex items-center gap-1.5">
+          {chrono && <ChronoBadge chrono={chrono} />}
           {overdue.has(fiche.id) && (
             <span
               className="size-2 rounded-full bg-ambre"

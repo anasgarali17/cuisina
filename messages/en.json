@@ -1253,5 +1253,18 @@
       "fin": "End",
       "notes": "Notes"
     }
+  },
+  "chrono": {
+    "jours": "{n} d",
+    "infobulle": {
+      "ok": "{jours} d in this stage (threshold: {seuil} d)",
+      "attention": "{jours} d in this stage — threshold is {seuil} d",
+      "retard": "{jours} d in this stage, past the expected {seuil} d"
+    },
+    "alertes": {
+      "titre": "Files running late",
+      "ligne": "{etape} — past {seuil} d, time to chase",
+      "reste": "and {n} more"
+    }
   }
 }
