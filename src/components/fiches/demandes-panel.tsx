@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { decideSubmission } from "@/lib/actions/lien-actions";
+import { modele } from "@/lib/catalogue";
+import { PastilleCouleur } from "@/components/catalogue/pastille-couleur";
 import type { FicheSubmissionRow } from "@/lib/database.types";
 import { SUBMISSION_STATUTS, type SubmissionStatut } from "@/lib/domain";
 import { formatDate } from "@/lib/dates";
@@ -69,9 +71,12 @@ function StatutChip({ statut }: { statut: SubmissionStatut }) {
 export function DemandesPanel({
   submissions: initial,
   conseillers,
+  photosDemandes = {},
 }: {
   submissions: FicheSubmissionRow[];
   conseillers: { id: string; name: string }[];
+  /** URLs signées des photos client — voir la page qui les calcule. */
+  photosDemandes?: Record<string, string[]>;
 }) {
   const t = useTranslations();
   const locale = useLocale();
@@ -242,7 +247,13 @@ export function DemandesPanel({
                       </span>
                     </div>
 
-                    {isOpen && <Details submission={s} names={names} />}
+                    {isOpen && (
+                      <Details
+                        submission={s}
+                        names={names}
+                        photos={photosDemandes[s.id] ?? []}
+                      />
+                    )}
 
                     {s.statut !== "en_attente" && s.decision_note && (
                       <p className="mt-3 rounded-xl bg-secondary/60 px-3 py-2 text-sm">
@@ -367,14 +378,27 @@ function ProjectChips({ submission }: { submission: FicheSubmissionRow }) {
   );
 }
 
+/**
+ * Tout ce que la demande porte, et non un extrait.
+ *
+ * Le panneau n'affichait que l'identité : le client choisissait un modèle,
+ * des coloris, une façade, dessinait sa cuisine et joignait des photos — rien
+ * de tout cela n'apparaissait. Le conseiller rappelait pour redemander ce que
+ * le client avait déjà pris le temps d'envoyer, ce qui annule l'intérêt du
+ * formulaire.
+ */
 function Details({
   submission,
   names,
+  photos,
 }: {
   submission: FicheSubmissionRow;
   names: Record<string, string>;
+  /** URLs signées, calculées au serveur — le bucket est privé. */
+  photos: string[];
 }) {
   const t = useTranslations();
+  const modeleChoisi = modele(submission.modele);
   const rows: [string, string | null][] = [
     [t("fiches.wizard.email"), submission.email],
     [t("fiches.wizard.telDomicile"), submission.tel_domicile],
@@ -394,6 +418,20 @@ function Details({
         : null,
     ],
     [t("demandes.assigne"), names[submission.conseiller_id] ?? null],
+    /* — Ce que le client a choisi lui-même — */
+    [
+      t("demandes.souhaits.typeProjet"),
+      submission.type_projet
+        ? t(`public.shared.types.${submission.type_projet}`)
+        : null,
+    ],
+    [t("demandes.souhaits.modele"), modeleChoisi?.nom ?? submission.modele],
+    [
+      t("demandes.souhaits.facade"),
+      submission.facade
+        ? t(`public.souhaits.facades.${submission.facade}`)
+        : null,
+    ],
   ];
 
   return (
@@ -406,6 +444,80 @@ function Details({
           </div>
         ))}
       </dl>
+      {/* — Les coloris, en pastilles : « Fil Tordu » ne dit rien tout seul — */}
+      {submission.couleurs?.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs text-muted-foreground">
+            {t("demandes.souhaits.couleurs")}
+          </p>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {submission.couleurs.map((c) => (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs"
+              >
+                <PastilleCouleur nom={c} className="size-3.5" />
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* — Le mot du client, en entier — */}
+      {submission.commentaire_client && (
+        <div className="mt-3">
+          <p className="text-xs text-muted-foreground">
+            {t("demandes.souhaits.commentaire")}
+          </p>
+          <p className="mt-0.5 whitespace-pre-line text-sm">
+            {submission.commentaire_client}
+          </p>
+        </div>
+      )}
+
+      {/* — Le croquis : une data URL, rien à signer — */}
+      {submission.croquis_client && (
+        <div className="mt-3">
+          <p className="text-xs text-muted-foreground">
+            {t("demandes.souhaits.croquis")}
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={submission.croquis_client}
+            alt={t("demandes.souhaits.croquis")}
+            className="mt-1 w-full max-w-md rounded-xl border border-border bg-white"
+          />
+        </div>
+      )}
+
+      {/* — Les photos : le lien signé expire, on ouvre dans un onglet — */}
+      {photos.length > 0 && (
+        <div className="mt-3">
+          <p className="text-xs text-muted-foreground">
+            {t("demandes.souhaits.photos", { n: photos.length })}
+          </p>
+          <div className="mt-1 grid grid-cols-3 gap-2 sm:grid-cols-6">
+            {photos.map((url, i) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block overflow-hidden rounded-xl border border-border transition-opacity hover:opacity-80"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={url}
+                  alt={t("demandes.souhaits.photoN", { n: i + 1 })}
+                  className="h-20 w-full object-cover"
+                />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {submission.observations && (
         <div className="mt-3">
           <p className="text-xs text-muted-foreground">

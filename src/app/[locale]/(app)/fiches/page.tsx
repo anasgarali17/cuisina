@@ -10,6 +10,8 @@ import {
   listProfiles,
   listSubmissions,
 } from "@/lib/data/queries";
+import { createClient } from "@/lib/supabase/server";
+import { supabaseConfigured } from "@/lib/env";
 import { qrMatrix } from "@/lib/qr";
 import { PageHeader } from "@/components/shell/page-header";
 import { FichesWorkspace } from "@/components/fiches/fiches-workspace";
@@ -50,6 +52,42 @@ export default async function FichesPage() {
     name: `${p.prenom} ${p.nom}`,
   }));
 
+  /**
+   * Les photos déposées par le client, signées pour une heure.
+   *
+   * Le bucket est privé : un chemin ne s'ouvre pas tout seul. Le client
+   * envoyait donc ses photos depuis la foire, elles arrivaient bien en base,
+   * et personne ne pouvait les voir — le conseiller rappelait pour demander
+   * ce qui était déjà là.
+   *
+   * Tout est signé en une fois plutôt qu'une requête par demande : la pile
+   * en compte plusieurs dizaines, et chaque signature est un aller-retour.
+   */
+  const photosDemandes: Record<string, string[]> = {};
+  if (supabaseConfigured()) {
+    const chemins = submissions.flatMap((s) => s.photos ?? []);
+    if (chemins.length > 0) {
+      const supabase = await createClient();
+      const { data } = await supabase.storage
+        .from("demandes-photos")
+        .createSignedUrls(chemins, 3600);
+      const parChemin = new Map<string, string>();
+      for (const entree of data ?? []) {
+        // `path` est rendu tel qu'il a été demandé : on s'y fie plutôt qu'à
+        // l'ordre, qu'une erreur partielle suffirait à décaler.
+        if (entree?.path && entree.signedUrl) {
+          parChemin.set(entree.path, entree.signedUrl);
+        }
+      }
+      for (const s of submissions) {
+        const urls = (s.photos ?? [])
+          .map((p) => parChemin.get(p))
+          .filter((u): u is string => Boolean(u));
+        if (urls.length > 0) photosDemandes[s.id] = urls;
+      }
+    }
+  }
+
   // La matrice est calculée ici : l'encodeur QR reste hors du bundle client,
   // qui ne reçoit que les modules — un millier de caractères par lien.
   const liens: LienView[] = liensRows.map((lien) => {
@@ -76,6 +114,7 @@ export default async function FichesPage() {
         conseillers={conseillers}
         pdvs={pdvs}
         submissions={submissions}
+        photosDemandes={photosDemandes}
         conseillerOptions={conseillerOptions}
         liens={liens}
       />

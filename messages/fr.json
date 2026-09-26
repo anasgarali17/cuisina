@@ -368,6 +368,26 @@
       "enAttente": "Métrage demandé — à planifier",
       "demandeLe": "Demandé le {date}",
       "annuler": "Annuler la demande"
+    },
+    "photos": {
+      "titre": "Photos",
+      "ajouter": "Ajouter",
+      "envoi": "Envoi…",
+      "vide": "Aucune photo. Celles du client et les vôtres apparaîtront ici.",
+      "duClient": "Client",
+      "retirer": "Retirer la photo {nom}",
+      "tropGrosse": "« {nom} » dépasse 8 Mo.",
+      "echecEnvoi": "L’envoi de « {nom} » a échoué."
+    },
+    "supprimer": {
+      "titre": "Supprimer cette fiche ?",
+      "confirmation": "La fiche {reference} de {client} sera effacée définitivement.",
+      "perteHistorique": "L’historique et les relances partent avec elle.",
+      "pertePhotos": "Les photos et documents joints sont effacés.",
+      "perteRdv": "Les rendez-vous liés sont retirés de l’agenda.",
+      "irreversible": "Cette action est irréversible.",
+      "confirmer": "Supprimer définitivement",
+      "enCours": "Suppression…"
     }
   },
   "canaux": {
@@ -792,6 +812,16 @@
         "prompt": "La demande de {client} n’entrera pas au pipeline. Elle reste consultable ici.",
         "placeholder": "Hors zone, doublon, demande non sérieuse…"
       }
+    },
+    "souhaits": {
+      "typeProjet": "Type de projet",
+      "modele": "Modèle choisi",
+      "facade": "Type de façade",
+      "couleurs": "Coloris souhaités",
+      "commentaire": "Message du client",
+      "croquis": "Croquis du client",
+      "photos": "Photos envoyées ({n})",
+      "photoN": "Photo {n}"
     }
   },
   "liens": {
@@ -886,7 +916,8 @@
         "dressing": "Un dressing"
       },
       "cuisines": "Cuisines",
-      "dressings": "Dressings"
+      "dressings": "Dressings",
+      "photosPerdues": "{n, plural, one {Une photo n’a pas pu être envoyée} other {# photos n’ont pas pu être envoyées}} — apportez-la au rendez-vous ou envoyez-la au showroom."
     },
     "client": {
       "title": "Parlez-nous de votre projet",

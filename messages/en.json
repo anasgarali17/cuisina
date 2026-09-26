@@ -368,6 +368,26 @@
       "enAttente": "Measurement requested — to be scheduled",
       "demandeLe": "Requested on {date}",
       "annuler": "Cancel the request"
+    },
+    "photos": {
+      "titre": "Photos",
+      "ajouter": "Add",
+      "envoi": "Uploading…",
+      "vide": "No photos yet. The client’s and yours will appear here.",
+      "duClient": "Client",
+      "retirer": "Remove photo {nom}",
+      "tropGrosse": "“{nom}” is over 8 MB.",
+      "echecEnvoi": "Uploading “{nom}” failed."
+    },
+    "supprimer": {
+      "titre": "Delete this fiche?",
+      "confirmation": "Fiche {reference} for {client} will be permanently erased.",
+      "perteHistorique": "Its history and follow-ups go with it.",
+      "pertePhotos": "Attached photos and documents are erased.",
+      "perteRdv": "Linked appointments are removed from the calendar.",
+      "irreversible": "This cannot be undone.",
+      "confirmer": "Delete permanently",
+      "enCours": "Deleting…"
     }
   },
   "canaux": {
@@ -792,6 +812,16 @@
         "prompt": "{client}’s request will not enter the pipeline. It stays readable here.",
         "placeholder": "Out of area, duplicate, not a serious enquiry…"
       }
+    },
+    "souhaits": {
+      "typeProjet": "Project type",
+      "modele": "Chosen model",
+      "facade": "Door material",
+      "couleurs": "Requested colours",
+      "commentaire": "Client’s message",
+      "croquis": "Client’s sketch",
+      "photos": "Photos sent ({n})",
+      "photoN": "Photo {n}"
     }
   },
   "liens": {
@@ -886,7 +916,8 @@
         "dressing": "A dressing room"
       },
       "cuisines": "Kitchens",
-      "dressings": "Dressing rooms"
+      "dressings": "Dressing rooms",
+      "photosPerdues": "{n, plural, one {One photo could not be sent} other {# photos could not be sent}} — bring it to the appointment or send it to the showroom."
     },
     "client": {
       "title": "Tell us about your project",

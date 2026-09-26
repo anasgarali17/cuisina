@@ -107,6 +107,8 @@ export function PublicFicheForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
+  /** Photos que le bucket a refusées — dites au client, pas avalées. */
+  const [photosPerdues, setPhotosPerdues] = useState(0);
 
   const cuisineActive = projet.nb_cuisines > 0;
   const dressingActive = projet.nb_dressings > 0;
@@ -176,7 +178,16 @@ export function PublicFicheForm({
     window.scrollTo({ top: 0 });
   }
 
-  /** Dépose les photos d'un souhait au bucket ; abandon silencieux par fichier. */
+  /**
+   * Dépose les photos d'un souhait au bucket.
+   *
+   * Une photo qui ne passe pas est abandonnée : perdre la demande entière
+   * parce qu'une image de 7 Mo n'est pas montée serait un mauvais échange.
+   * Mais l'abandon n'est plus muet — `photosPerdues` les compte, et l'écran
+   * de confirmation le dit. Le client croyait avoir envoyé sa cuisine, le
+   * conseiller ne voyait rien arriver, et personne n'avait de quoi
+   * comprendre.
+   */
   async function deposerPhotos(souhaits: Souhaits): Promise<string[]> {
     if (souhaits.photos.length === 0 || !supabaseNavigateur) return [];
     const supabase = supabaseNavigateur();
@@ -189,7 +200,10 @@ export function PublicFicheForm({
         return error ? null : chemin;
       }),
     );
-    return resultats.filter((p): p is string => p !== null);
+    const reussies = resultats.filter((p): p is string => p !== null);
+    const perdues = resultats.length - reussies.length;
+    if (perdues > 0) setPhotosPerdues((n) => n + perdues);
+    return reussies;
   }
 
   async function submit() {
@@ -290,6 +304,14 @@ export function PublicFicheForm({
                 {showroomChoisi.telephone}
               </a>
             )}
+          </p>
+        )}
+        {/* La demande est partie, mais pas tout : le dire ici, où le client
+            peut encore rappeler le showroom, plutôt que de le laisser croire
+            que ses photos sont arrivées. */}
+        {photosPerdues > 0 && (
+          <p className="mx-auto mt-4 max-w-sm rounded-2xl border border-ambre/40 bg-ambre/10 p-3 text-sm text-ambre">
+            {t("public.shared.photosPerdues", { n: photosPerdues })}
           </p>
         )}
         <p className="mt-5 inline-block rounded-full border border-border px-4 py-1.5 font-mono text-xs text-muted-foreground">

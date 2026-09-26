@@ -31,6 +31,7 @@ export function FichesWorkspace({
   conseillers,
   pdvs,
   submissions,
+  photosDemandes,
   conseillerOptions,
   liens,
 }: {
@@ -38,6 +39,8 @@ export function FichesWorkspace({
   conseillers: Record<string, string>;
   pdvs: PointDeVenteRow[];
   submissions: FicheSubmissionRow[];
+  /** URLs signées des photos client, par identifiant de demande. */
+  photosDemandes: Record<string, string[]>;
   conseillerOptions: { id: string; name: string }[];
   liens: LienView[];
 }) {
@@ -87,6 +90,7 @@ export function FichesWorkspace({
       {tab === "demandes" && (
         <DemandesPanel
           submissions={submissions}
+          photosDemandes={photosDemandes}
           conseillers={conseillerOptions}
         />
       )}

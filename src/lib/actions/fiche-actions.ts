@@ -172,13 +172,170 @@ export async function supprimerPieceJointe(
   if (!profile) return fail("unauthenticated");
 
   const supabase = await createClient();
+
+  // Le chemin d'abord : une fois la ligne partie, plus rien ne dit où le
+  // fichier dort, et il occuperait le bucket pour toujours.
+  const { data: piece } = await supabase
+    .from("fiche_pieces_jointes")
+    .select("chemin")
+    .eq("id", parsed.data.id)
+    .single();
+
   const { error } = await supabase
     .from("fiche_pieces_jointes")
     .delete()
     .eq("id", parsed.data.id);
   if (error) return fail(dbError(error));
 
+  /*
+   * Le fichier suit la ligne, au mieux. Le bucket n'autorise la suppression
+   * qu'à qui a déposé (`storage.foldername(name)[1] = auth.uid()`) : un chef
+   * qui retire la photo d'un conseiller efface la référence sans effacer
+   * l'objet. On ne fait pas échouer la suppression pour autant — la photo a
+   * disparu de la fiche, ce qui était la demande.
+   */
+  if (piece?.chemin) {
+    await supabase.storage.from("fiches-pieces").remove([piece.chemin]);
+  }
+
   revalidatePath(`/fiches/${parsed.data.fiche_id}`);
+  return succeed(undefined);
+}
+
+const photoClientSchema = z.object({
+  fiche_id: z.string().uuid(),
+  chemin: z.string().min(1).max(500),
+});
+
+/**
+ * Retire une photo envoyée par le client.
+ *
+ * Elles ne vivent pas dans `fiche_pieces_jointes` mais dans un tableau de
+ * chemins sur la fiche, recopié depuis la demande à l'acceptation. On réécrit
+ * donc le tableau sans celle-là, puis on efface l'objet — dans cet ordre :
+ * une photo encore listée mais absente du bucket afficherait une vignette
+ * cassée, alors que l'inverse ne coûte qu'un fichier orphelin.
+ */
+export async function supprimerPhotoClient(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = photoClientSchema.safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const supabase = await createClient();
+  const { data: fiche } = await supabase
+    .from("fiches_contact")
+    .select("photos_client")
+    .eq("id", parsed.data.fiche_id)
+    .single();
+  if (!fiche) return fail("not_found");
+
+  const restantes = (fiche.photos_client ?? []).filter(
+    (p: string) => p !== parsed.data.chemin,
+  );
+  // Rien retiré : le chemin n'appartenait pas à cette fiche.
+  if (restantes.length === (fiche.photos_client ?? []).length) {
+    return fail("not_found");
+  }
+
+  const { error, count } = await supabase
+    .from("fiches_contact")
+    .update({ photos_client: restantes }, { count: "exact" })
+    .eq("id", parsed.data.fiche_id);
+  if (error) return fail(dbError(error));
+  if (!count) return fail("db_droits");
+
+  await supabase.storage.from("demandes-photos").remove([parsed.data.chemin]);
+
+  revalidatePath(`/fiches/${parsed.data.fiche_id}`);
+  return succeed(undefined);
+}
+
+/**
+ * Supprime une fiche contact, définitivement.
+ *
+ * L'historique, les relances, les pièces jointes et les tâches partent avec
+ * elle par les `on delete cascade` du schéma. Les rendez-vous, eux, demandent
+ * un geste : `rendez_vous.fiche_id` est en `on delete set null` (0001), donc
+ * la cascade les détache au lieu de les emporter, et le créneau resterait
+ * bloqué dans l'agenda pour un client que plus aucun dossier ne justifie.
+ *
+ * Le client créé à la signature reste : c'est une entité à part, et une
+ * affaire supprimée par erreur ne doit pas emporter le fichier client.
+ *
+ * Qui a le droit est décidé par la RLS (voir 0021), pas ici : une garde en
+ * TypeScript se contourne en appelant l'action directement.
+ */
+export async function supprimerFiche(
+  input: unknown,
+): Promise<ActionResult<undefined>> {
+  if (!supabaseConfigured()) return fail("demo_mode");
+  const parsed = z.object({ id: z.string().uuid() }).safeParse(input);
+  if (!parsed.success) return fail("validation");
+
+  const profile = await getCurrentProfile();
+  if (!profile) return fail("unauthenticated");
+
+  const supabase = await createClient();
+
+  /*
+   * On relève d'abord ce qu'il faudra retirer, sans rien détruire : après la
+   * suppression, `rendez_vous.fiche_id` est remis à NULL par la contrainte et
+   * plus rien ne relie les créneaux à la fiche.
+   */
+  const [{ data: pieces }, { data: fiche }, { data: rdv }] = await Promise.all([
+    supabase
+      .from("fiche_pieces_jointes")
+      .select("chemin")
+      .eq("fiche_id", parsed.data.id),
+    supabase
+      .from("fiches_contact")
+      .select("photo_fiche_url, photos_client")
+      .eq("id", parsed.data.id)
+      .single(),
+    supabase.from("rendez_vous").select("id").eq("fiche_id", parsed.data.id),
+  ]);
+
+  /*
+   * La fiche part en premier, et rien d'autre ne bouge tant qu'elle tient.
+   *
+   * `count` plutôt que la seule absence d'erreur : la RLS ne refuse pas un
+   * DELETE qu'elle interdit, elle le rend sans effet. Sans ce compte, une
+   * suppression refusée pour cause de droits repartait en succès, l'écran se
+   * fermait, et la fiche était toujours là au rafraîchissement — pendant que
+   * ses rendez-vous et ses photos, eux, avaient bel et bien disparu.
+   */
+  const { error, count } = await supabase
+    .from("fiches_contact")
+    .delete({ count: "exact" })
+    .eq("id", parsed.data.id);
+  if (error) return fail(dbError(error));
+  if (!count) return fail("db_droits");
+
+  // La fiche n'existe plus : on nettoie ce que la cascade ne prend pas.
+  const chemins = (pieces ?? []).map((p) => p.chemin).filter(Boolean);
+  const rdvIds = (rdv ?? []).map((r) => r.id);
+  const photosClient = fiche?.photos_client ?? [];
+  await Promise.all([
+    chemins.length > 0
+      ? supabase.storage.from("fiches-pieces").remove(chemins)
+      : null,
+    photosClient.length > 0
+      ? supabase.storage.from("demandes-photos").remove(photosClient)
+      : null,
+    fiche?.photo_fiche_url
+      ? supabase.storage.from("fiches").remove([fiche.photo_fiche_url])
+      : null,
+    rdvIds.length > 0
+      ? supabase.from("rendez_vous").delete().in("id", rdvIds)
+      : null,
+  ]);
+
+  revalidatePath("/", "layout");
   return succeed(undefined);
 }
 

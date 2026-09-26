@@ -9,6 +9,7 @@ import type {
   EvenementPersonnelRow,
   FicheHistoriqueRow,
   FicheLienRow,
+  FichePieceJointeRow,
   FicheRelanceRow,
   FicheRow,
   FicheSubmissionRow,
@@ -170,6 +171,8 @@ export interface FicheDetail {
   fiche: FicheRow;
   historique: FicheHistoriqueRow[];
   relances: FicheRelanceRow[];
+  /** Photos et documents ajoutés par l'équipe — voir 0016_fiche_allegee. */
+  pieces: FichePieceJointeRow[];
 }
 
 export const getFicheDetail = cache(
@@ -185,26 +188,42 @@ export const getFicheDetail = cache(
         relances: demoRelances
           .filter((r) => r.fiche_id === id)
           .sort((a, b) => b.created_at.localeCompare(a.created_at)),
+        // Le mode démo n'a pas de bucket : aucune pièce à montrer.
+        pieces: [],
       };
     }
     const supabase = await createClient();
-    // One round trip: the detail page needs all three lists together.
-    const [{ data: fiche }, { data: historique }, { data: relances }] =
-      await Promise.all([
-        supabase.from("fiches_contact").select("*").eq("id", id).single(),
-        supabase
-          .from("fiche_historique")
-          .select("*")
-          .eq("fiche_id", id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("fiche_relances")
-          .select("*")
-          .eq("fiche_id", id)
-          .order("created_at", { ascending: false }),
-      ]);
+    // One round trip: the detail page needs all four lists together.
+    const [
+      { data: fiche },
+      { data: historique },
+      { data: relances },
+      { data: pieces },
+    ] = await Promise.all([
+      supabase.from("fiches_contact").select("*").eq("id", id).single(),
+      supabase
+        .from("fiche_historique")
+        .select("*")
+        .eq("fiche_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("fiche_relances")
+        .select("*")
+        .eq("fiche_id", id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("fiche_pieces_jointes")
+        .select("*")
+        .eq("fiche_id", id)
+        .order("created_at", { ascending: false }),
+    ]);
     if (!fiche) return null;
-    return { fiche, historique: historique ?? [], relances: relances ?? [] };
+    return {
+      fiche,
+      historique: historique ?? [],
+      relances: relances ?? [],
+      pieces: pieces ?? [],
+    };
   },
 );
 
